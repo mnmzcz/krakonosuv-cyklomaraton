@@ -41,6 +41,7 @@ const ogUrl = new URL(og.src, Astro.site);
     <meta property="og:url" content={canonical} />
     <meta property="og:image" content={ogUrl} />
     <meta name="twitter:card" content="summary_large_image" />
+    <slot name="head" />
     <script is:inline>
       document.documentElement.classList.add('js');
     </script>

@@ -153,7 +153,7 @@ const tiersJson = JSON.stringify(priceTiers);
     border: 0;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 1.2s var(--ease-out);
+    transition: opacity 0.5s var(--ease-out);
   }
 
   .media.is-playing :global(iframe) {
@@ -511,7 +511,7 @@ const tiersJson = JSON.stringify(priceTiers);
     priceEl.textContent = t.short ? `Startovné teď od ${kc(t.short)} · ${t.label.toLowerCase()}` : `Startovné na místě ${kc(t.cash!)}`;
   }
 
-  // background video: YouTube (privacy-enhanced), loaded after the page, never under reduced motion or data saver
+  // background video: YouTube (privacy-enhanced), never under reduced motion or data saver
   const media = document.querySelector<HTMLElement>('[data-hero-media]');
   const toggle = document.querySelector<HTMLButtonElement>('[data-video-toggle]');
   const label = document.querySelector<HTMLElement>('[data-video-label]');
@@ -521,7 +521,7 @@ const tiersJson = JSON.stringify(priceTiers);
     let paused = false;
 
     const YT = 'https://www.youtube-nocookie.com';
-    const command = (func: string) => frame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), YT);
+    const command = (func: string, args: unknown[] = []) => frame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), YT);
 
     // the poster stays until the player reports PLAYING; an embed error (e.g. YouTube's sign-in check) drops the frame for good
     const fail = () => {
@@ -539,7 +539,11 @@ const tiersJson = JSON.stringify(priceTiers);
       }
       const state = msg.event === 'onStateChange' ? msg.info : msg.info?.playerState;
       if (msg.event === 'onError' || msg.info?.videoData?.errorCode) fail();
-      else if (state === 1) media.classList.add('is-playing');
+      else if (state === 1 && !media.classList.contains('is-playing')) {
+        // the player has been running unseen while it booted: rewind so the film is seen from its first frame
+        command('seekTo', [0, true]);
+        media.classList.add('is-playing');
+      }
     });
 
     const setPaused = (p: boolean) => {
@@ -586,13 +590,9 @@ const tiersJson = JSON.stringify(priceTiers);
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
 
-    if (reduce || saveData) {
-      setPaused(true);
-    } else if (document.readyState === 'complete') {
-      load();
-    } else {
-      window.addEventListener('load', load, { once: true });
-    }
+    // start right away: the poster holds the frame until the film is actually running
+    if (reduce || saveData) setPaused(true);
+    else load();
 
     toggle.addEventListener('click', () => {
       if (!frame) {
