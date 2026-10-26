@@ -69,8 +69,7 @@ import voucher from '../assets/news/voucher.png';
 
   .gift-img {
     margin: 0;
-    box-shadow: 0 30px 60px -30px rgba(6, 18, 33, 0.35);
-    transform: rotate(1.2deg);
+    border: 1px solid var(--line);
   }
 
   .gift-img :global(img) {
@@ -80,10 +79,6 @@ import voucher from '../assets/news/voucher.png';
   @media (max-width: 60rem) {
     .gift {
       grid-template-columns: 1fr;
-    }
-
-    .gift-img {
-      transform: none;
     }
   }
 </style>

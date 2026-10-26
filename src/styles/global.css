@@ -468,7 +468,8 @@ summary:focus-visible {
   width: 100%;
   min-height: 3rem;
   padding: 0.7rem 0.9rem;
-  border: 1.5px solid var(--line-strong);
+  /* a field's edge is a control boundary: ink-3 clears 3:1 (5.5:1 on paper) */
+  border: 1.5px solid var(--ink-3);
   border-radius: 2px;
   background: var(--paper);
   color: var(--ink);
@@ -487,7 +488,7 @@ summary:focus-visible {
 
 .field input:hover,
 .field textarea:hover {
-  border-color: var(--ridge-500);
+  border-color: var(--ink);
 }
 
 .field input:focus-visible,

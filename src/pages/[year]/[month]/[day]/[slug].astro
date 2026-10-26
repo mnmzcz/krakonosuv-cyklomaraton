@@ -24,10 +24,10 @@ const older = posts[i + 1];
   <article>
     <header class="a-head">
       <div class="wrap">
-        <p class="a-meta t-label num">
-          <a href="/aktuality/">Aktuality</a> · <time datetime={post.data.date.toISOString().slice(0, 10)}>{postDate(post)}</time> · {post.data.category}
-        </p>
         <h1 class="a-title">{post.data.title}</h1>
+        <p class="a-meta t-label num">
+          <time datetime={post.data.date.toISOString().slice(0, 10)}>{postDate(post)}</time> · {post.data.category} · <a href="/aktuality/">Všechny aktuality</a>
+        </p>
       </div>
     </header>
     <div class="wrap a-img">
@@ -72,6 +72,7 @@ const older = posts[i + 1];
   }
 
   .a-meta {
+    margin-top: 1.25rem;
     color: var(--ink-3);
   }
 
@@ -80,12 +81,11 @@ const older = posts[i + 1];
   }
 
   .a-title {
-    margin-top: 1rem;
     max-width: 22ch;
     font-stretch: 66%;
     font-weight: 820;
     font-size: clamp(2.5rem, 6vw, 4.75rem);
-    line-height: 0.98;
+    line-height: 1.04;
     text-transform: uppercase;
   }
 
