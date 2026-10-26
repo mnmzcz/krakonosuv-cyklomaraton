@@ -5,3 +5,4 @@ dist/
 .env
 .impeccable/review/
 .impeccable/config.local.json
+.netlify/
