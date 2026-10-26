@@ -16,6 +16,7 @@ import c2017 from '../assets/photos/peloton-udoli.jpg';
 import c2016 from '../assets/photos/balik.jpg';
 import c2015 from '../assets/photos/peloton-les.jpg';
 import c2014 from '../assets/photos/zatacka.jpg';
+import routes from '../data/routes.json';
 
 type Album = { label: string; href: string };
 const years: { year: number; cover: ImageMetadata; albums: Album[] }[] = [
@@ -89,7 +90,11 @@ const [recent, older] = [years.filter((y) => y.albums.length > 1), years.filter(
 ---
 
 <Base title="Fotogalerie" description="Fotografie ze všech ročníků Krakonošova cyklomaratonu od roku 2014.">
-  <PageHead title="Fotogalerie" lede="Alba fotografů od roku 2014. Galerie se otevírají na Disku Google, Zoneramě a ve Fotkách Google." />
+  <PageHead
+    title="Fotogalerie"
+    lede="Alba fotografů od roku 2014. Galerie se otevírají na Disku Google, Zoneramě a ve Fotkách Google."
+    mark={{ name: 'Pražská bouda', km: routes.routes.long.waypoints.find((w) => w.name === 'Pražská bouda')?.km ?? 71.6 }}
+  />
 
   <section class="section" aria-label="Ročníky s alby">
     <div class="wrap recent">

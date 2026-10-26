@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
 import RouteProfile from '../components/RouteProfile.astro';
+import RouteMap from '../components/RouteMap.astro';
 import Icon from '../components/Icon.astro';
 import headPhoto from '../assets/photos/sjezd-peloton.jpg';
 import routes from '../data/routes.json';
@@ -9,17 +10,36 @@ import splits from '../data/splits-2026.json';
 import { program, programNote, race } from '../data/race';
 
 const long = routes.routes.long;
+const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+const fmtInt = (n: number) => n.toLocaleString('cs-CZ').replace(/\s/g, '\u00a0');
 
+// every spectator spot stands at a place of the long route's road book
+const PLACE: Record<string, string> = {
+  start: 'Trutnov',
+  prkenny: 'Prkenný Důl',
+  lubawka: 'Lubawka',
+  pomezni: 'Pomezní Boudy',
+  prazska: 'Pražská bouda',
+  strazne: 'Strážné',
+  janske: 'Janské Lázně',
+  cil: 'Trutnov',
+};
+const wp = (name: string, km = 0) => {
+  const found = long.waypoints.filter((w) => w.name === name);
+  if (!found.length) throw new Error(`fanousci: waypoint "${name}" is missing in routes.json`);
+  return found.reduce((b, w) => (Math.abs(w.km - km) < Math.abs(b.km - km) ? w : b));
+};
+
+// kilometres and altitudes in the notes come from the same route data as the timetable and the profile
 const notes: Record<string, string> = {
   start:
     'Slavnostní start obou tratí u Společenského centra UFFO. Následují cca 3 km neutrální jízdy za zaváděcím vozidlem, ostrý start je za železničním přejezdem na Polské ulici.',
-  prkenny: 'První stoupání závodu, kolem 20. kilometru, nad Žacléřem.',
-  lubawka: 'Závod projíždí polským městečkem a jeho náměstím (km 31,5).',
-  pomezni: 'Nejvyšší bod krátké trati na česko-polské hranici. Kontrola, bufet a Photopoint; projíždějí tudy obě tratě.',
-  prazska:
-    'Vrchol dlouhé trati po stoupání z Pece pod Sněžkou. Úsek Pec pod Sněžkou – Pražská bouda – Černý Důl má zákaz vjezdu, nahoru jen pěšky nebo na kole.',
-  strazne: 'Bufet dlouhé trati na 90. kilometru.',
-  janske: 'Poslední velké stoupání dlouhé trati, km 112.',
+  prkenny: `První stoupání závodu, vrchol nad Žacléřem na km ${fmtKm(wp('Prkenný Důl').km)}.`,
+  lubawka: `Závod projíždí polským městečkem a jeho náměstím (km ${fmtKm(wp('Lubawka').km)}).`,
+  pomezni: `Nejvyšší bod krátké trati (${fmtInt(wp('Pomezní Boudy').alt)} m) na česko-polské hranici. Kontrola, bufet a Photopoint; projíždějí tudy obě tratě.`,
+  prazska: `Vrchol dlouhé trati (${fmtInt(wp('Pražská bouda').alt)} m) po stoupání z Pece pod Sněžkou. Úsek Pec pod Sněžkou – Pražská bouda – Černý Důl má zákaz vjezdu, nahoru jen pěšky nebo na kole.`,
+  strazne: `Bufet dlouhé trati na km ${fmtKm(wp('Strážné').km)}.`,
+  janske: `Poslední velké stoupání dlouhé trati, z Lánova (km ${fmtKm(wp('Lánov').km)}) do Janských Lázní (km ${fmtKm(wp('Janské Lázně').km)}).`,
   cil: 'Cílová brána u UFFO. Vyhlášení výsledků a tombola v 16:00.',
 };
 
@@ -30,7 +50,7 @@ const toMin = (t: string) => {
 const T0 = 10 * 60;
 const T1 = 17 * 60;
 const pos = (t: string) => ((toMin(t) - T0) / (T1 - T0)) * 100;
-const hours = Array.from({ length: 8 }, (_, i) => ({ label: `${10 + i}:00`, x: (i / 7) * 100 }));
+const hours = Array.from({ length: 8 }, (_, i) => ({ label: `${10 + i}:00`, x: (i / 7) * 100, odd: i % 2 === 1 && i < 7 }));
 
 const nearPoint = (km: number) =>
   long.points.reduce((b, p) => (Math.abs(p[0] - km) < Math.abs(b[0] - km) ? p : b));
@@ -39,13 +59,18 @@ const mapLink = (km: number) => {
   return `https://mapy.com/fnc/v1/showmap?mapset=outdoor&center=${p[3]},${p[2]}&zoom=14&marker=true`;
 };
 
-const spots = splits.spots.map((s) => {
+const spots = splits.spots.map((s, i) => {
   const w = s.window as Record<string, { km: number; first: string; last: string }>;
   const km = s.km as Record<string, number>;
   const kmA = km.long ?? km.short;
+  const place = wp(PLACE[s.id] ?? s.name, kmA);
+  if (Math.abs(place.km - kmA) > 0.3) console.warn(`fanousci: ${s.name} is km ${kmA} in splits but km ${place.km} in routes.json`);
   return {
     ...s,
+    n: i + 1,
     kmA,
+    place,
+    route: (km.long !== undefined ? 'long' : 'short') as 'long' | 'short',
     note: notes[s.id],
     map: mapLink(kmA),
     bars: (['long', 'short'] as const)
@@ -61,22 +86,17 @@ const spots = splits.spots.map((s) => {
   };
 });
 
-const markers = spots
-  .filter((s) => s.kmA !== undefined)
-  .map((s) => {
-    const name = s.name.replace('Start · ', '').replace('Cíl · ', '').replace(', UFFO', '').replace(' · Žacléř', '').replace(' (PL)', '');
-    return {
-      km: s.kmA,
-      name,
-      alt: long.waypoints.find((w) => w.name === name)?.alt,
-      tier: 1 as const,
-      kind: 'spot' as const,
-    };
-  })
-  // start and finish share Trutnov; keep one label at each end
-  .map((m, i, all) => (i === all.length - 1 ? { ...m, name: 'Cíl Trutnov' } : i === 0 ? { ...m, name: 'Start Trutnov' } : m));
+// profile markers: km from the timetable, altitude from the long route's waypoint of the same name;
+// start and finish share Trutnov, so each end carries its own label
+const markers = spots.map((s, i, all) => ({
+  km: s.kmA,
+  name: i === 0 ? `Start ${s.place.name}` : i === all.length - 1 ? `Cíl ${s.place.name}` : s.place.name,
+  alt: s.place.alt,
+  tier: 1 as const,
+  kind: 'spot' as const,
+}));
 
-const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+const mapSpots = spots.map((s) => ({ n: s.n, name: s.place.name, km: s.kmA, route: s.route }));
 ---
 
 <Base title="Fanoušci" description="Kde fandit na Krakonošově cyklomaratonu, kdy kudy pojedou závodníci, program v Trutnově a doprava v den závodu.">
@@ -85,6 +105,7 @@ const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 
     lede="Krakonošův cyklomaraton se jede na otevřených silnicích východních Krkonoš. Fandit můžete na startu v Trutnově, na stoupáních i v cíli. Tady najdete kde, kdy a jak se tam dostat."
     image={headPhoto}
     imagePosition="50% 40%"
+    mark={{ name: 'Pomezní Boudy', km: wp('Pomezní Boudy').km }}
   >
     <nav class="jump on-dark" aria-label="Na této stránce">
       <a class="btn btn--ghost btn--small" href="#kde-fandit">Kde fandit</a>
@@ -105,65 +126,78 @@ const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 
 
       <RouteProfile id="fans-profile" routes={['long']} markers={markers} stats={false} table={false} />
 
-      <div class="timetable" role="table" aria-label={`Průjezdní časy podle ročníku ${splits.year}`}>
-        <div class="tt-row tt-head" role="row">
-          <span role="columnheader" class="t-label">Místo</span>
-          <span role="columnheader" class="t-label">km</span>
-          <span role="columnheader" class="t-label tt-axis-head">
-            <span class="visually-hidden">Okno průjezdu</span>
-            <span class="hours" aria-hidden="true">
-              {hours.map((h) => <span style={`left:${h.x}%`} class="num">{h.label}</span>)}
-            </span>
-          </span>
+      <div class="spots">
+        <div class="spots-map">
+          <RouteMap id="fans-map" spots={mapSpots} />
         </div>
 
-        {
-          spots.map((s) => (
-            <div class="tt-row" role="row">
-              <div role="cell" class="tt-place">
-                <h3 class="tt-name">{s.name}</h3>
-                <p class="tt-note">{s.note}</p>
-                <a class="tt-map" href={s.map} target="_blank" rel="noopener">
-                  <Icon name="pin" /> Na mapě
-                </a>
-              </div>
-              <div role="cell" class="tt-km num">
-                {s.bars.map((b) => (
-                  <span>
-                    {fmtKm(b.km)}
-                    <abbr title={b.route === 'long' ? 'dlouhá trať' : 'krátká trať'}>{b.route === 'long' ? 'A' : 'B'}</abbr>
-                  </span>
-                ))}
-              </div>
-              <div role="cell" class="tt-bars">
-                {s.bars.map((b) => (
-                  <div class:list={['bar-line', b.route]}>
-                    <span
-                      class:list={['bar', { measured: s.measured, point: b.w === 0 }]}
-                      style={`left:${b.x}%;width:${b.w}%`}
-                      aria-hidden="true"
-                    />
-                    <span class="bar-text num" style={`left:${b.x}%`}>
-                      <abbr title={b.route === 'long' ? 'dlouhá trať' : 'krátká trať'}>{b.route === 'long' ? 'A' : 'B'}</abbr>
-                      {b.first === b.last ? b.first : `${b.first} – ${b.last}`}
-                    </span>
-                  </div>
-                ))}
-              </div>
+        <div class="spots-table">
+          <div class="timetable" role="table" aria-label={`Průjezdní časy podle ročníku ${splits.year}`}>
+            <div class="tt-row tt-head" role="row">
+              <span role="columnheader" class="t-label">Místo</span>
+              <span role="columnheader" class="t-label">km</span>
+              <span role="columnheader" class="t-label tt-axis-head">
+                <span class="visually-hidden">Okno průjezdu</span>
+                <span class="hours" aria-hidden="true">
+                  {hours.map((h) => <span style={`left:${h.x}%`} class:list={['num', { odd: h.odd }]}>{h.label}</span>)}
+                </span>
+              </span>
             </div>
-          ))
-        }
-      </div>
 
-      <ul class="tt-legend">
-        <li><i class="lg measured" />měřeno v roce {splits.year} (první až poslední závodník)</li>
-        <li><i class="lg" />dopočteno mezi měřenými body</li>
-        <li><b>A</b> dlouhá trať · <b>B</b> krátká trať</li>
-      </ul>
-      <p class="source">
-        Zdroj: <a href="https://vysledky.sportsoft.cz/race/805" target="_blank" rel="noopener">oficiální výsledky {splits.date}, SportSoft</a>. Časy pro
-        rok {race.year} se budou lišit podle počasí a tempa pole.
-      </p>
+            {
+              spots.map((s) => (
+                <div class="tt-row" role="row">
+                  <div role="cell" class="tt-place">
+                    <h3 class="tt-name">
+                      <span class="tt-n num">
+                        {s.n}<span class="visually-hidden">.</span>
+                      </span>
+                      <span>{s.name}</span>
+                    </h3>
+                    <p class="tt-note">{s.note}</p>
+                    <a class="tt-map" href={s.map} target="_blank" rel="noopener">
+                      <Icon name="pin" /> Na mapě
+                    </a>
+                  </div>
+                  <div role="cell" class="tt-km num">
+                    {s.bars.map((b) => (
+                      <span>
+                        {fmtKm(b.km)}
+                        <abbr title={b.route === 'long' ? 'dlouhá trať' : 'krátká trať'}>{b.route === 'long' ? 'A' : 'B'}</abbr>
+                      </span>
+                    ))}
+                  </div>
+                  <div role="cell" class="tt-bars">
+                    {s.bars.map((b) => (
+                      <div class:list={['bar-line', b.route]}>
+                        <span
+                          class:list={['bar', { measured: s.measured, point: b.w === 0 }]}
+                          style={`left:${b.x}%;width:${b.w}%`}
+                          aria-hidden="true"
+                        />
+                        <span class="bar-text num" style={`left:${b.x}%`}>
+                          <abbr title={b.route === 'long' ? 'dlouhá trať' : 'krátká trať'}>{b.route === 'long' ? 'A' : 'B'}</abbr>
+                          {b.first === b.last ? b.first : `${b.first} – ${b.last}`}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+
+          <ul class="tt-legend">
+            <li><i class="lg measured" />měřeno v roce {splits.year} (první až poslední závodník)</li>
+            <li><i class="lg" />dopočteno mezi měřenými body</li>
+            <li><b>A</b> dlouhá trať · <b>B</b> krátká trať</li>
+          </ul>
+          <p class="source">
+            Zdroj: <a href="https://vysledky.sportsoft.cz/race/805" target="_blank" rel="noopener">oficiální výsledky {splits.date}, SportSoft</a>. Časy pro
+            rok {race.year} se budou lišit podle počasí a tempa pole.
+          </p>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -257,10 +291,71 @@ const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 
     margin-top: 2rem;
   }
 
+  /* map and timetable: the pins on the map carry the row numbers */
+  .spots {
+    display: grid;
+    gap: clamp(2rem, 4vw, 3rem);
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .spots-map {
+    max-width: 46rem;
+  }
+
+  @media (min-width: 80rem) {
+    .spots {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 0.7fr);
+      align-items: start;
+    }
+
+    .spots-map {
+      grid-column: 2;
+      grid-row: 1;
+      position: sticky;
+      top: calc(var(--header-h) + 1.5rem);
+      max-width: none;
+    }
+
+    .spots-table {
+      grid-column: 1;
+      grid-row: 1;
+    }
+
+    .spots .tt-row {
+      grid-template-columns: minmax(13rem, 4fr) 4rem minmax(0, 6.5fr);
+      gap: 1.25rem;
+    }
+
+    /* a narrower time axis keeps every other hour */
+    .spots .hours .odd {
+      display: none;
+    }
+  }
+
   /* timetable: the road book's "horaire probable" */
   .timetable {
-    margin-top: clamp(2.5rem, 5vw, 4rem);
     border-top: 1.5px solid var(--ink);
+  }
+
+  .tt-name {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .tt-n {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    font-stretch: 75%;
+    font-weight: 800;
+    font-size: 0.875rem;
+    line-height: 1;
   }
 
   .tt-row {

@@ -1,5 +1,6 @@
 ---
 // Subpage header: a ridge-blue band whose lower edge is the real long-route profile.
+// An optional mark pins the place the page is about onto that ridge, road-book style.
 import { Picture } from 'astro:assets';
 import data from '../data/routes.json';
 
@@ -8,17 +9,52 @@ interface Props {
   lede?: string;
   image?: ImageMetadata;
   imagePosition?: string;
+  /** a place on the long route, marked on the ridge with a red dot and a vertical label */
+  mark?: { name: string; km: number };
 }
-const { title, lede, image, imagePosition = '50% 50%' } = Astro.props;
+const { title, lede, image, imagePosition = '50% 50%', mark } = Astro.props;
 
 const r = data.routes.long;
-const L = r.points[r.points.length - 1][0];
+const pts = r.points;
+const L = pts[pts.length - 1][0];
+const ALT_MIN = 250;
+const ALT_SPAN = 900;
+const lift = (alt: number) => (alt - ALT_MIN) / ALT_SPAN;
+const nearest = (km: number) => pts.reduce((b, p, i) => (Math.abs(p[0] - km) < Math.abs(pts[b][0] - km) ? i : b), 0);
+
+// every third sample keeps the silhouette; the named places (and the mark) stay exact vertices
+const keep = new Set<number>([0, pts.length - 1, ...r.waypoints.map((w) => nearest(w.km))]);
+for (let i = 0; i < pts.length; i += 3) keep.add(i);
+const markIdx = mark ? nearest(mark.km) : -1;
+if (markIdx >= 0) keep.add(markIdx);
+const ridge = [...keep].sort((a, b) => a - b).map((i) => pts[i]);
 const area =
-  r.points.map((p, i) => `${i ? 'L' : 'M'}${((p[0] / L) * 1000).toFixed(1)} ${((1 - (p[1] - 250) / 900) * 100).toFixed(1)}`).join('') +
-  'L1000 100L0 100Z';
+  ridge.map((p, i) => `${i ? 'L' : 'M'}${((p[0] / L) * 1000).toFixed(1)} ${((1 - lift(p[1])) * 100).toFixed(1)}`).join('') + 'L1000 100L0 100Z';
+
+const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+const m = mark
+  ? (() => {
+      const p = pts[markIdx];
+      const x = (p[0] / L) * 100;
+      const kmText = `km ${fmtKm(mark.km)}`;
+      return {
+        ...mark,
+        kmText,
+        x,
+        lift: lift(p[1]),
+        edge: x < 3 ? 'start' : x > 97 ? 'end' : '',
+        // label length in ems of the label face (condensed caps, measured): reserves room above the ridge
+        len: mark.name.length * 0.5 + kmText.length * 0.46 + 0.3,
+        nameLen: mark.name.length * 0.5,
+      };
+    })()
+  : null;
 ---
 
-<header class:list={['page-head', { 'has-image': image }]}>
+<header
+  class:list={['page-head', { 'has-image': image, 'has-mark': m, 'mark-edge': m?.edge }]}
+  style={m ? `--mx:${m.x.toFixed(2)}%;--mt:${(0.35 + (m.x / 100) * 0.8).toFixed(2)}s;--lift:${m.lift.toFixed(3)};--mark-len:${m.len.toFixed(2)};--mark-len-s:${m.nameLen.toFixed(2)}` : undefined}
+>
   {
     image && (
       <div class="ph-media">
@@ -34,10 +70,23 @@ const area =
   <svg class="ph-ridge" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
     <path d={area} />
   </svg>
+  {
+    m && (
+      <div class:list={['ph-mark', m.edge && `edge-${m.edge}`]} aria-hidden="true">
+        <span class="ph-mark-label">
+          <b>{m.name}</b>
+          <span class="num">{m.kmText}</span>
+        </span>
+      </div>
+    )
+  }
 </header>
 
 <style>
   .page-head {
+    --ridge-h: clamp(3.5rem, 8vw, 7rem);
+    --mark-size: 0.875rem;
+    --stem: 1.25rem;
     position: relative;
     overflow: hidden;
     background: var(--ridge-900);
@@ -75,6 +124,22 @@ const area =
     padding-top: clamp(8rem, 18vw, 15rem);
   }
 
+  /* the mark's label stands above the ridge; keep the head's content clear of it */
+  .has-mark {
+    --mark-room: calc(var(--ridge-h) * var(--lift) + var(--stem) + 0.4rem + var(--mark-len) * var(--mark-size) + 1.5rem);
+  }
+
+  .has-mark .ph-inner {
+    padding-bottom: max(clamp(6rem, 12vw, 10rem), var(--mark-room));
+  }
+
+  /* at the ends of the road the label stands in the page gutter, clear of the content */
+  @media (min-width: 75rem) {
+    .mark-edge .ph-inner {
+      padding-bottom: clamp(6rem, 12vw, 10rem);
+    }
+  }
+
   .ph-title {
     font-size: clamp(3rem, 8vw, 6rem);
     max-width: 16ch;
@@ -94,15 +159,99 @@ const area =
     right: 0;
     bottom: -1px;
     width: 100%;
-    height: clamp(3.5rem, 8vw, 7rem);
+    height: var(--ridge-h);
   }
 
   .ph-ridge path {
     fill: var(--snow);
   }
 
+  /* the mark: a red dot on the ridge's own vertex, a stem, and the place in condensed caps */
+  .ph-mark {
+    position: absolute;
+    left: clamp(0.5rem, var(--mx), 100% - 0.5rem);
+    bottom: calc(var(--ridge-h) * var(--lift) - 1px);
+    width: 0;
+    height: 0;
+  }
+
+  .ph-mark::after {
+    content: '';
+    position: absolute;
+    left: -0.3125rem;
+    top: -0.3125rem;
+    width: 0.625rem;
+    height: 0.625rem;
+    border-radius: 50%;
+    background: var(--red);
+    border: 2px solid var(--snow);
+  }
+
+  .ph-mark::before {
+    content: '';
+    position: absolute;
+    left: -0.5px;
+    bottom: 0.3125rem;
+    width: 1px;
+    height: var(--stem);
+    background: rgba(255, 255, 255, 0.75);
+  }
+
+  .ph-mark-label {
+    position: absolute;
+    bottom: calc(var(--stem) + 0.4rem);
+    left: 0;
+    transform: translateX(-50%) rotate(180deg);
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+    font-stretch: 62%;
+    font-size: var(--mark-size);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: 0.045em;
+    text-transform: uppercase;
+    color: #fff;
+  }
+
+  .ph-mark-label b {
+    font-weight: 780;
+  }
+
+  .ph-mark-label .num {
+    margin-top: 0.4em;
+    font-weight: 500;
+    text-transform: none;
+    color: var(--on-dark-2);
+  }
+
+  /* over a photograph the label needs a little lift off the busy ground */
+  .has-image .ph-mark-label {
+    text-shadow: 1px 0 3px rgba(6, 18, 33, 0.75);
+  }
+
+  .has-image .ph-mark-label .num {
+    color: var(--ridge-100);
+  }
+
+  /* at the ends of the road the label stands beside its stem, inside the page */
+  .edge-start .ph-mark-label {
+    left: 0.35rem;
+    transform: rotate(180deg);
+  }
+
+  .edge-end .ph-mark-label {
+    left: auto;
+    right: 0.35rem;
+    transform: rotate(180deg);
+  }
+
   :global(.js) .ph-ridge {
     animation: ph-ride 1.6s var(--ease-out) 0.1s both;
+  }
+
+  :global(.js) .ph-mark {
+    animation: ph-mark 0.6s var(--ease-out) both;
+    animation-delay: var(--mt);
   }
 
   @keyframes ph-ride {
@@ -111,6 +260,37 @@ const area =
     }
     to {
       clip-path: inset(0 0 0 0);
+    }
+  }
+
+  @keyframes ph-mark {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .ph-mark {
+      animation: none;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .page-head {
+      --mark-size: 0.8125rem;
+      --stem: 0.875rem;
+    }
+
+    /* small screens: the place name alone keeps the head short */
+    .ph-mark-label .num {
+      display: none;
+    }
+
+    .has-mark {
+      --mark-room: calc(var(--ridge-h) * var(--lift) + var(--stem) + 0.4rem + var(--mark-len-s) * var(--mark-size) + 1.25rem);
     }
   }
 </style>

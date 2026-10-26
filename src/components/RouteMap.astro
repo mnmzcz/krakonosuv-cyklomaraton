@@ -1,0 +1,637 @@
+---
+// The road book's map plate: both routes drawn from the same 200 m samples as the profile,
+// north up, with the spectator spots as numbered pins that match the timetable.
+import data from '../data/routes.json';
+
+type RouteId = 'long' | 'short';
+type Dir = 'n' | 's' | 'e' | 'w' | 'ne' | 'nw' | 'se' | 'sw';
+type Pt = number[]; // [km, alt, lat, lon, grade]
+
+export type MapSpot = {
+  /** number shown in the pin, the same as the timetable row */
+  n: number;
+  name: string;
+  km: number;
+  route?: RouteId;
+};
+
+interface Props {
+  id: string;
+  spots: MapSpot[];
+  /** concise description for screen readers; the timetable stays the full text alternative */
+  label?: string;
+}
+
+const { id, spots, label } = Astro.props;
+
+const long = data.routes.long;
+const short = data.routes.short;
+
+/* ---------- projection: equirectangular, x scaled by cos(latitude), in km ---------- */
+const all = [...long.points, ...short.points];
+const lats = all.map((p) => p[2]);
+const lons = all.map((p) => p[3]);
+const latMin = Math.min(...lats);
+const latMax = Math.max(...lats);
+const lonMin = Math.min(...lons);
+const lonMax = Math.max(...lons);
+const KM_PER_DEG = 111.2;
+const kx = Math.cos((((latMin + latMax) / 2) * Math.PI) / 180);
+const PAD = { t: 1.6, r: 1.6, b: 1.6, l: 1.6 }; // km of air around the routes for pins and labels
+const W = (lonMax - lonMin) * kx * KM_PER_DEG + PAD.l + PAD.r;
+const H = (latMax - latMin) * KM_PER_DEG + PAD.t + PAD.b;
+
+const px = (lon: number) => (lon - lonMin) * kx * KM_PER_DEG + PAD.l;
+const py = (lat: number) => (latMax - lat) * KM_PER_DEG + PAD.t;
+const pct = (p: Pt) => ({ x: (px(p[3]) / W) * 100, y: (py(p[2]) / H) * 100 });
+
+const path = (pts: Pt[]) => pts.map((p, i) => `${i ? 'L' : 'M'}${px(p[3]).toFixed(3)} ${py(p[2]).toFixed(3)}`).join('');
+
+const at = (pts: Pt[], km: number) => pts.reduce((b, p) => (Math.abs(p[0] - km) < Math.abs(b[0] - km) ? p : b));
+
+/* ---------- the short route is drawn only where it leaves the long one ---------- */
+const near = (p: Pt, q: Pt) => Math.hypot(px(p[3]) - px(q[3]), py(p[2]) - py(q[2]));
+const offLong = (p: Pt) => long.points.every((q) => near(p, q) > 0.12);
+const firstOff = short.points.findIndex(offLong);
+const back = short.points.findIndex((p, i) => i > firstOff && !offLong(p));
+const shortOwn = firstOff > 0 && back > firstOff ? short.points.slice(firstOff - 1, back + 1) : [];
+
+/* ---------- direction of travel: arrowheads where the road runs straight ---------- */
+const straightness = (pts: Pt[], km: number) => near(at(pts, km - 0.6), at(pts, km + 0.6)) / 1.2;
+const arrow = (pts: Pt[], target: number) => {
+  let km = target;
+  for (let k = target - 1.6; k <= target + 1.6; k += 0.2) if (straightness(pts, k) > straightness(pts, km)) km = k;
+  const a = at(pts, km - 0.6);
+  const b = at(pts, km + 0.6);
+  const deg = (Math.atan2(py(b[2]) - py(a[2]), px(b[3]) - px(a[3])) * 180) / Math.PI;
+  return { ...pct(at(pts, km)), deg: deg.toFixed(0) };
+};
+const arrows = [
+  ...[5, 27, 44, 58, 85, 96.5, 107, 121, 129.5].map((k) => ({ ...arrow(long.points, k), route: 'long' })),
+  ...(shortOwn.length ? [{ ...arrow(short.points, 67), route: 'short' }] : []),
+];
+
+/* ---------- places: road-book labels, tuned for the 2026 routes, default east ---------- */
+const PLACES: Record<string, { dir: Dir; tier: 1 | 2; route?: RouteId }> = {
+  'Malá Úpa': { dir: 'e', tier: 2 },
+  'Pec pod Sněžkou': { dir: 'e', tier: 1 },
+  Lánov: { dir: 'sw', tier: 2 },
+  'Svoboda nad Úpou': { dir: 'e', tier: 1 },
+  Hertvíkovice: { dir: 'e', tier: 2, route: 'short' },
+  Vlčice: { dir: 'w', tier: 2 },
+};
+// where each spot's name sits next to its pin
+const SPOT_DIR: Record<string, Dir> = {
+  'Prkenný Důl': 'e',
+  Lubawka: 'nw',
+  'Pomezní Boudy': 'w',
+  'Pražská bouda': 's',
+  Strážné: 'n',
+  'Janské Lázně': 's',
+};
+
+const spotNames = spots.map((s) => s.name);
+const places = Object.entries(PLACES)
+  .filter(([name]) => !spotNames.includes(name))
+  .map(([name, cfg]) => {
+    const r = cfg.route === 'short' ? short : long;
+    const w = r.waypoints.find((w) => w.name === name) ?? short.waypoints.find((w) => w.name === name);
+    if (!w) return null;
+    return { name, ...cfg, ...pct(at(r.points, w.km)) };
+  })
+  .filter((p): p is NonNullable<typeof p> => p !== null);
+
+// spots that share a place (start and finish in Trutnov) become one group of pins
+type Group = { x: number; y: number; ns: number[]; name: string; dir: Dir; trutnov: boolean };
+const groups: Group[] = [];
+for (const s of spots) {
+  const r = s.route === 'short' ? short : long;
+  const p = at(r.points, s.km);
+  const pos = pct(p);
+  const g = groups.find((g) => Math.abs(g.x - pos.x) < 0.6 && Math.abs(g.y - pos.y) < 0.6);
+  if (g) g.ns.push(s.n);
+  else groups.push({ ...pos, ns: [s.n], name: s.name, dir: SPOT_DIR[s.name] ?? 'e', trutnov: false });
+}
+const startPt = pct(long.points[0]);
+groups.forEach((g) => (g.trutnov = Math.abs(g.x - startPt.x) < 0.6 && Math.abs(g.y - startPt.y) < 0.6));
+
+/* ---------- scale bar ---------- */
+const SCALE_KM = 5;
+const scaleW = (SCALE_KM / W) * 100;
+
+const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+const year = data.source.match(/ročníku (\d{4})/)?.[1] ?? '';
+const nums = spots.map((s) => s.n);
+const aria =
+  label ??
+  `Mapa dlouhé a krátké trati${year ? ` ročníku ${year}` : ''}, sever nahoře. Místa pro fanoušky jsou na mapě očíslovaná ${Math.min(...nums)} až ${Math.max(...nums)}, stejně jako v tabulce průjezdů.`;
+---
+
+<figure class="rm" id={id}>
+  <div class="rm-plate" role="img" aria-label={aria} style={`aspect-ratio:${W.toFixed(3)} / ${H.toFixed(3)}`}>
+    <svg class="rm-svg" viewBox={`0 0 ${W.toFixed(3)} ${H.toFixed(3)}`} preserveAspectRatio="xMidYMid meet" aria-hidden="true" focusable="false">
+      <g class="rm-grid">
+        {Array.from({ length: Math.floor(W / 5) }, (_, i) => <line x1={(i + 1) * 5} x2={(i + 1) * 5} y1="0" y2={H} />)}
+        {Array.from({ length: Math.floor(H / 5) }, (_, i) => <line y1={(i + 1) * 5} y2={(i + 1) * 5} x1="0" x2={W} />)}
+      </g>
+      <path class="rm-case" d={path(long.points)} />
+      {shortOwn.length > 0 && <path class="rm-case" d={path(shortOwn)} />}
+      {shortOwn.length > 0 && <path class="rm-short" d={path(shortOwn)} />}
+      <path class="rm-long" d={path(long.points)} />
+    </svg>
+
+    <div class="rm-layer" aria-hidden="true">
+      {
+        arrows.map((a) => (
+          <span class:list={['rm-dir', a.route]} style={`left:${a.x.toFixed(2)}%;top:${a.y.toFixed(2)}%;--r:${a.deg}deg`}>
+            <svg viewBox="0 0 12 12">
+              <path d="M2 2 11 6 2 10 4.5 6Z" />
+            </svg>
+          </span>
+        ))
+      }
+
+      {
+        places.map((p) => (
+          <span class:list={['rm-place', `tier-${p.tier}`, `d-${p.dir}`]} style={`left:${p.x.toFixed(2)}%;top:${p.y.toFixed(2)}%`}>
+            <span class="rm-name t-label">{p.name}</span>
+          </span>
+        ))
+      }
+
+      {
+        groups.map((g) =>
+          g.trutnov ? (
+            <span class="rm-finish" style={`left:${g.x.toFixed(2)}%;top:${g.y.toFixed(2)}%`}>
+              <span class="rm-sf" />
+              <span class="rm-pins">
+                {g.ns.map((n) => (
+                  <span class="rm-pin num">{n}</span>
+                ))}
+              </span>
+              <span class="rm-name t-label">
+                <b>Trutnov</b> start a cíl
+              </span>
+            </span>
+          ) : (
+            <span class:list={['rm-spot', `d-${g.dir}`]} style={`left:${g.x.toFixed(2)}%;top:${g.y.toFixed(2)}%`}>
+              <span class="rm-pins">
+                {g.ns.map((n) => (
+                  <span class="rm-pin num">{n}</span>
+                ))}
+              </span>
+              <span class="rm-name t-label">{g.name}</span>
+            </span>
+          ),
+        )
+      }
+
+      <span class="rm-north">
+        <svg viewBox="0 0 16 28">
+          <path class="rm-north-head" d="M8 1 13 12H3Z" />
+          <path d="M8 12v15" />
+        </svg>
+        <span class="t-label">S</span>
+      </span>
+
+      <span class="rm-scale" style={`--w:${scaleW.toFixed(2)}%`}>
+        <span class="rm-scale-bar" />
+        <span class="rm-scale-text t-label num">0</span>
+        <span class="rm-scale-text t-label num">{fmtKm(SCALE_KM)}<span class="unit">km</span></span>
+      </span>
+    </div>
+  </div>
+
+  <figcaption class="rm-key">
+    <ul>
+      <li><i class="k-line long" />{long.name} {long.letter}</li>
+      <li><i class="k-line short" />{short.name} {short.letter}, kde vede jinudy</li>
+      <li><i class="k-pin num">1</i>místo pro fanoušky, číslo jako v tabulce</li>
+      <li><i class="k-sf" />start a cíl u UFFO</li>
+    </ul>
+    <p class="rm-src">
+      Trasy ročníku {year} podle Mapy.com, sever nahoře. Podrobná mapa:
+      <a href={long.mapUrl} target="_blank" rel="noopener">{long.name.toLowerCase()}</a>,
+      <a href={short.mapUrl} target="_blank" rel="noopener">{short.name.toLowerCase()}</a>.
+    </p>
+  </figcaption>
+</figure>
+
+<style>
+  .rm {
+    margin: 0;
+  }
+
+  .rm-plate {
+    position: relative;
+    width: 100%;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+
+  .rm-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .rm-grid line {
+    stroke: var(--ridge-100);
+    stroke-width: 1;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .rm-case,
+  .rm-long,
+  .rm-short {
+    fill: none;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+  }
+
+  .rm-case {
+    stroke: var(--paper);
+    stroke-width: 7;
+  }
+
+  .rm-long {
+    stroke: var(--ink);
+    stroke-width: 2.5;
+  }
+
+  .rm-short {
+    stroke: var(--ridge-500);
+    stroke-width: 2.5;
+  }
+
+  .rm-layer {
+    position: absolute;
+    inset: 0;
+  }
+
+  .rm-layer > * {
+    position: absolute;
+  }
+
+  /* direction of travel */
+  .rm-dir {
+    width: 0.875rem;
+    height: 0.875rem;
+    margin: -0.4375rem 0 0 -0.4375rem;
+    transform: rotate(var(--r));
+  }
+
+  .rm-dir svg {
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .rm-dir path {
+    fill: var(--ink);
+    stroke: var(--paper);
+    stroke-width: 1.25;
+    stroke-linejoin: round;
+    paint-order: stroke;
+  }
+
+  .rm-dir.short path {
+    fill: var(--ridge-500);
+  }
+
+  /* labels: condensed caps, the road book's voice */
+  .rm-name {
+    position: absolute;
+    white-space: nowrap;
+    color: var(--ink);
+    text-shadow:
+      0 0 2px var(--paper),
+      0 0 2px var(--paper),
+      0 0 3px var(--paper);
+  }
+
+  .rm-place {
+    width: 0;
+    height: 0;
+  }
+
+  .rm-place::before {
+    content: '';
+    position: absolute;
+    left: -3px;
+    top: -3px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+  }
+
+  .rm-place .rm-name {
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+
+  .rm-place.tier-1 .rm-name {
+    font-weight: 750;
+    color: var(--ink);
+  }
+
+  /* direction classes place the label around a zero-size anchor */
+  .d-e .rm-name {
+    left: var(--gap);
+    top: 0;
+    transform: translateY(-50%);
+  }
+  .d-w .rm-name {
+    right: var(--gap);
+    top: 0;
+    transform: translateY(-50%);
+  }
+  .d-n .rm-name {
+    bottom: var(--gap);
+    left: 0;
+    transform: translateX(-50%);
+  }
+  .d-s .rm-name {
+    top: var(--gap);
+    left: 0;
+    transform: translateX(-50%);
+  }
+  .d-ne .rm-name {
+    left: calc(var(--gap) * 0.7);
+    bottom: calc(var(--gap) * 0.7);
+  }
+  .d-nw .rm-name {
+    right: calc(var(--gap) * 0.7);
+    bottom: calc(var(--gap) * 0.7);
+  }
+  .d-se .rm-name {
+    left: calc(var(--gap) * 0.7);
+    top: calc(var(--gap) * 0.7);
+  }
+  .d-sw .rm-name {
+    right: calc(var(--gap) * 0.7);
+    top: calc(var(--gap) * 0.7);
+  }
+
+  .rm-place {
+    --gap: 0.45rem;
+  }
+
+  /* spectator spots: numbered red pins sitting on the road */
+  .rm-spot,
+  .rm-finish {
+    --pin: 1.5rem;
+    --gap: calc(var(--pin) / 2 + 0.3rem);
+    width: 0;
+    height: 0;
+    z-index: 2;
+  }
+
+  .rm-pins {
+    position: absolute;
+    left: 0;
+    top: 0;
+    display: flex;
+    gap: 2px;
+    transform: translate(-50%, -50%);
+  }
+
+  .rm-pin {
+    display: grid;
+    place-items: center;
+    width: var(--pin);
+    height: var(--pin);
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    box-shadow: 0 0 0 2px var(--paper);
+    font-stretch: 75%;
+    font-weight: 800;
+    font-size: 0.875rem;
+    line-height: 1;
+    font-style: normal;
+  }
+
+  .rm-spot .rm-name {
+    font-weight: 800;
+    font-size: 0.875rem;
+  }
+
+  /* start and finish: the ink ring at UFFO, pins 1 and 8 beside it */
+  .rm-sf {
+    position: absolute;
+    left: -0.5rem;
+    top: -0.5rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    z-index: 1;
+  }
+
+  .rm-finish .rm-pins {
+    transform: translate(-50%, calc(-100% - 0.6rem));
+  }
+
+  .rm-finish .rm-name {
+    left: 0.8rem;
+    top: -0.1rem;
+    line-height: 1.15;
+    display: grid;
+    font-weight: 600;
+    font-size: 0.8125rem;
+  }
+
+  .rm-finish .rm-name b {
+    font-weight: 800;
+    font-size: 0.875rem;
+  }
+
+  /* north arrow and scale, top and bottom left where the map is empty */
+  .rm-north {
+    left: 1rem;
+    top: 0.9rem;
+    display: grid;
+    justify-items: center;
+    gap: 0.15rem;
+    color: var(--ink);
+  }
+
+  .rm-north svg {
+    width: 0.9rem;
+    height: 1.6rem;
+  }
+
+  .rm-north path {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.5;
+  }
+
+  .rm-north .rm-north-head {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  .rm-scale {
+    left: 1rem;
+    bottom: 0.9rem;
+    width: var(--w);
+    height: 1.6rem;
+  }
+
+  .rm-scale-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0.4rem;
+    border: 1.5px solid var(--ink);
+    border-top: 0;
+  }
+
+  .rm-scale-text {
+    position: absolute;
+    top: 0;
+    transform: translateX(-50%);
+    color: var(--ink);
+  }
+
+  .rm-scale-text:first-of-type {
+    left: 0;
+  }
+
+  .rm-scale-text:last-of-type {
+    left: 100%;
+  }
+
+  .rm-scale .unit {
+    margin-left: 0.2em;
+    text-transform: none;
+  }
+
+  /* key */
+  .rm-key {
+    margin-top: 1rem;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .rm-key ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+    list-style: none;
+  }
+
+  .rm-key li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .k-line {
+    width: 1.75rem;
+    height: 3px;
+    background: var(--ink);
+  }
+
+  .k-line.short {
+    background: var(--ridge-500);
+  }
+
+  .k-pin {
+    display: grid;
+    place-items: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 50%;
+    background: var(--red);
+    color: #fff;
+    font-stretch: 75%;
+    font-weight: 800;
+    font-size: 0.75rem;
+    font-style: normal;
+  }
+
+  .k-sf {
+    width: 0.9rem;
+    height: 0.9rem;
+    border-radius: 50%;
+    border: 3px solid var(--ink);
+    background: var(--paper);
+  }
+
+  .rm-src {
+    margin-top: 0.4rem;
+    color: var(--ink-3);
+    font-size: 0.875rem;
+  }
+
+  .rm-src a {
+    color: var(--ink-2);
+    text-decoration-color: var(--red);
+  }
+
+  @media (max-width: 48rem) {
+    .tier-2 {
+      display: none;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .tier-1 {
+      display: none;
+    }
+  }
+
+  @media (max-width: 48rem) {
+
+    .rm-spot,
+    .rm-finish {
+      --pin: 1.25rem;
+    }
+
+    .rm-pin {
+      font-size: 0.75rem;
+    }
+
+    .rm-name,
+    .rm-spot .rm-name,
+    .rm-finish .rm-name b {
+      font-size: 0.75rem;
+    }
+
+    .rm-finish .rm-name {
+      font-size: 0.6875rem;
+    }
+
+    .rm-dir {
+      width: 0.75rem;
+      height: 0.75rem;
+      margin: -0.375rem 0 0 -0.375rem;
+    }
+
+    .rm-north {
+      left: 0.6rem;
+      top: 0.5rem;
+    }
+
+    .rm-north svg {
+      width: 0.7rem;
+      height: 1.2rem;
+    }
+
+    .rm-scale {
+      left: 0.75rem;
+      bottom: 0.5rem;
+    }
+  }
+</style>

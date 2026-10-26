@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
 import Icon from '../components/Icon.astro';
 import splits from '../data/splits-2026.json';
+import routes from '../data/routes.json';
 
 type Link = { label: string; href: string };
 const editions: { n: number; date: string; links: Link[] }[] = [
@@ -56,7 +57,11 @@ const winners = [
 ---
 
 <Base title="Výsledky" description="Výsledky všech ročníků Krakonošova cyklomaratonu od roku 2014.">
-  <PageHead title="Výsledky" lede="Třináct ročníků od roku 2014. Hlavní závod online na SportSoftu, dětské závody v PDF." />
+  <PageHead
+    title="Výsledky"
+    lede="Třináct ročníků od roku 2014. Hlavní závod online na SportSoftu, dětské závody v PDF."
+    mark={{ name: 'Cíl Trutnov', km: routes.routes.long.km }}
+  />
 
   <section class="section" aria-label="Ročníky">
     <div class="wrap">
