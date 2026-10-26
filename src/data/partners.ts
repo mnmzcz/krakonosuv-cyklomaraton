@@ -20,7 +20,12 @@ export const main: Partner[] = [
   { name: 'Město Trutnov', href: 'https://www.trutnov.cz/', logo: logo('2024_06_truntov.png') },
 ];
 
-export const patronage = 'Závod se koná pod záštitou Ing. arch. Michala Rosy: starosty města Trutnova';
+/** The organisers' sentence, split so the name can be set in bold: "…záštitou <strong>Ing. arch. Michala Rosy</strong>: starosty…". */
+export const patronage = {
+  lead: 'Závod se koná pod záštitou',
+  name: 'Ing. arch. Michala\u00a0Rosy',
+  rest: ': starosty města Trutnova',
+};
 
 export const partners: Partner[] = [
   { name: 'Lakol', href: 'http://www.lakol.cz/', logo: logo('2023_10_logo-lakol-micro-text.png') },
@@ -89,10 +94,33 @@ export const towns = [
   { name: 'Strážné', href: 'https://www.strazne.eu/' },
 ];
 
-/** Coats of arms and town logos from the old homepage strip; the town names are listed as text beside them. */
-export const townMarks: ImageMetadata[] = Object.keys(obceFiles)
-  .sort()
-  .map((k) => obceFiles[k].default);
+const obce = (file: string) => {
+  const hit = obceFiles[`../assets/obce/${file}`];
+  if (!hit) throw new Error(`Missing town mark ${file}`);
+  return hit.default;
+};
+
+/**
+ * A town's coat of arms or logo. `ink` is the drawn area inside the file as [left, top, width, height]
+ * in source pixels (measured with sharp's trim on white), so the board can crop away the padding some
+ * files carry and size every mark by its visible area rather than by its canvas.
+ */
+export type TownMark = { logo: ImageMetadata; ink: [number, number, number, number] };
+
+/** Coats of arms and town logos from the old homepage strip, crests alternating with wordmarks; the town names are listed as text beside them. */
+export const townMarks: TownMark[] = [
+  { logo: obce('2023_10_janske-lazne-logo-vertikalni-cmyk-barevne.png'), ink: [0, 0, 370, 126] },
+  { logo: obce('2023_10_11-1.png'), ink: [101, 18, 132, 164] },
+  { logo: obce('2023_10_logo-marsov-660x176-cs.png'), ink: [0, 0, 1000, 267] },
+  { logo: obce('2023_10_23-1.png'), ink: [101, 18, 136, 164] },
+  { logo: obce('2023_10_logopec.png'), ink: [0, 0, 243, 109] },
+  { logo: obce('2023_10_logo-12.png'), ink: [18, 23, 68, 85] },
+  { logo: obce('2023_10_mulogo-1.png'), ink: [50, 48, 251, 251] },
+  { logo: obce('2023_10_44-1.png'), ink: [101, 19, 130, 162] },
+  { logo: obce('2023_10_logo-21.png'), ink: [0, 0, 274, 77] },
+  { logo: obce('2023_10_znak-1.png'), ink: [278, 77, 445, 523] },
+  { logo: obce('2023_10_logo_gmina_lubawka_mieszkanca.png'), ink: [13, 13, 215, 49] },
+];
 
 export const support = {
   region: { text: 'Realizováno za finanční podpory Královéhradeckého kraje', logo: logo('2023_10_standard-dvouradkove-color-cmyk.svg') },

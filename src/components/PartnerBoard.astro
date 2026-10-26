@@ -12,6 +12,27 @@ const { headingLevel: H = 'h2', showTitle = true } = Astro.props;
 const Tier = H === 'h2' ? 'h3' : 'h4';
 
 const ext = (p: Partner) => (p.href && p.href !== '#' ? { href: p.href, target: '_blank', rel: 'noopener' } : {});
+
+// Town marks share one optical size. Each mark is cropped to its ink box and sized by its aspect
+// ratio a: width a^(1-K), height a^-K, in units of --u. K = 0.5 would give every mark the same area;
+// 0.35 lets the long, light wordmarks grow a little against the solid crests so they read as equals.
+const K = 0.35;
+const MAX_U = 44; // px, the largest --u below
+const marks = townMarks.map(({ logo, ink: [l, t, w, h] }) => {
+  const mw = (w / h) ** (1 - K);
+  return {
+    logo,
+    // enough pixels for the cropped box at 2x
+    px: Math.min(logo.width, Math.ceil(2 * MAX_U * mw * (logo.width / w))),
+    style: [
+      `--mw:${mw.toFixed(3)}`,
+      `--ar:${w}/${h}`,
+      `--iw:${((logo.width / w) * 100).toFixed(2)}%`,
+      `--il:${((-l / w) * 100).toFixed(2)}%`,
+      `--it:${((-t / h) * 100).toFixed(2)}%`,
+    ].join(';'),
+  };
+});
 ---
 
 <div class="board">
@@ -45,7 +66,7 @@ const ext = (p: Partner) => (p.href && p.href !== '#' ? { href: p.href, target: 
         ))
       }
     </ul>
-    <p class="patronage">{patronage}</p>
+    <p class="patronage">{patronage.lead} <strong>{patronage.name}</strong>{patronage.rest}</p>
   </section>
 
   <section class="tier" aria-labelledby="pt-partners">
@@ -103,7 +124,15 @@ const ext = (p: Partner) => (p.href && p.href !== '#' ? { href: p.href, target: 
       </ul>
     </div>
     <ul class="marks" aria-hidden="true">
-      {townMarks.map((m) => <li><Image src={m} alt="" height={64} /></li>)}
+      {
+        marks.map((m) => (
+          <li>
+            <span class="mark" style={m.style}>
+              <Image src={m.logo} alt="" width={m.px} />
+            </span>
+          </li>
+        ))
+      }
     </ul>
   </section>
 
@@ -213,6 +242,11 @@ const ext = (p: Partner) => (p.href && p.href !== '#' ? { href: p.href, target: 
     color: var(--ink-2);
   }
 
+  .patronage strong {
+    color: var(--ink);
+    font-weight: 700;
+  }
+
   .towns-grid {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
@@ -237,18 +271,67 @@ const ext = (p: Partner) => (p.href && p.href !== '#' ? { href: p.href, target: 
     text-decoration-color: var(--line-strong);
   }
 
+  /* town marks: equal cells, one optical size (see the frontmatter); rows of 11, 6 + 5, 4 + 4 + 3 or 3 */
   .marks {
+    --u: 2.5rem;
+    --gap-x: 1rem;
+    --per-row: 6;
     list-style: none;
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    gap: 1rem 2rem;
-    margin-top: 1rem;
+    justify-content: center;
+    gap: 1.5rem var(--gap-x);
+    margin-top: 0.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--line);
   }
 
-  .marks :global(img) {
-    height: 3rem;
-    width: auto;
+  .marks > li {
+    /* a hair under the exact share, so rounding never pushes the last mark to a new row */
+    flex: 0 0 calc((100% - (var(--per-row) - 1) * var(--gap-x)) / var(--per-row) - 0.1px);
+    min-width: 0;
+    display: grid;
+    place-items: center;
+    height: calc(var(--u) * 1.25);
+  }
+
+  .mark {
+    position: relative;
+    overflow: hidden;
+    width: min(100%, calc(var(--u) * var(--mw)));
+    aspect-ratio: var(--ar);
+  }
+
+  .mark :global(img) {
+    position: absolute;
+    left: var(--il);
+    top: var(--it);
+    width: var(--iw);
+    max-width: none;
+    height: auto;
+    /* white file backgrounds disappear into the snow ground */
+    mix-blend-mode: multiply;
+  }
+
+  @media (min-width: 80rem) {
+    .marks {
+      --u: 2.75rem;
+      --per-row: 11;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .marks {
+      --per-row: 4;
+      --gap-x: 0.75rem;
+      row-gap: 1.25rem;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .marks {
+      --per-row: 3;
+    }
   }
 
   .support {
@@ -272,24 +355,58 @@ const ext = (p: Partner) => (p.href && p.href !== '#' ? { href: p.href, target: 
     width: auto;
   }
 
+  /* phones: three across and short cells, so the wall stays a wall and not a 2 000 px column */
   @media (max-width: 48rem) {
-    .top,
     .support,
     .towns-grid {
       grid-template-columns: 1fr;
     }
 
-    .row-3,
-    .row-4 {
-      grid-template-columns: repeat(2, 1fr);
+    .top {
+      gap: 0.75rem;
     }
 
-    .row-wall {
-      grid-template-columns: repeat(2, 1fr);
+    .tier > :global(.t-label) {
+      padding-bottom: 0.5rem;
+    }
+
+    .cell {
+      min-height: 4.5rem;
+      padding: 0.6rem 0.5rem;
+    }
+
+    .cell :global(img) {
+      max-height: 2.25rem;
+    }
+
+    .cell-l {
+      min-height: 5.25rem;
+    }
+
+    .cell-l :global(img) {
+      max-height: 2.75rem;
     }
 
     .cell-xl {
-      min-height: 8rem;
+      min-height: 6.5rem;
+      padding: 0.9rem 0.75rem;
+    }
+
+    .cell-xl :global(img) {
+      max-height: 3.75rem;
+      max-width: 90%;
+    }
+
+    .row-wall {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .row-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .union {
+      min-height: 5.5rem;
     }
   }
 </style>

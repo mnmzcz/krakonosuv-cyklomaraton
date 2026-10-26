@@ -23,11 +23,13 @@ export const race = {
 
 export type PriceTier = { until: string | null; label: string; short?: number; long?: number; cash?: number };
 
+// Labels carry a no-break space (\u00a0) between day and month: the hero rewrites the price line in
+// the browser, after the build-time Czech typography pass has run.
 export const priceTiers: PriceTier[] = [
-  { until: '2026-12-31', label: 'Do 31. prosince 2026', short: 1290, long: 1490 },
-  { until: '2027-05-12', label: 'Do 12. května 2027', short: 1590, long: 1790 },
-  { until: '2027-06-09', label: 'Do 9. června 2027', short: 1890, long: 2090 },
-  { until: null, label: 'Na místě v hotovosti', cash: 2600 },
+  { until: '2026-12-31', label: 'Do 31.\u00a0prosince 2026', short: 1290, long: 1490 },
+  { until: '2027-05-12', label: 'Do 12.\u00a0května 2027', short: 1590, long: 1790 },
+  { until: '2027-06-09', label: 'Do 9.\u00a0června 2027', short: 1890, long: 2090 },
+  { until: null, label: 'Na místě v\u00a0hotovosti', cash: 2600 },
 ];
 
 export const priceNote = '* Nižší cena je za krátkou trať, vyšší cena je za dlouhou trať';

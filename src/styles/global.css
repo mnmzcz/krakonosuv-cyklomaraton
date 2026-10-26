@@ -34,6 +34,13 @@
 
   --font: 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, system-ui, sans-serif;
 
+  /* Leading for multi-line uppercase titles. Archivo's caps stand 0.69em tall, but Czech accents
+     reach 0.89em (Á É Í Ý Č Ř Š Ž Ě) and the ring of Ů 0.94em, so below ~1.0 they collide with the
+     line above. These keep the block compressed and still clear the tallest mark. */
+  --lh-display: 1.02;
+  --lh-title: 1.04;
+  --lh-caps: 1.08;
+
   --gutter: clamp(1rem, 4vw, 3rem);
   --max: 84rem;
   --header-h: 4.5rem;
@@ -145,6 +152,23 @@ textarea {
   color: inherit;
 }
 
+/* Disclosure: the native marker in every browser (display: list-item makes Firefox and Safari agree),
+   tinted as an action. Nothing here styles ::-webkit-details-marker or ::before, so a component that
+   draws its own marker only needs list-style: none on its summary plus
+   summary::-webkit-details-marker { display: none } for older Safari. */
+summary {
+  display: list-item;
+  cursor: pointer;
+}
+
+summary::marker {
+  color: var(--red);
+}
+
+summary:focus-visible {
+  outline-offset: 2px;
+}
+
 .visually-hidden {
   position: absolute !important;
   width: 1px;
@@ -200,7 +224,7 @@ textarea {
   font-stretch: 62%;
   font-weight: 820;
   text-transform: uppercase;
-  line-height: 0.9;
+  line-height: var(--lh-display);
   letter-spacing: -0.005em;
 }
 
@@ -209,7 +233,7 @@ textarea {
   font-weight: 800;
   text-transform: uppercase;
   font-size: clamp(2.5rem, 6.2vw, 5.25rem);
-  line-height: 0.98;
+  line-height: var(--lh-title);
   letter-spacing: -0.005em;
 }
 
@@ -218,7 +242,7 @@ textarea {
   font-weight: 760;
   text-transform: uppercase;
   font-size: clamp(1.375rem, 2.4vw, 1.875rem);
-  line-height: 1;
+  line-height: var(--lh-caps);
 }
 
 .t-label {
@@ -270,7 +294,7 @@ textarea {
   font-weight: 800;
   text-transform: uppercase;
   font-size: clamp(1.625rem, 3vw, 2.25rem);
-  line-height: 1;
+  line-height: var(--lh-caps);
 }
 
 .prose h3 {
