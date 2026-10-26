@@ -52,7 +52,7 @@ const m = mark
 ---
 
 <header
-  class:list={['page-head', { 'has-image': image, 'has-mark': m, 'mark-edge': m?.edge }]}
+  class:list={['page-head', { 'has-image': image, 'has-mark': m, 'mark-edge': m?.edge, 'mark-clear': m && !m.edge && m.x >= 50 }]}
   style={m ? `--mx:${m.x.toFixed(2)}%;--mt:${(0.35 + (m.x / 100) * 0.8).toFixed(2)}s;--lift:${m.lift.toFixed(3)};--mark-len:${m.len.toFixed(2)};--mark-len-s:${m.nameLen.toFixed(2)}` : undefined}
 >
   {
@@ -133,9 +133,21 @@ const m = mark
     padding-bottom: max(clamp(6rem, 12vw, 10rem), var(--mark-room));
   }
 
+  /* a photographed head is tall already: give the mark's room from the top padding */
+  .has-image.has-mark .ph-inner {
+    padding-top: clamp(5rem, 10vw, 8rem);
+  }
+
   /* at the ends of the road the label stands in the page gutter, clear of the content */
   @media (min-width: 75rem) {
     .mark-edge .ph-inner {
+      padding-bottom: clamp(6rem, 12vw, 10rem);
+    }
+  }
+
+  /* a mark in the right half clears the title and lede once the page is wide enough */
+  @media (min-width: 90rem) {
+    .mark-clear .ph-inner {
       padding-bottom: clamp(6rem, 12vw, 10rem);
     }
   }

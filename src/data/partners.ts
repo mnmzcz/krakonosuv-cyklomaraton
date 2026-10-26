@@ -111,9 +111,9 @@ export type TownMark = { logo: ImageMetadata; ink: [number, number, number, numb
 export const townMarks: TownMark[] = [
   { logo: obce('2023_10_janske-lazne-logo-vertikalni-cmyk-barevne.png'), ink: [0, 0, 370, 126] },
   { logo: obce('2023_10_11-1.png'), ink: [101, 18, 132, 164] },
-  { logo: obce('2023_10_logo-marsov-660x176-cs.png'), ink: [0, 0, 1000, 267] },
+  { logo: obce('2023_10_logo-marsov-660x176-cs.png'), ink: [23, 25, 977, 217] },
   { logo: obce('2023_10_23-1.png'), ink: [101, 18, 136, 164] },
-  { logo: obce('2023_10_logopec.png'), ink: [0, 0, 243, 109] },
+  { logo: obce('2023_10_logopec.png'), ink: [8, 8, 227, 93] },
   { logo: obce('2023_10_logo-12.png'), ink: [18, 23, 68, 85] },
   { logo: obce('2023_10_mulogo-1.png'), ink: [50, 48, 251, 251] },
   { logo: obce('2023_10_44-1.png'), ink: [101, 19, 130, 162] },

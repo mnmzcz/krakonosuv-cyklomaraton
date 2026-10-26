@@ -152,12 +152,9 @@ textarea {
   color: inherit;
 }
 
-/* Disclosure: the native marker in every browser (display: list-item makes Firefox and Safari agree),
-   tinted as an action. Nothing here styles ::-webkit-details-marker or ::before, so a component that
-   draws its own marker only needs list-style: none on its summary plus
-   summary::-webkit-details-marker { display: none } for older Safari. */
+/* Disclosure: the browser's own marker, tinted as an action. A component that draws its own marker
+   sets list-style: none on its summary plus summary::-webkit-details-marker { display: none }. */
 summary {
-  display: list-item;
   cursor: pointer;
 }
 

@@ -67,7 +67,8 @@ const arrow = (pts: Pt[], target: number) => {
   return { ...pct(at(pts, km)), deg: deg.toFixed(0) };
 };
 const arrows = [
-  ...[5, 27, 44, 58, 85, 96.5, 107, 121, 129.5].map((k) => ({ ...arrow(long.points, k), route: 'long' })),
+  // kept clear of the Trutnov pins and the Janské Lázně label
+  ...[27, 44, 58, 85, 96.5, 121].map((k) => ({ ...arrow(long.points, k), route: 'long' })),
   ...(shortOwn.length ? [{ ...arrow(short.points, 67), route: 'short' }] : []),
 ];
 
@@ -410,7 +411,7 @@ const aria =
     border-radius: 50%;
     background: var(--red);
     color: #fff;
-    box-shadow: 0 0 0 2px var(--paper);
+    border: 2px solid var(--paper);
     font-stretch: 75%;
     font-weight: 800;
     font-size: 0.875rem;
@@ -580,12 +581,6 @@ const aria =
     text-decoration-color: var(--red);
   }
 
-  @media (max-width: 48rem) {
-    .tier-2 {
-      display: none;
-    }
-  }
-
   @media (max-width: 30rem) {
     .tier-1 {
       display: none;
@@ -593,6 +588,9 @@ const aria =
   }
 
   @media (max-width: 48rem) {
+    .tier-2 {
+      display: none;
+    }
 
     .rm-spot,
     .rm-finish {

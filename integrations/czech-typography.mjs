@@ -172,6 +172,9 @@ function bindRun(nodes) {
     const k = starts.findLastIndex((s) => s <= a);
     const node = nodes[k];
     if (!node.value.trim() || hit[0] === NBSP) continue;
+    // whitespace touching a tag stays breakable: inside a flex or grid parent a no-break space
+    // there would show up as an extra gap ("Žáci I <span>PDF</span>")
+    if (a === starts[k] || b - starts[k] === node.value.length) continue;
     const before = joined.slice(Math.max(0, a - 40), a).replace(/\u0001+$/u, '');
     const after = joined.slice(b, b + 40).replace(/^\u0001+/u, '');
     if (!RULES.some((r) => r.before.test(before) && r.after.test(after))) continue;

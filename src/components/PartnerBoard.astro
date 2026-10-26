@@ -213,6 +213,12 @@ const marks = townMarks.map(({ logo, ink: [l, t, w, h] }) => {
     background: var(--ridge-100);
   }
 
+  /* lift the focused cell so its neighbours do not paint over the ring */
+  a.cell:focus-visible {
+    position: relative;
+    z-index: 1;
+  }
+
   .cell :global(img) {
     width: auto;
     max-width: 100%;
