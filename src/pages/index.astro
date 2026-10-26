@@ -94,9 +94,13 @@ const stops = [
 
 <style>
   /* the road book opens with its heading right under the hero ridge; its profile keeps the same km scale */
+  /* The road book opens on a fresh sheet: paper under a 3px ink rule, so the hero's ridge (which
+     shows the same road) ends with the hero instead of running on into the section. */
   .route {
-    padding-top: clamp(2.5rem, 5vw, 4rem);
+    padding-top: clamp(3.5rem, 7vw, 6rem);
     padding-bottom: var(--space-section);
+    background: var(--paper);
+    border-top: 3px solid var(--ink);
   }
 
   .fans {

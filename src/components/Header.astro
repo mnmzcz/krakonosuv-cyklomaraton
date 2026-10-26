@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import MapyMark from './MapyMark.astro';
 import { nav, race, social } from '../data/race';
 
 const path = Astro.url.pathname;
@@ -40,7 +41,7 @@ const inSection = (href?: string) => isCurrent(href) || (href === '/aktuality/' 
                         rel={c.external ? 'noopener' : undefined}
                       >
                         {c.label}
-                        {c.external && <Icon name="external" class="ext" label="(otevře Mapy.com)" />}
+                        {c.mapy ? <MapyMark /> : c.external && <Icon name="external" class="ext" label="(otevře se v novém okně)" />}
                       </a>
                     </li>
                   ))}
@@ -83,7 +84,7 @@ const inSection = (href?: string) => isCurrent(href) || (href === '/aktuality/' 
                     <li>
                       <a href={c.href} target={c.external ? '_blank' : undefined} rel={c.external ? 'noopener' : undefined}>
                         {c.label}
-                        {c.external && <Icon name="external" class="ext" label="(otevře Mapy.com)" />}
+                        {c.mapy ? <MapyMark /> : c.external && <Icon name="external" class="ext" label="(otevře se v novém okně)" />}
                       </a>
                     </li>
                   ))}

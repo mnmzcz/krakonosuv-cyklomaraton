@@ -203,7 +203,7 @@ A cold, cartographic palette: one hue family of ridge blues from night to mist o
 
 ### Neutral
 - **Snow Ground** (`snow`): the page background and the fill of every ridge silhouette, so the profile becomes the ground the next band stands on. Also the halo behind labels drawn over the profile.
-- **Paper White** (`paper`): raised material laid on the snow. The header, the docked ride rail, the map plate, partner cells, form panels and fields, place-marker dots, and paper bands (testimonials, partner board).
+- **Paper White** (`paper`): raised material laid on the snow. The header, the docked ride rail, the map plate, partner cells, form panels and fields, place-marker dots, and paper bands (the homepage route section, testimonials, partner board). The route section opens under a 3px ink rule straight after the hero, so the hero's ridge ends with the hero and the road book starts on a fresh sheet.
 - **Road Ink** (`ink`): headings, the profile line, stems, axis and ticks, ruled tops of data blocks, the active route tab, the scrub readout and stop tooltips (16:1 on snow).
 - **Slate Ink** (`ink-2`): reading text in prose and ledes, legends, bracket outlines (9:1 on snow).
 - **Fog Ink** (`ink-3`): data-term labels (Start, Délka, Nejvýš), units, qualifiers ("trasa 2026"), altitudes in place labels, sources and notes (5.2:1 on snow, 4.5:1 on Mist; the lightest text allowed).

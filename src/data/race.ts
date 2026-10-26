@@ -80,23 +80,24 @@ export const social = [
   { name: 'YouTube', href: 'https://www.youtube.com/@krakonosuvcyklomaraton9209', icon: 'youtube' },
 ] as const;
 
-export type NavItem = { label: string; href?: string; external?: boolean; children?: NavItem[] };
+/** external opens in a new tab; mapy marks a route on Mapy.com, shown with its logo */
+export type NavItem = { label: string; href?: string; external?: boolean; mapy?: boolean; children?: NavItem[] };
 
 export const nav: NavItem[] = [
+  { label: 'Aktuality', href: '/aktuality/' },
   {
     label: 'Závodníci',
     children: [
       { label: 'Registrace', href: '/registrace/' },
       { label: 'Propozice', href: '/propozice/' },
       { label: 'Ubytování', href: '/ubytovani/' },
-      { label: 'Krátká trasa 2026', href: 'https://mapy.com/s/lufujuloce', external: true },
-      { label: 'Dlouhá trasa 2026', href: 'https://mapy.com/s/jurotegada', external: true },
+      { label: 'Krátká trasa 2026', href: 'https://mapy.com/s/lufujuloce', external: true, mapy: true },
+      { label: 'Dlouhá trasa 2026', href: 'https://mapy.com/s/jurotegada', external: true, mapy: true },
     ],
   },
   { label: 'Fanoušci', href: '/fanousci/' },
   { label: 'Výsledky', href: '/vysledky/' },
   { label: 'Fotogalerie', href: '/fotogalerie/' },
-  { label: 'Aktuality', href: '/aktuality/' },
   { label: 'Partneři', href: '/partneri/' },
   {
     label: 'E-shop',
