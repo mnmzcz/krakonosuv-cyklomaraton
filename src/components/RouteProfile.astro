@@ -347,7 +347,7 @@ const order = chartFirst ? ['intro', 'chart', 'stage', 'legend', 'climbs', 'tabl
               {showClimbs && (
                 <li>
                   <i class="sw-bracket" />
-                  stoupání, průměrný sklon
+                  stoupání<span class="lg-avg">, průměrný sklon</span>
                 </li>
               )}
               <li>
@@ -1291,6 +1291,11 @@ const order = chartFirst ? ['intro', 'chart', 'stage', 'legend', 'climbs', 'tabl
     }
 
     .rb-bracket .num {
+      display: none;
+    }
+
+    /* phones show the bracket without its figure; the climbs table carries the average */
+    .lg-avg {
       display: none;
     }
 
