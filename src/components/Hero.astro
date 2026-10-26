@@ -147,8 +147,11 @@ const tiersJson = JSON.stringify(priceTiers);
     position: absolute;
     top: 50%;
     left: 50%;
+    /* cover the hero like a background: a 16:9 frame at least as wide and as tall as the hero.
+       max-width: none lifts the global iframe cap, which kept the frame to the phone's width */
     width: max(100cqw, 177.78cqh);
     height: max(100cqh, 56.25cqw);
+    max-width: none;
     transform: translate(-50%, -50%) scale(1.18);
     border: 0;
     pointer-events: none;
