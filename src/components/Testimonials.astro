@@ -138,12 +138,14 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
     padding-block: 1.35rem 1.6rem;
   }
 
+  /* A 20px floor against the 17px of the other quotes, so the lead keeps its weight on phones
+     and in the narrow register at 72rem, where 1.6vw alone would bring it down to 18px. */
   .lead blockquote p {
     max-width: 38em;
     color: var(--ink);
     font-weight: 450;
-    font-size: clamp(1.125rem, 1.6vw, 1.3125rem);
-    line-height: 1.5;
+    font-size: clamp(1.25rem, 1.6vw, 1.3125rem);
+    line-height: 1.48;
   }
 
   /* With room for it, the names stand in their own column and every quote starts on one line. */
@@ -171,7 +173,7 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
     grid-area: finishers;
     display: grid;
     gap: 1rem;
-    align-self: end;
+    align-self: start;
     padding-top: 0.95rem;
     border-top: 1.5px solid var(--ink);
   }
@@ -210,9 +212,11 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
     }
   }
 
-  /* Wide screens: copy in 5fr, the register in 7fr. The heading opens the left column and the
-     finishers close it, level with the end of the register. Below 72rem the 7fr column would be
-     too narrow to keep the names in their own column, so the section stays stacked. */
+  /* Wide screens: copy in 5fr, the register in 7fr. The finishers follow the heading at a fixed
+     step, as the evidence for its lede, and whatever height the register has left over stays
+     open at the foot of the left column instead of as a hole between the two. Below 72rem the
+     7fr column would be too narrow to keep the names in their own column, so the section stays
+     stacked. */
   @media (min-width: 72rem) {
     .ohlasy {
       grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -221,7 +225,7 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
         'head register'
         'finishers register';
       column-gap: clamp(2.5rem, 6vw, 6rem);
-      row-gap: 2.5rem;
+      row-gap: 3rem;
     }
   }
 </style>
