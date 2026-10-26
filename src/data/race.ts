@@ -84,7 +84,7 @@ export type NavItem = { label: string; href?: string; external?: boolean; childr
 
 export const nav: NavItem[] = [
   {
-    label: 'Info pro závodníky',
+    label: 'Závodníci',
     children: [
       { label: 'Registrace', href: '/registrace/' },
       { label: 'Propozice', href: '/propozice/' },
@@ -94,14 +94,9 @@ export const nav: NavItem[] = [
     ],
   },
   { label: 'Fanoušci', href: '/fanousci/' },
-  {
-    label: 'Archiv',
-    children: [
-      { label: 'Fotogalerie', href: '/fotogalerie/' },
-      { label: 'Výsledky', href: '/vysledky/' },
-      { label: 'Aktuality', href: '/aktuality/' },
-    ],
-  },
+  { label: 'Výsledky', href: '/vysledky/' },
+  { label: 'Fotogalerie', href: '/fotogalerie/' },
+  { label: 'Aktuality', href: '/aktuality/' },
   { label: 'Partneři', href: '/partneri/' },
   {
     label: 'E-shop',

@@ -3,12 +3,14 @@ title: 'SportHelp na Krakonošově cyklomaratonu: Soustřeď se na výkon, my se
 date: 2026-03-05
 slug: sporthelp-na-krakonosove-cyklomaratonu-soustred-se-na-vykon-my-se-postarame-o-zbytek
 category: Novinky
-image: ../../assets/news/safe-1.png
-imageAlt: 'Plakát SportHelp: Soustřeď se na svůj výkon'
+image: ../../assets/photos/dvojice-les.jpg
+imageAlt: 'Dva závodníci soustředěně stoupají, za nimi zalesněné hřebeny Krkonoš'
 excerpt: 'Letos poprvé se můžeš na start Krakonošova cyklomaratonu postavit s naprostým klidem.'
 ---
 
 Letos poprvé se můžeš na start Krakonošova cyklomaratonu postavit s naprostým klidem. Díky nové spolupráci s SportHelp získáš možnost sjednat si špičkové sportovní pojištění, které tě ochrání při jakémkoli úrazu – ať už se stane během závodu nebo jinde. Ty se soustředíš na výkon, SportHelp se postará o zbytek.
+
+![Plakát SportHelp: Soustřeď se na svůj výkon](../../assets/news/safe-1.png)
 
 ### Závod bez starostí
 

@@ -1,5 +1,7 @@
 ---
+import { Image } from 'astro:assets';
 import { testimonials } from '../data/race';
+import photo from '../assets/photos/peloton-les.jpg';
 import splits from '../data/splits-2026.json';
 
 const finishers = splits.stats.long.finishers + splits.stats.short.finishers;
@@ -15,6 +17,11 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
       V roce 2026 dojelo do cíle <strong>{finishers} závodníků</strong>: {splits.stats.long.finishers} na dlouhé a {splits.stats.short.finishers} na krátké trati.
     </p>
   </div>
+
+  {/* the riders the voices speak for: a group on the road, no single face to mistake for an author */}
+  <figure class="photo">
+    <Image src={photo} alt="Skupina závodníků jede v tahu po rovné silnici lemované stromy" widths={[640, 960, 1280]} sizes="(max-width: 72rem) 100vw, 40vw" />
+  </figure>
 
   {/* A ruled register, read top to bottom: the rider's name heads each row, like a place in the timetable. */}
   <ul class="register" role="list">
@@ -37,7 +44,7 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
 </div>
 
 <style>
-  /* Phones and tablets: the heading with its lede and the finishers, then the register. */
+  /* Phones and tablets: the heading with its lede and the finishers, the photo, then the register. */
   .ohlasy {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -48,6 +55,13 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
     display: grid;
     gap: 1.25rem;
     align-content: start;
+  }
+
+  .photo :global(img) {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    object-position: 40% 35%;
   }
 
   /* ---------- the register ---------- */
@@ -157,8 +171,29 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
   @media (min-width: 72rem) {
     .ohlasy {
       grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-rows: auto 1fr;
       align-items: start;
       column-gap: clamp(2.5rem, 6vw, 6rem);
+      row-gap: 2.5rem;
+    }
+
+    .register {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+
+    /* the photo takes whatever height the register leaves beside the heading, so both columns end together */
+    .photo {
+      position: relative;
+      align-self: stretch;
+      min-height: 13rem;
+    }
+
+    .photo :global(img) {
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      aspect-ratio: auto;
     }
   }
 </style>
