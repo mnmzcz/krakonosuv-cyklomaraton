@@ -25,7 +25,8 @@ const peaks = ['Pomezní Boudy', 'Pražská bouda'].map((name) => {
   return { ...w, x: (near[0] / L) * 100, y: Y(near[1]) / 100 };
 });
 
-const ticks = [20, 40, 60, 80, 100, 120].map((k) => ({ k, x: (k / L) * 100 }));
+// 120 would crowd the finish label, which carries the measured length and its qualifier
+const ticks = [20, 40, 60, 80, 100].map((k) => ({ k, x: (k / L) * 100 }));
 const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
 const routes = data.routes;
 
@@ -96,12 +97,14 @@ const tiersJson = JSON.stringify(priceTiers);
       <span class="ax-start">Start Trutnov</span>
       {
         ticks.map((t) => (
-          <span class="num ax-tick" style={`left:${t.x}%`}>
+          <span class:list={['num ax-tick', { 'ax-tick--late': t.k === 100 }]} style={`left:${t.x}%`}>
             {t.k}
           </span>
         ))
       }
-      <span class="num ax-end">Cíl {fmtKm(r.km)} km</span>
+      <span class="num ax-end">
+        Cíl {fmtKm(r.km)} km <span class="ax-q">(trasa 2026)</span>
+      </span>
     </div>
   </div>
 </section>
@@ -234,6 +237,12 @@ const tiersJson = JSON.stringify(priceTiers);
     align-items: center;
     gap: 0.5rem 1.25rem;
     font-size: 0.9375rem;
+    transition: transform 0.45s var(--ease-out);
+  }
+
+  /* keyboard focus can bring the page's rail out over the top of the hero; the controls step under it */
+  :global(html.js:has([data-rail]:focus-within:not([data-docked]))) .video-ctrl {
+    transform: translateY(var(--rail-h, 3rem));
   }
 
   .vbtn {
@@ -376,7 +385,7 @@ const tiersJson = JSON.stringify(priceTiers);
     color: var(--ink-3);
   }
 
-  .ridge-axis span {
+  .ridge-axis > span {
     position: absolute;
     white-space: nowrap;
   }
@@ -393,6 +402,17 @@ const tiersJson = JSON.stringify(priceTiers);
     right: 0;
   }
 
+  .ax-q {
+    font-weight: 500;
+  }
+
+  /* on narrow tablets the last tick would run into the finish label */
+  @media (max-width: 56rem) {
+    .ax-tick--late {
+      display: none;
+    }
+  }
+
   /* entrance: the ridge is ridden left to right once */
   :global(.js) .ridge-ground {
     animation: ride 1.8s var(--ease-out) 0.2s both;
@@ -401,6 +421,14 @@ const tiersJson = JSON.stringify(priceTiers);
   :global(.js) .peak {
     animation: land 0.6s var(--ease-out) both;
     animation-delay: var(--t, 0.4s);
+  }
+
+  /* reduced motion: the ridge and its summits are simply there, without waiting for the ride */
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .ridge-ground,
+    :global(.js) .peak {
+      animation: none;
+    }
   }
 
   @keyframes ride {

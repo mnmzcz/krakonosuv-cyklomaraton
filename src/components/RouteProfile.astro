@@ -25,7 +25,8 @@ interface Props {
   table?: boolean;
   /** climb brackets on the chart and the climb list; follows `stats` unless set */
   climbs?: boolean;
-  /** chart-first: the profile leads, stage header, heading (default slot) and climbs follow it */
+  /** chart-first: the profile leads, stage header, heading (default slot) and climbs follow it.
+      The heading stays first in reading order; only the visual order changes. */
   layout?: 'default' | 'chart-first';
 }
 
@@ -110,11 +111,32 @@ const charts = routes.map((rid) => {
   for (let k = 0; k <= L; k += 5) ticks.push({ k, x: (k / L) * 100, major: k % 10 === 0 });
 
   const topPoint = r.waypoints.reduce((a, b) => (b.alt > a.alt ? b : a));
-  const climbs = (r.climbs ?? []).map((c) => ({
-    ...c,
-    x0: (c.from_km / L) * 100,
-    x1: Math.min(100, (c.to_km / L) * 100),
-  }));
+  // each climb's % label stands over its bracket where it is farthest from any place's stem,
+  // so no leader line runs through it (kept to the middle 60 % of the bracket)
+  const stems = marks.map((m) => m.at).sort((a, b) => a - b);
+  const climbs = (r.climbs ?? []).map((c) => {
+    const len = c.to_km - c.from_km;
+    const lo = c.from_km + len * 0.2;
+    const hi = c.to_km - len * 0.2;
+    const bounds = [-Infinity, ...stems, Infinity];
+    let best = { at: (c.from_km + c.to_km) / 2, room: -Infinity };
+    for (let i = 0; i < bounds.length - 1; i++) {
+      const [a, b] = [bounds[i], bounds[i + 1]];
+      if (b < lo || a > hi) continue;
+      const mid = Number.isFinite(a) && Number.isFinite(b) ? (a + b) / 2 : Number.isFinite(a) ? hi : lo;
+      const at = Math.max(lo, Math.min(hi, mid));
+      const room = Math.min(at - a, b - at);
+      if (room > best.room) best = { at, room };
+    }
+    return {
+      ...c,
+      x0: (c.from_km / L) * 100,
+      x1: Math.min(100, (c.to_km / L) * 100),
+      lx: ((best.at - c.from_km) / len) * 100,
+      // under ~3,5 km of free road the label only clears the stems on wide screens
+      tight: best.room < 3.5,
+    };
+  });
 
   return {
     rid,
@@ -136,11 +158,12 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
 const multi = charts.length > 1;
 const showStage = stats || multi;
 
-// chart-first leads with the profile; the default reads like a stage page: title, header, profile
-const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['intro', 'stage', 'chart', 'legend', 'climbs', 'table'];
+// the default reads like a stage page: title, header, profile. chart-first puts the profile on top
+// (a grid places the blocks), while the heading still comes first for screen readers.
+const order = chartFirst ? ['intro', 'chart', 'stage', 'legend', 'climbs', 'table'] : ['intro', 'stage', 'chart', 'legend', 'climbs', 'table'];
 ---
 
-<div class:list={['rb', `rb--${layout}`]} data-rb id={id}>
+<div class:list={['rb', `rb--${layout}`, { 'rb--intro': hasIntro, 'rb--climbs': showClimbs }]} data-rb id={id}>
   {
     order.map((block) => (
       <>
@@ -248,7 +271,7 @@ const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['int
                 {showClimbs && c.climbs.length > 0 && (
                   <div class="rb-brackets" aria-hidden="true">
                     {c.climbs.map((cl) => (
-                      <span class="rb-bracket" style={`left:${cl.x0}%;width:${cl.x1 - cl.x0}%;--t:${((cl.x0 / 100) * 1.1).toFixed(2)}s`}>
+                      <span class:list={['rb-bracket', { 'is-tight': cl.tight }]} style={`left:${cl.x0}%;width:${cl.x1 - cl.x0}%;--lx:${cl.lx.toFixed(1)}%;--t:${((cl.x0 / 100) * 1.1).toFixed(2)}s`}>
                         <span class="num">{fmtPct(cl.avg)} %</span>
                       </span>
                     ))}
@@ -344,13 +367,8 @@ const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['int
           </div>
         )}
 
-        {((block === 'lead' && (hasIntro || showClimbs)) || (block === 'climbs' && showClimbs)) && (
-          <div class:list={['rb-lead', { 'has-copy': block === 'lead' && hasIntro }]}>
-            {block === 'lead' && hasIntro && (
-              <div class="rb-lead-copy">
-                <slot />
-              </div>
-            )}
+        {block === 'climbs' && showClimbs && (
+          <div class="rb-lead">
             {showClimbs &&
               charts.map(
                 (c) =>
@@ -362,7 +380,7 @@ const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['int
                       <table aria-labelledby={`${id}-${c.rid}-climbs`}>
                         <thead>
                           <tr>
-                            <th scope="col">Stoupání</th>
+                            <th scope="col">Úsek</th>
                             <th scope="col" class="n">
                               Délka
                             </th>
@@ -438,7 +456,8 @@ const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['int
 
 <style>
   .rb {
-    --label-band: clamp(6.5rem, 12vw, 10rem);
+    /* tall enough for the longest name with its height (Svoboda nad Úpou 534) at every width */
+    --label-band: clamp(9.25rem, 12vw, 10rem);
     --plot-h: clamp(10rem, 22vw, 17rem);
     --axis-h: 2.25rem;
     position: relative;
@@ -453,6 +472,56 @@ const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['int
     display: grid;
     gap: 1.25rem;
     margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+
+  /* chart-first: the heading and lede come first in the source, the grid shows the profile first
+     and sets them beside the climbs. Nothing in the copy is focusable, so focus order follows the eye. */
+  .rb--chart-first {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    column-gap: clamp(2.5rem, 6vw, 6rem);
+    grid-template-areas:
+      'chart chart'
+      'stage stage'
+      'note note'
+      'foot foot'
+      'copy climbs'
+      'table table';
+    align-items: start;
+  }
+
+  .rb--chart-first > .rb-route {
+    grid-area: chart;
+  }
+
+  .rb--chart-first > .rb-stage {
+    grid-area: stage;
+  }
+
+  .rb--chart-first > .rb-note {
+    grid-area: note;
+  }
+
+  .rb--chart-first > .rb-foot {
+    grid-area: foot;
+  }
+
+  .rb--chart-first > .rb-intro {
+    grid-area: copy;
+    margin: clamp(2.5rem, 5vw, 4rem) 0 0;
+  }
+
+  .rb--chart-first > .rb-lead {
+    grid-area: climbs;
+  }
+
+  .rb--chart-first > .rb-table {
+    grid-area: table;
+  }
+
+  .rb--chart-first:not(.rb--climbs) > .rb-intro,
+  .rb--chart-first:not(.rb--intro) > .rb-lead {
+    grid-column: 1 / -1;
   }
 
   /* ---------- stage header: one ruled line, like the head of a stage profile ---------- */
@@ -684,13 +753,16 @@ const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['int
     border-bottom: 0;
   }
 
+  /* the label stands where no stem passes (--lx, set from the data); a snow halo keeps it legible */
   .rb-bracket .num {
     position: absolute;
-    left: 50%;
+    left: var(--lx, 50%);
     bottom: calc(100% + 0.1rem);
     transform: translateX(-50%);
-    padding: 0 0.3rem;
-    background: var(--snow);
+    text-shadow:
+      0 0 2px var(--snow),
+      0 0 2px var(--snow),
+      0 0 3px var(--snow);
     font-size: 0.75rem;
     font-weight: 650;
     line-height: 1.1;
@@ -979,22 +1051,10 @@ const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['int
     transform: translateY(0.1rem);
   }
 
-  /* lead: heading and lede beside the climbs (chart-first), or the climbs alone */
+  /* the climbs: beside the heading and lede (chart-first), or under the legend */
   .rb-lead {
     display: grid;
-    gap: 2.5rem clamp(2.5rem, 6vw, 6rem);
     margin-top: clamp(2.5rem, 5vw, 4rem);
-    align-items: start;
-  }
-
-  .rb-lead.has-copy {
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-  }
-
-  .rb-lead-copy {
-    display: grid;
-    gap: 1.25rem;
-    align-content: start;
   }
 
   .rb-h3 {
@@ -1206,8 +1266,13 @@ const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['int
   }
 
   @media (max-width: 60rem) {
-    .rb-lead.has-copy {
+    .rb-bracket.is-tight .num {
+      display: none;
+    }
+
+    .rb--chart-first {
       grid-template-columns: minmax(0, 1fr);
+      grid-template-areas: 'chart' 'stage' 'note' 'foot' 'copy' 'climbs' 'table';
     }
   }
 

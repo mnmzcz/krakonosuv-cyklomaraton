@@ -95,10 +95,13 @@ const first = resolved[0];
           resolved.map((s, i) => (
             <li class:list={['stop', { 'stop--end': s.finish }]} style={`--x:${s.x}%;--sy:${s.y}`}>
               {s.finish ? (
-                <span class="stop-in">
+                <span class="stop-in" data-rail-finish data-km={r.km}>
+                  <Icon name="flag" class="stop-flag" />
                   <span class="stop-name">{s.label}</span>
                   <span class="stop-km num">km {fmtKm(r.km)}</span>
-                  <span class="stop-place">{s.place}</span>
+                  <span class="stop-place">
+                    {s.place}<span class="stop-q">, trasa 2026</span>
+                  </span>
                 </span>
               ) : (
                 <a class="stop-in" href={`#${s.id}`} data-stop={i} data-km={s.km}>
@@ -116,8 +119,9 @@ const first = resolved[0];
 </nav>
 
 <style>
+  /* wide: the stop labels on top, the road below them with room for the marker at the summits */
   :global(html:has([data-rail])) {
-    --rail-h: 3rem;
+    --rail-h: 3.5rem;
     scroll-padding-top: calc(var(--header-h) + var(--rail-h));
   }
 
@@ -197,11 +201,13 @@ const first = resolved[0];
   }
 
   .rail-dot {
+    --d: 0.6rem;
     position: absolute;
+    z-index: 2;
     left: calc(var(--p) * 100%);
     top: calc(var(--y) * 100%);
-    width: 0.7rem;
-    height: 0.7rem;
+    width: var(--d);
+    height: var(--d);
     border-radius: 50%;
     background: var(--red);
     box-shadow: 0 0 0 2px var(--paper);
@@ -272,6 +278,7 @@ const first = resolved[0];
       border: 1.5px solid var(--ink-2);
     }
 
+    /* the label starts a marker's width right of its stem, so the red marker never touches it */
     .stop-in {
       position: absolute;
       left: 0;
@@ -280,18 +287,29 @@ const first = resolved[0];
       align-items: baseline;
       gap: 0.3rem;
       height: 1.6rem;
-      padding: 0.45rem 0.4rem 0 0.45rem;
+      padding: 0.45rem 0.4rem 0 0.7rem;
       white-space: nowrap;
     }
 
-    /* the finish stands on the road at the end of the line, where Trutnov's valley leaves the band empty */
+    .stop-in :global(.stop-flag),
+    .stop-q {
+      display: none;
+    }
+
+    /* the finish stands over Trutnov's valley at the end of the line, high enough that the marker
+       (Vlčice and the run-in to Trutnov, under 550 m) passes beneath it */
     .stop--end .stop-in {
       left: auto;
       right: 0;
       top: auto;
-      bottom: 0.4rem;
+      bottom: 0.875rem;
       height: auto;
-      padding: 0 0.45rem 0 0.4rem;
+      padding: 0 0.7rem 0 0.4rem;
+      line-height: 1;
+    }
+
+    .stop--end [aria-current='location'] .stop-name {
+      color: var(--ink);
     }
 
     .stop--end::before,
@@ -350,7 +368,7 @@ const first = resolved[0];
       color: var(--ink);
       text-decoration: underline;
       text-decoration-thickness: 2px;
-      text-underline-offset: 0.3em;
+      text-underline-offset: 0.25em;
       text-decoration-color: var(--line-strong);
     }
 
@@ -362,7 +380,7 @@ const first = resolved[0];
       color: var(--ink);
       text-decoration: underline;
       text-decoration-thickness: 2px;
-      text-underline-offset: 0.3em;
+      text-underline-offset: 0.25em;
       text-decoration-color: var(--red);
     }
 
@@ -378,8 +396,10 @@ const first = resolved[0];
 
   /* phones and tablets: one line says where you are; the stops open as a list */
   @media (max-width: 72rem) {
+    /* two bands: the line of text on top, the road below it. The marker (radius 0.3rem plus its
+       2px ring) at the highest summit still stays under the text line. */
     :global(html:has([data-rail])) {
-      --rail-h: 2.75rem;
+      --rail-h: 3rem;
     }
 
     .rail {
@@ -395,7 +415,7 @@ const first = resolved[0];
       gap: 1rem;
       width: 100%;
       height: 100%;
-      padding: 0.55rem 0 0;
+      padding: 0.4rem 0 0;
       border: 0;
       background: none;
       cursor: pointer;
@@ -407,6 +427,7 @@ const first = resolved[0];
       align-items: baseline;
       gap: 0.45rem;
       min-width: 0;
+      line-height: 1.15;
       white-space: nowrap;
     }
 
@@ -512,8 +533,42 @@ const first = resolved[0];
       display: none;
     }
 
-    .stop--end .stop-in {
+    /* the finish is where the list ends, not a link: a flag instead of a ring, quieter type */
+    .stop--end .stop-in::before {
+      content: none;
+    }
+
+    .stop--end .stop-in :global(.stop-flag) {
+      grid-area: mark;
+      justify-self: center;
+      width: 1.05rem;
+      height: 1.05rem;
       color: var(--ink-3);
+    }
+
+    .stop--end {
+      border-top-style: dashed !important;
+    }
+
+    .stop--end .stop-in {
+      min-height: 2.75rem;
+    }
+
+    .stop--end .stop-name {
+      color: var(--ink-3);
+      font-size: 0.875rem;
+    }
+
+    .stop--end .stop-place {
+      font-size: 0.8125rem;
+    }
+
+    .stop--end [aria-current='location'] :global(.stop-flag) {
+      color: var(--red);
+    }
+
+    .stop--end [aria-current='location'] .stop-name {
+      color: var(--ink);
     }
 
     a.stop-in[aria-current='location']::before {
@@ -547,6 +602,7 @@ const first = resolved[0];
     const targets = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))));
     const kms = links.map((a) => Number(a.dataset.km));
     const items = links.map((a) => a.closest('li')!);
+    const finish = rail.querySelector<HTMLElement>('[data-rail-finish]')!;
     const toggle = rail.querySelector<HTMLButtonElement>('[data-rail-toggle]')!;
     const nowName = rail.querySelector<HTMLElement>('[data-rail-now-name]')!;
     const nowKm = rail.querySelector<HTMLElement>('[data-rail-now-km]')!;
@@ -597,19 +653,22 @@ const first = resolved[0];
         return prof.end;
       };
 
+      // i === links.length is the finish: the bottom of the page, the marker at the end of the road
       let active = -1;
       const setActive = (i: number) => {
         if (i === active) return;
         active = i;
-        links.forEach((a, j) => {
-          if (j === i) a.setAttribute('aria-current', 'location');
-          else a.removeAttribute('aria-current');
-          items[j].classList.toggle('is-passed', j < i);
+        const stops: HTMLElement[] = [...links, finish];
+        stops.forEach((el, j) => {
+          if (j === i) el.setAttribute('aria-current', 'location');
+          else el.removeAttribute('aria-current');
+          if (j < items.length) items[j].classList.toggle('is-passed', j < i);
         });
-        const a = links[i];
-        nowName.textContent = a.querySelector('.stop-name')!.textContent;
-        nowKm.textContent = `km ${fmt(kms[i])}`;
-        nowPlace.textContent = a.querySelector('.stop-place')!.firstChild!.textContent!.trim();
+        const el = stops[i];
+        const place = el.querySelector('.stop-place')!;
+        nowName.textContent = el.querySelector('.stop-name')!.textContent;
+        nowKm.textContent = `km ${fmt(i < kms.length ? kms[i] : prof.end)}`;
+        nowPlace.textContent = (i < kms.length ? place.firstChild!.textContent! : place.textContent!).replace(/\s+/g, ' ').trim();
       };
 
       let frame = 0;
@@ -620,8 +679,8 @@ const first = resolved[0];
         anchors.forEach((a, j) => {
           if (y >= a - 2) i = j;
         });
-        setActive(i);
         const atEnd = y >= maxY - 2 && maxY > anchors[anchors.length - 1];
+        setActive(atEnd ? links.length : i);
         const km = reduce.matches ? (atEnd ? prof.end : kms[i]) : kmAt(y);
         const alt = altAt(Math.min(km, prof.L));
         rail.style.setProperty('--p', Math.min(1, km / prof.L).toFixed(4));
