@@ -67,7 +67,7 @@ const archive = [
 
     <div class="base">
       <span>{race.fullName}</span>
-      <span>Created by <a href="http://www.mnmz.cz">minimize</a></span>
+      <span>Created by <a class="maker" href="http://www.mnmz.cz">minimize</a></span>
     </div>
   </div>
 </footer>
@@ -188,6 +188,13 @@ const archive = [
 
   .base a {
     color: #fff;
+  }
+
+  /* The studio's name in italics. The site turns font synthesis off; this one word lets the browser
+     slant the roman, so every page does not pull in the 100 kB italic font file for it. */
+  .maker {
+    font-style: italic;
+    font-synthesis: style;
   }
 
   @media (max-width: 60rem) {
