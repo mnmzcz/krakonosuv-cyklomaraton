@@ -26,14 +26,13 @@ interface Props {
   /** climb brackets on the chart and the climb list; follows `stats` unless set */
   climbs?: boolean;
   /** default: heading (default slot), stage header and profile stacked like a stage page.
-      split: the heading beside the stage header, the profile full width under both, and the legend
-      with the footnote beside the climbs. The heading row stacks below 75rem, the rest below 60rem.
-      Both keep source order equal to visual order. */
+      split: the heading beside the stage header and its footnote, the profile full width under
+      both, and the legend beside the climbs. The heading row stacks below 75rem, the rest below
+      60rem. Both keep source order equal to visual order. */
   layout?: 'default' | 'split';
 }
 
 const { id, routes = ['long', 'short'], markers, stats = true, table = true, climbs: showClimbs = stats, layout = 'default' } = Astro.props;
-const split = layout === 'split';
 const hasIntro = Astro.slots.has('default');
 
 const ALT_MIN = 300;
@@ -238,7 +237,7 @@ const showStage = stats || multi;
         ))}
     </div>
   )}
-  {multi && !split && (
+  {multi && (
     <p class="rb-note">
       <span aria-hidden="true">* </span>Délky podle propozic 2027. {race.routesNote}
     </p>
@@ -352,11 +351,6 @@ const showStage = stats || multi;
         bufet
       </li>
     </ul>
-    {multi && split && (
-      <p class="rb-note">
-        <span aria-hidden="true">* </span>Délky podle propozic 2027. {race.routesNote}
-      </p>
-    )}
     {charts.map((c) => (
       <a class="link-arrow rb-r" data-route={c.rid} href={c.r.mapUrl} target="_blank" rel="noopener">
         {c.r.name} 2026 v Mapy.com <Icon name="external" />
@@ -467,8 +461,8 @@ const showStage = stats || multi;
   }
 
   /* split: one road-book page. The heading and lede open it, the stage header (whose tabs switch
-     everything below) sits beside them on wide screens, the profile runs full width under both, and
-     the legend with its footnote stands beside the climbs. Source order is visual order. */
+     everything below) and the footnote to its asterisks sit beside them on wide screens, the profile
+     runs full width under both, and the legend stands beside the climbs. Source order is visual order. */
   .rb--split {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
@@ -486,10 +480,6 @@ const showStage = stats || multi;
     gap: 1rem;
   }
 
-  .rb--split .rb-note {
-    margin: 0;
-  }
-
   @media (width > 60rem) {
     .rb--split {
       grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
@@ -497,6 +487,7 @@ const showStage = stats || multi;
       grid-template-areas:
         'intro intro'
         'stage stage'
+        'note note'
         'chart chart'
         'foot climbs'
         'table table';
@@ -508,6 +499,10 @@ const showStage = stats || multi;
 
     .rb--split > .rb-stage {
       grid-area: stage;
+    }
+
+    .rb--split > .rb-note {
+      grid-area: note;
     }
 
     .rb--split > .rb-route {
@@ -545,9 +540,13 @@ const showStage = stats || multi;
   }
 
   @media (width > 75rem) {
+    /* the stage header starts level with the heading, its footnote right under it; whatever height
+       the heading and lede have left over goes below the footnote (the 1fr row), never between them */
     .rb--split {
+      grid-template-rows: auto 1fr auto auto auto;
       grid-template-areas:
         'intro stage'
+        'intro note'
         'chart chart'
         'foot climbs'
         'table table';
@@ -557,17 +556,13 @@ const showStage = stats || multi;
       margin-bottom: 0;
     }
 
-    /* the stage header stands on the lede's last line, straight above the profile it switches */
-    .rb--split > .rb-stage {
-      align-self: end;
-    }
-
     .rb--split:not(.rb--stage) > .rb-intro,
-    .rb--split:not(.rb--intro) > .rb-stage {
+    .rb--split:not(.rb--intro) > .rb-stage,
+    .rb--split:not(.rb--intro) > .rb-note {
       grid-column: 1 / -1;
     }
 
-    /* in the 7fr column the tabs take their own row and every fact stacks value over qualifier */
+    /* in the 7fr column the tabs keep their own row, as they do below 75rem */
     .rb--split .rb-stage.has-tabs {
       grid-template-columns: minmax(0, 1fr);
     }
@@ -579,11 +574,15 @@ const showStage = stats || multi;
     .rb--split .rb-stage.has-tabs .rb-tabs label:last-of-type {
       border-right: 0;
     }
+  }
 
+  /* wherever the five facts share one row, they take equal tracks and stack value over qualifier,
+     so the hairlines stay put when the route changes (phones keep their two-column grid) */
+  @media (width > 48rem) {
     .rb--split .rb-facts {
       display: grid;
       grid-auto-flow: column;
-      grid-auto-columns: auto;
+      grid-auto-columns: 1fr;
     }
 
     .rb--split .rb-fact:first-child {
