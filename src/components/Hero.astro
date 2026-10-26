@@ -6,21 +6,28 @@ import Icon from './Icon.astro';
 import { currentTierIndex, kc, priceTiers, race } from '../data/race';
 
 const r = data.routes.long;
-const L = r.points[r.points.length - 1][0];
+const pts = r.points;
+const L = pts[pts.length - 1][0];
 const MIN = 250;
 const MAX = 1150;
+// same horizontal scale as the road book below: x 0..1000 spans the content column (.wrap)
 const X = (km: number) => (km / L) * 1000;
 const Y = (alt: number) => (1 - (alt - MIN) / (MAX - MIN)) * 100;
-const area =
-  r.points.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(2)} ${Y(p[1]).toFixed(2)}`).join('') + 'L1000 100L0 100Z';
+const xy = (p: number[]) => `${X(p[0]).toFixed(2)} ${Y(p[1]).toFixed(2)}`;
+// the valley floor of Trutnov runs on past start and finish to the edges of the screen
+const floorIn = Y(pts[0][1]).toFixed(2);
+const floorOut = Y(pts[pts.length - 1][1]).toFixed(2);
+const area = `M-40000 ${floorIn}L${pts.map(xy).join('L')}L41000 ${floorOut}L41000 100L-40000 100Z`;
 
 const peaks = ['Pomezní Boudy', 'Pražská bouda'].map((name) => {
   const w = r.waypoints.find((w) => w.name === name)!;
-  const near = r.points.reduce((b, p) => (Math.abs(p[0] - w.km) < Math.abs(b[0] - w.km) ? p : b));
-  return { ...w, x: (w.km / L) * 100, y: Y(near[1]) / 100 };
+  const near = pts.reduce((b, p) => (Math.abs(p[0] - w.km) < Math.abs(b[0] - w.km) ? p : b));
+  return { ...w, x: (near[0] / L) * 100, y: Y(near[1]) / 100 };
 });
 
 const ticks = [20, 40, 60, 80, 100, 120].map((k) => ({ k, x: (k / L) * 100 }));
+const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+const routes = data.routes;
 
 const tier = currentTierIndex();
 const t = priceTiers[tier];
@@ -48,9 +55,11 @@ const tiersJson = JSON.stringify(priceTiers);
       Krakonošův<br />cyklomaraton 2027
     </h1>
     <p class="tagline">{race.tagline}</p>
-    <p class="facts t-label num">
-      <span>Dlouhá 135 km</span><span>Krátká 86 km</span><span>Start a cíl Trutnov</span>
-    </p>
+    <ul class="facts t-label num">
+      <li>Dlouhá cca {routes.long.official_km} km</li>
+      <li>Krátká cca {routes.short.official_km} km</li>
+      <li>Start a cíl Trutnov</li>
+    </ul>
     <div class="actions">
       <a class="btn" href={race.registrationUrl}>Registrovat se <Icon name="arrow" /></a>
       <p class="price num" data-price-now data-tiers={tiersJson}>{priceNow}</p>
@@ -69,16 +78,20 @@ const tiersJson = JSON.stringify(priceTiers);
   </div>
 
   <div class="ridge" aria-hidden="true">
-    <svg viewBox="0 0 1000 100" preserveAspectRatio="none" class="ridge-svg">
-      <path d={area} />
-    </svg>
-    {
-      peaks.map((p) => (
-        <span class="peak" style={`--x:${p.x}%;--y:${p.y};--t:${(0.4 + (p.x / 100) * 1.2).toFixed(2)}s`}>
-          <span class="peak-name t-label">{p.name}</span>
-        </span>
-      ))
-    }
+    <div class="ridge-ground">
+      <div class="ridge-track">
+        <svg viewBox="0 0 1000 100" preserveAspectRatio="none" class="ridge-svg">
+          <path d={area} />
+        </svg>
+        {
+          peaks.map((p) => (
+            <span class="peak" style={`--x:${p.x}%;--y:${p.y};--t:${(0.4 + (p.x / 100) * 1.2).toFixed(2)}s`}>
+              <span class="peak-name t-label">{p.name}</span>
+            </span>
+          ))
+        }
+      </div>
+    </div>
     <div class="ridge-axis">
       <span class="ax-start">Start Trutnov</span>
       {
@@ -88,7 +101,7 @@ const tiersJson = JSON.stringify(priceTiers);
           </span>
         ))
       }
-      <span class="num ax-end">Cíl {L.toLocaleString('cs-CZ', { maximumFractionDigits: 1 })} km</span>
+      <span class="num ax-end">Cíl {fmtKm(r.km)} km</span>
     </div>
   </div>
 </section>
@@ -155,7 +168,8 @@ const tiersJson = JSON.stringify(priceTiers);
 
   .content {
     position: relative;
-    padding-bottom: calc(var(--ridge-h) * 0.78 + 1rem);
+    /* the copy stands clear of the summits: the ridge never runs under the price line */
+    padding-bottom: calc(var(--ridge-h) + 0.75rem);
   }
 
   .title {
@@ -172,22 +186,29 @@ const tiersJson = JSON.stringify(priceTiers);
     line-height: 1.3;
   }
 
+  /* every fact carries its own marker, so a wrapped line still starts with one */
   .facts {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem 1.25rem;
+    gap: 0.45rem 1.5rem;
     margin-top: 1rem;
+    list-style: none;
     color: var(--ridge-200);
     font-size: 0.9375rem;
   }
 
-  .facts span + span::before {
+  .facts li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    white-space: nowrap;
+  }
+
+  .facts li::before {
     content: '';
-    display: inline-block;
+    flex: none;
     width: 0.35rem;
     height: 0.35rem;
-    margin-right: 1.25rem;
-    vertical-align: 0.15em;
     background: var(--red);
   }
 
@@ -262,8 +283,11 @@ const tiersJson = JSON.stringify(priceTiers);
     height: 0.95rem;
   }
 
-  /* the real long-route profile rising out of the video: it is the ground the page stands on */
+  /* the real long-route profile rising out of the video: it is the ground the page stands on.
+     The route spans the content column, on the same scale as the road book directly below it. */
   .ridge {
+    --axis: 1.75rem;
+    --track-inset: max(var(--gutter), calc((100% - var(--max)) / 2));
     position: absolute;
     left: 0;
     right: 0;
@@ -272,14 +296,28 @@ const tiersJson = JSON.stringify(priceTiers);
     color: var(--ink);
   }
 
-  .ridge-svg {
+  .ridge-ground {
     position: absolute;
     left: 0;
     right: 0;
     top: 0;
-    bottom: 1.75rem;
+    bottom: var(--axis);
+  }
+
+  .ridge-track {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--track-inset);
+    right: var(--track-inset);
+  }
+
+  .ridge-svg {
+    position: absolute;
+    inset: 0;
     width: 100%;
-    height: calc(100% - 1.75rem);
+    height: 100%;
+    overflow: visible;
   }
 
   .ridge-svg path {
@@ -292,7 +330,7 @@ const tiersJson = JSON.stringify(priceTiers);
     left: 0;
     right: 0;
     bottom: 0;
-    height: 1.8rem;
+    height: calc(var(--axis) + 0.05rem);
     background: var(--snow);
   }
 
@@ -300,7 +338,7 @@ const tiersJson = JSON.stringify(priceTiers);
     position: absolute;
     left: var(--x);
     top: 0;
-    height: calc((100% - 1.75rem) * var(--y));
+    height: calc(100% * var(--y));
     width: 0;
   }
 
@@ -326,15 +364,10 @@ const tiersJson = JSON.stringify(priceTiers);
     font-size: 0.8125rem;
   }
 
-  .peak-name .num {
-    font-weight: 500;
-    color: var(--ink-3);
-  }
-
   .ridge-axis {
     position: absolute;
-    left: 0;
-    right: 0;
+    left: var(--track-inset);
+    right: var(--track-inset);
     bottom: 0.35rem;
     height: 1.2rem;
     z-index: 1;
@@ -353,15 +386,15 @@ const tiersJson = JSON.stringify(priceTiers);
   }
 
   .ax-start {
-    left: var(--gutter);
+    left: 0;
   }
 
   .ax-end {
-    right: var(--gutter);
+    right: 0;
   }
 
   /* entrance: the ridge is ridden left to right once */
-  :global(.js) .ridge-svg {
+  :global(.js) .ridge-ground {
     animation: ride 1.8s var(--ease-out) 0.2s both;
   }
 
@@ -392,7 +425,7 @@ const tiersJson = JSON.stringify(priceTiers);
 
   @media (max-width: 48rem) {
     .hero {
-      --ridge-h: 6.5rem;
+      --ridge-h: 8rem;
       min-height: max(34rem, calc(100svh - var(--header-h)));
     }
 
@@ -418,12 +451,10 @@ const tiersJson = JSON.stringify(priceTiers);
       justify-content: center;
     }
 
-    .content {
-      padding-bottom: calc(var(--ridge-h) * 0.6 + 3.5rem);
-    }
-
+    /* vertical names fit on a phone too; they start lower, where the snow under a peak is wider */
     .peak-name {
-      display: none;
+      top: calc(100% + 1.15rem);
+      font-size: 0.6875rem;
     }
 
     .ax-tick {

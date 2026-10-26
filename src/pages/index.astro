@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
+import RideRail from '../components/RideRail.astro';
 import RouteProfile from '../components/RouteProfile.astro';
 import PriceClimb from '../components/PriceClimb.astro';
 import NewsList from '../components/NewsList.astro';
@@ -14,31 +15,47 @@ import splits from '../data/splits-2026.json';
 const pomezni = splits.spots.find((s) => s.id === 'pomezni')!;
 const first = pomezni.window.long!.first;
 const last = pomezni.window.short!.last;
+
+// The page is ridden like the long route: each section is a stop at a real place on the road.
+const stops = [
+  // where the road begins
+  { id: 'trat', label: 'Trať', place: 'Trutnov' },
+  // the first climb of the day; the price climbs too, deadline by deadline
+  { id: 'startovne', label: 'Startovné', place: 'Prkenný Důl' },
+  // the spot both routes pass, the one the fans section quotes pass times for
+  { id: 'fandit', label: 'Fandit', place: 'Pomezní Boudy' },
+  // the roof of the race, where the news comes from the top
+  { id: 'aktuality', label: 'Aktuality', place: 'Pražská bouda' },
+  // the feed station, where riders stop and talk
+  { id: 'ohlasy', label: 'Ohlasy', place: 'Strážné' },
+  // the last climb, through one of the towns that back the race
+  { id: 'partneri', label: 'Partneři', place: 'Janské Lázně' },
+];
 ---
 
 <Base>
   <Hero />
+  <RideRail stops={stops} />
 
-  <section class="section route" aria-labelledby="trat-title">
+  <section class="route" id="trat" aria-labelledby="trat-title">
     <div class="wrap">
-      <div class="section-head">
+      <RouteProfile id="profil-trate" layout="chart-first">
         <h2 class="t-title" id="trat-title">Trať</h2>
         <p class="t-lede">
-          Silniční okruh z Trutnova přes Polsko na Pomezní Boudy, dlouhá trať navíc přes Pražskou boudu a Strážné. Profil ukazuje trasy ročníku 2026; ty
-          letošní upřesníme po schválení Policií ČR. Projeďte je kurzorem nebo šipkami.
+          Silniční okruh z Trutnova přes Polsko na Pomezní Boudy, dlouhá trať navíc přes Pražskou boudu a Strážné. Profil ukazuje trasy ročníku 2026 a projedete
+          ho kurzorem, prstem nebo šipkami. Trasy pro rok 2027 upřesníme po schválení Policií ČR.
         </p>
-      </div>
-      <RouteProfile id="trat" />
+      </RouteProfile>
     </div>
   </section>
 
-  <section class="section field-dark" aria-labelledby="startovne">
+  <section class="section field-dark" id="startovne" aria-label="Startovné">
     <div class="wrap">
       <PriceClimb />
     </div>
   </section>
 
-  <section class="fans" aria-labelledby="fans-title">
+  <section class="fans" id="fandit" aria-labelledby="fans-title">
     <div class="fans-img">
       <Image src={fansPhoto} alt="Závodníci stoupají horskou loukou, u silnice stojí turisté" widths={[640, 1024, 1500]} sizes="(max-width: 60rem) 100vw, 55vw" />
     </div>
@@ -51,7 +68,7 @@ const last = pomezni.window.short!.last;
     </div>
   </section>
 
-  <section class="section" aria-labelledby="aktuality-title">
+  <section class="section" id="aktuality" aria-labelledby="aktuality-title">
     <div class="wrap">
       <div class="section-head head-row">
         <h2 class="t-title" id="aktuality-title">Aktuality</h2>
@@ -61,13 +78,13 @@ const last = pomezni.window.short!.last;
     </div>
   </section>
 
-  <section class="section field-paper voices" aria-label="Ohlasy závodníků">
+  <section class="section field-paper voices" id="ohlasy" aria-label="Ohlasy závodníků">
     <div class="wrap">
       <Testimonials />
     </div>
   </section>
 
-  <section class="section partners" aria-label="Partneři">
+  <section class="section partners" id="partneri" aria-label="Partneři">
     <div class="wrap">
       <PartnerBoard />
     </div>
@@ -75,8 +92,10 @@ const last = pomezni.window.short!.last;
 </Base>
 
 <style>
+  /* the road book sits right under the hero ridge, on the same km scale */
   .route {
-    padding-top: clamp(2.5rem, 6vw, 5rem);
+    padding-top: clamp(1.5rem, 3vw, 2.5rem);
+    padding-bottom: var(--space-section);
   }
 
   .fans {

@@ -2,6 +2,7 @@
 // The road book: the real elevation profile of a route, places standing at their kilometre.
 import data from '../data/routes.json';
 import Icon from './Icon.astro';
+import { race } from '../data/race';
 
 type RouteId = 'long' | 'short';
 export type Marker = {
@@ -18,11 +19,19 @@ interface Props {
   routes?: RouteId[];
   /** replaces the route's own waypoints (used for spectator spots) */
   markers?: Marker[];
+  /** the ruled stage header (route, start, finish, length, climbing, top) */
   stats?: boolean;
+  /** the "Místa na trati" table */
   table?: boolean;
+  /** climb brackets on the chart and the climb list; follows `stats` unless set */
+  climbs?: boolean;
+  /** chart-first: the profile leads, stage header, heading (default slot) and climbs follow it */
+  layout?: 'default' | 'chart-first';
 }
 
-const { id, routes = ['long', 'short'], markers, stats = true, table = true } = Astro.props;
+const { id, routes = ['long', 'short'], markers, stats = true, table = true, climbs: showClimbs = stats, layout = 'default' } = Astro.props;
+const chartFirst = layout === 'chart-first';
+const hasIntro = Astro.slots.has('default');
 
 const ALT_MIN = 300;
 const ALT_MAX = 1150;
@@ -49,215 +58,380 @@ const SERVICES: Record<RouteId, { km: number; kind: 'clock' | 'bottle'; label: s
   ],
 };
 
-const grade = (a: number[], b: number[]) => {
-  const run = (b[0] - a[0]) * 1000;
-  const g = run > 0 ? ((b[1] - a[1]) / run) * 100 : 0;
-  return g > 6 ? 3 : g > 4 ? 2 : g > 2 ? 1 : 0;
-};
-
 const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
-const fmtInt = (n: number) => n.toLocaleString('cs-CZ').replace(/\s/g, ' ');
+const fmtInt = (n: number) => n.toLocaleString('cs-CZ').replace(/\s/g, ' ');
+const fmtPct = (n: number) => n.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+type Point = [number, number, number, number, number];
 
 const charts = routes.map((rid) => {
   const r = data.routes[rid];
-  const L = r.points[r.points.length - 1][0];
+  const pts = r.points as Point[];
+  const L = pts[pts.length - 1][0];
   const X = (km: number) => (km / L) * 1000;
   const Y = (alt: number) => yFrac(alt) * 100;
-  const segs = r.points.slice(0, -1).map((p, i) => {
-    const q = r.points[i + 1];
-    const x1 = X(p[0]);
-    const x2 = Math.min(1000, X(q[0]) + 0.4);
-    return {
-      d: `M${x1.toFixed(2)} ${Y(p[1]).toFixed(2)}L${x2.toFixed(2)} ${Y(q[1]).toFixed(2)}L${x2.toFixed(2)} 100L${x1.toFixed(2)} 100Z`,
-      g: p[4] ?? grade(p, q),
-    };
-  });
-  const line = r.points.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(2)} ${Y(p[1]).toFixed(2)}`).join('');
+  const xy = (p: Point) => `${X(p[0]).toFixed(2)} ${Y(p[1]).toFixed(2)}`;
+
+  // the gradient class comes with every 200 m sample; consecutive equal classes merge into one shape
+  const runs: { g: number; from: number; to: number }[] = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const g = pts[i][4] ?? 0;
+    const last = runs[runs.length - 1];
+    if (last && last.g === g) last.to = i + 1;
+    else runs.push({ g, from: i, to: i + 1 });
+  }
+  const line = 'M' + pts.map(xy).join('L');
+  const base = `${line}L1000 100L0 100Z`;
+  const fills = runs
+    .filter((run) => run.g > 0)
+    .map(({ g, from, to }) => {
+      const seg = pts.slice(from, to + 1);
+      const x0 = X(seg[0][0]).toFixed(2);
+      const end = seg[seg.length - 1];
+      // a hair of overlap so neighbouring shapes never show a seam
+      const x1 = Math.min(1000, X(end[0]) + 0.35).toFixed(2);
+      return { g, d: `M${seg.map(xy).join('L')}L${x1} ${Y(end[1]).toFixed(2)}L${x1} 100L${x0} 100Z` };
+    });
+
+  const nearest = (km: number) => pts.reduce((best, p) => (Math.abs(p[0] - km) < Math.abs(best[0] - km) ? p : best));
 
   const source: Marker[] = markers ?? r.waypoints.map((w) => ({ ...w, tier: TIER1[rid].includes(w.name) ? 1 : 2 }));
   const marks = source
     .filter((m) => m.km <= L + 0.5)
     .map((m) => {
-      // the stem lands on the drawn line, the label carries the true altitude
-      const near = r.points.reduce((best, p) => (Math.abs(p[0] - m.km) < Math.abs(best[0] - m.km) ? p : best));
+      // the stem lands on the drawn line: the nearest sample by km is a vertex of that line
+      const near = nearest(m.km);
       const alt = m.alt ?? near[1];
-      const x = Math.min(100, (m.km / L) * 100);
-      return { ...m, alt, x, y: yFrac(near[1]), edge: x < 3 ? 'start' : x > 97 ? 'end' : '' };
+      const x = (near[0] / L) * 100;
+      return { ...m, alt, at: near[0], x, y: yFrac(near[1]), edge: x < 3 ? 'start' : x > 97 ? 'end' : '' };
     });
 
   const ticks = [];
   for (let k = 0; k <= L; k += 5) ticks.push({ k, x: (k / L) * 100, major: k % 10 === 0 });
 
-  const top = r.waypoints.reduce((a, b) => (b.alt > a.alt ? b : a));
+  const topPoint = r.waypoints.reduce((a, b) => (b.alt > a.alt ? b : a));
+  const climbs = (r.climbs ?? []).map((c) => ({
+    ...c,
+    x0: (c.from_km / L) * 100,
+    x1: Math.min(100, (c.to_km / L) * 100),
+  }));
+
   return {
     rid,
     r,
     L,
-    segs,
+    base,
+    fills,
     line,
     marks,
     ticks,
-    top,
+    top: { alt: r.top ?? topPoint.alt, name: topPoint.name },
+    climbs,
     services: SERVICES[rid].map((s) => ({ ...s, x: (s.km / L) * 100 })),
-    json: JSON.stringify({ L, p: r.points.map((p) => [p[0], p[1]]), w: marks.map((m) => [m.km, m.alt, m.name]) }),
+    json: JSON.stringify({ L, p: pts.map((p) => [p[0], p[1]]), w: marks.map((m) => [m.at, m.alt, m.name]) }),
   };
 });
 
 const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
+const multi = charts.length > 1;
+const showStage = stats || multi;
+
+// chart-first leads with the profile; the default reads like a stage page: title, header, profile
+const order = chartFirst ? ['chart', 'stage', 'legend', 'lead', 'table'] : ['intro', 'stage', 'chart', 'legend', 'climbs', 'table'];
 ---
 
-<div class="rb" data-rb id={id}>
+<div class:list={['rb', `rb--${layout}`]} data-rb id={id}>
   {
-    charts.length > 1 && (
-      <fieldset class="rb-tabs">
-        <legend class="visually-hidden">Vyberte trať</legend>
-        {charts.map((c, i) => (
-          <>
-            <input type="radio" name={`${id}-route`} id={`${id}-${c.rid}`} value={c.rid} checked={i === 0} class="visually-hidden" />
-            <label for={`${id}-${c.rid}`}>
-              <span class="tab-name">{c.r.name}</span>
-              <span class="tab-km num">{c.r.official_km} km</span>
-            </label>
-          </>
-        ))}
-      </fieldset>
-    )
-  }
-
-  {
-    charts.map((c) => (
-      <section class="rb-route" data-route={c.rid} aria-label={`${c.r.name}, profil trasy`}>
-        {stats && (
-          <dl class="rb-stats">
-            <div>
-              <dt class="t-label">Délka trasy 2026</dt>
-              <dd class="num">
-                {fmtKm(c.r.km)}
-                <span>km</span>
-              </dd>
-            </div>
-            <div>
-              <dt class="t-label">Převýšení</dt>
-              <dd class="num">
-                {fmtInt(c.r.gain)}
-                <span>m</span>
-              </dd>
-            </div>
-            <div>
-              <dt class="t-label">Nejvýš · {c.top.name}</dt>
-              <dd class="num">
-                {fmtInt(c.top.alt)}
-                <span>m n. m.</span>
-              </dd>
-            </div>
-            <div>
-              <dt class="t-label">Start</dt>
-              <dd class="num">{c.r.start}</dd>
-            </div>
-          </dl>
+    order.map((block) => (
+      <>
+        {block === 'intro' && hasIntro && (
+          <div class="rb-intro">
+            <slot />
+          </div>
         )}
 
-        <div class="rb-chart" data-chart={c.json}>
-          <div class="rb-plot">
-            {grid.map((g) => (
-              <div class="rb-grid" style={`top:${g.y}%`}>
-                <span class="num">{g.a}</span>
-              </div>
-            ))}
-            <svg class="rb-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
-              {c.segs.map((s) => (
-                <path d={s.d} class={`g${s.g}`} />
+        {block === 'stage' && showStage && (
+          <div class:list={['rb-stage', { 'has-tabs': multi }]}>
+            {multi && (
+              <fieldset class="rb-tabs">
+                <legend class="visually-hidden">Vyberte trať</legend>
+                {charts.map((c, i) => (
+                  <>
+                    <input type="radio" name={`${id}-route`} id={`${id}-${c.rid}`} value={c.rid} checked={i === 0} class="visually-hidden" />
+                    <label for={`${id}-${c.rid}`}>
+                      <span class="rb-letter" aria-hidden="true">
+                        {c.r.letter}
+                      </span>
+                      <span class="tab-name">{c.r.name}</span>
+                      <span class="tab-km num">
+                        {c.r.official_km} km<span aria-hidden="true">*</span>
+                        <span class="visually-hidden"> podle propozic 2027</span>
+                      </span>
+                    </label>
+                  </>
+                ))}
+              </fieldset>
+            )}
+            {stats &&
+              charts.map((c) => (
+                <dl class="rb-facts rb-r" data-route={c.rid}>
+                  {!multi && (
+                    <div class="rb-fact rb-fact--title">
+                      <dt class="visually-hidden">Trať</dt>
+                      <dd>
+                        <span class="rb-letter" aria-hidden="true">
+                          {c.r.letter}
+                        </span>
+                        <span class="v">{c.r.name}</span>
+                      </dd>
+                    </div>
+                  )}
+                  <div class="rb-fact">
+                    <dt class="t-label">Start</dt>
+                    <dd>
+                      <span class="v num">{c.r.start}</span> <span class="q">Trutnov</span>
+                    </dd>
+                  </div>
+                  <div class="rb-fact">
+                    <dt class="t-label">Cíl</dt>
+                    <dd>
+                      <span class="v">Trutnov</span>
+                    </dd>
+                  </div>
+                  <div class="rb-fact">
+                    <dt class="t-label">Délka</dt>
+                    <dd>
+                      <span class="v num">{fmtKm(c.r.km)} km</span> <span class="q">trasa 2026</span>
+                    </dd>
+                  </div>
+                  <div class="rb-fact">
+                    <dt class="t-label">Převýšení</dt>
+                    <dd>
+                      <span class="v num">{fmtInt(c.r.gain)} m</span> <span class="q">{c.r.gainSource}</span>
+                    </dd>
+                  </div>
+                  <div class="rb-fact">
+                    <dt class="t-label">Nejvýš</dt>
+                    <dd>
+                      <span class="v num">{fmtInt(c.top.alt)} m</span> <span class="q">{c.top.name}</span>
+                    </dd>
+                  </div>
+                </dl>
               ))}
-              <path d={c.line} class="rb-line" vector-effect="non-scaling-stroke" />
-            </svg>
           </div>
+        )}
+        {block === 'stage' && multi && (
+          <p class="rb-note">
+            <span aria-hidden="true">* </span>Délky podle propozic 2027. {race.routesNote}
+          </p>
+        )}
 
-          {c.marks.map((m) => (
-            <div
-              class:list={['rb-mark', `tier-${m.tier ?? 1}`, m.edge && `edge-${m.edge}`, m.kind === 'spot' && 'is-spot']}
-              style={`--x:${m.x}%;--y:${m.y};--t:${((m.x / 100) * 1.1).toFixed(2)}s`}
-              aria-hidden="true"
-            >
-              <span class="rb-name">
-                <b>{m.name}</b> <span class="num">{fmtInt(m.alt)}</span>
-              </span>
-            </div>
+        {block === 'chart' &&
+          charts.map((c) => (
+            <section class="rb-route rb-r" data-route={c.rid} aria-label={`${c.r.name}, profil trasy 2026`}>
+              <div class:list={['rb-chart', { 'has-climbs': showClimbs && c.climbs.length }]} data-chart={c.json}>
+                <div class="rb-plot">
+                  {grid.map((g) => (
+                    <div class="rb-grid" style={`top:${g.y}%`}>
+                      <span class="num">{g.a}</span>
+                    </div>
+                  ))}
+                  <svg class="rb-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+                    <path d={c.base} class="g0" />
+                    {c.fills.map((s) => (
+                      <path d={s.d} class={`g${s.g}`} />
+                    ))}
+                    <path d={c.line} class="rb-line" vector-effect="non-scaling-stroke" />
+                  </svg>
+                </div>
+
+                {showClimbs && c.climbs.length > 0 && (
+                  <div class="rb-brackets" aria-hidden="true">
+                    {c.climbs.map((cl) => (
+                      <span class="rb-bracket" style={`left:${cl.x0}%;width:${cl.x1 - cl.x0}%;--t:${((cl.x0 / 100) * 1.1).toFixed(2)}s`}>
+                        <span class="num">{fmtPct(cl.avg)} %</span>
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                {c.marks.map((m) => (
+                  <div
+                    class:list={['rb-mark', `tier-${m.tier ?? 1}`, m.edge && `edge-${m.edge}`, m.kind === 'spot' && 'is-spot']}
+                    style={`--x:${m.x}%;--y:${m.y};--t:${((m.x / 100) * 1.1).toFixed(2)}s`}
+                    aria-hidden="true"
+                  >
+                    <span class="rb-name">
+                      <b>{m.name}</b> <span class="num">{fmtInt(m.alt)}</span>
+                    </span>
+                  </div>
+                ))}
+
+                <div class="rb-axis" aria-hidden="true">
+                  {c.ticks.map((t) => (
+                    <span class:list={['tick', { major: t.major }]} style={`left:${t.x}%`}>
+                      {t.major && <span class="num">{t.k}</span>}
+                    </span>
+                  ))}
+                  <span class="unit t-label">km</span>
+                </div>
+
+                <div class="rb-services" aria-hidden="true">
+                  {c.services.map((s) => (
+                    <span class:list={['svc', s.kind]} style={`left:${s.x}%;--t:${((s.x / 100) * 1.1).toFixed(2)}s`} title={s.label}>
+                      <Icon name={s.kind} />
+                    </span>
+                  ))}
+                </div>
+
+                <div
+                  class="rb-scrub"
+                  tabindex="0"
+                  role="slider"
+                  aria-label={`Projet ${c.r.name.toLowerCase()} po kilometrech`}
+                  aria-valuemin="0"
+                  aria-valuemax={Math.round(c.L)}
+                  aria-valuenow="0"
+                  aria-valuetext="km 0, Trutnov"
+                >
+                  <span class="rb-cursor" hidden>
+                    <span class="rb-dot" />
+                  </span>
+                  <span class="rb-read" hidden>
+                    <span class="rd-top num" />
+                    <span class="rd-name" />
+                  </span>
+                </div>
+              </div>
+            </section>
           ))}
 
-          <div class="rb-axis" aria-hidden="true">
-            {c.ticks.map((t) => (
-              <span class:list={['tick', { major: t.major }]} style={`left:${t.x}%`}>
-                {t.major && <span class="num">{t.k}</span>}
-              </span>
+        {block === 'legend' && (
+          <div class="rb-foot">
+            <ul class="rb-legend" aria-label="Legenda">
+              <li>
+                <i class="sw g1" />
+                2–4 %
+              </li>
+              <li>
+                <i class="sw g2" />
+                4–6 %
+              </li>
+              <li>
+                <i class="sw g3" />
+                přes 6 %
+              </li>
+              {showClimbs && (
+                <li>
+                  <i class="sw-bracket" />
+                  stoupání, průměrný sklon
+                </li>
+              )}
+              <li>
+                <Icon name="clock" />
+                kontrola
+              </li>
+              <li>
+                <Icon name="bottle" />
+                bufet
+              </li>
+            </ul>
+            {charts.map((c) => (
+              <a class="link-arrow rb-r" data-route={c.rid} href={c.r.mapUrl} target="_blank" rel="noopener">
+                {c.r.name} 2026 v Mapy.com <Icon name="external" />
+              </a>
             ))}
-            <span class="unit t-label">km</span>
           </div>
-
-          <div class="rb-services" aria-hidden="true">
-            {c.services.map((s) => (
-              <span class:list={['svc', s.kind]} style={`left:${s.x}%;--t:${((s.x / 100) * 1.1).toFixed(2)}s`} title={s.label}>
-                <Icon name={s.kind} />
-              </span>
-            ))}
-          </div>
-
-          <div
-            class="rb-scrub"
-            tabindex="0"
-            role="slider"
-            aria-label={`Projet ${c.r.name.toLowerCase()} po kilometrech`}
-            aria-valuemin="0"
-            aria-valuemax={Math.round(c.L)}
-            aria-valuenow="0"
-            aria-valuetext="km 0, Trutnov"
-          >
-            <span class="rb-cursor" hidden>
-              <span class="rb-dot" />
-              <span class="rb-read num" />
-            </span>
-          </div>
-        </div>
-
-        <div class="rb-foot">
-          <ul class="rb-legend" aria-label="Legenda">
-            <li><i class="sw g1" />2–4 %</li>
-            <li><i class="sw g2" />4–6 %</li>
-            <li><i class="sw g3" />přes 6 %</li>
-            <li><Icon name="clock" />kontrola</li>
-            <li><Icon name="bottle" />bufet</li>
-          </ul>
-          <a class="link-arrow" href={c.r.mapUrl} target="_blank" rel="noopener">
-            {c.r.name} 2026 v Mapy.com <Icon name="external" />
-          </a>
-        </div>
-
-        {table && (
-          <details class="rb-table">
-            <summary>Místa na trati ({c.r.name.toLowerCase()})</summary>
-            <table>
-              <thead>
-                <tr>
-                  <th scope="col">km</th>
-                  <th scope="col">Místo</th>
-                  <th scope="col">m n. m.</th>
-                </tr>
-              </thead>
-              <tbody>
-                {c.r.waypoints.map((w) => (
-                  <tr>
-                    <td class="num">{fmtKm(w.km)}</td>
-                    <td>
-                      {w.name}
-                      {w.note && <span class="note"> · {w.note}</span>}
-                    </td>
-                    <td class="num">{fmtInt(w.alt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </details>
         )}
-      </section>
+
+        {((block === 'lead' && (hasIntro || showClimbs)) || (block === 'climbs' && showClimbs)) && (
+          <div class:list={['rb-lead', { 'has-copy': block === 'lead' && hasIntro }]}>
+            {block === 'lead' && hasIntro && (
+              <div class="rb-lead-copy">
+                <slot />
+              </div>
+            )}
+            {showClimbs &&
+              charts.map(
+                (c) =>
+                  c.climbs.length > 0 && (
+                    <div class="rb-climbs rb-r" data-route={c.rid}>
+                      <h3 class="rb-h3" id={`${id}-${c.rid}-climbs`}>
+                        Stoupání <span class="rb-h3-sub">{c.r.name.toLowerCase()}</span>
+                      </h3>
+                      <table aria-labelledby={`${id}-${c.rid}-climbs`}>
+                        <thead>
+                          <tr>
+                            <th scope="col">Stoupání</th>
+                            <th scope="col" class="n">
+                              Délka
+                            </th>
+                            <th scope="col" class="n">
+                              Převýšení
+                            </th>
+                            <th scope="col" class="n">
+                              Průměr
+                            </th>
+                            <th scope="col" class="n">
+                              Nejprudší km
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {c.climbs.map((cl) => (
+                            <tr>
+                              <th scope="row">
+                                <b>{cl.name}</b>
+                                <span class="span num">
+                                  km {fmtKm(cl.from_km)}–{fmtKm(cl.to_km)}
+                                </span>
+                              </th>
+                              <td class="n num">{fmtKm(cl.length)} km</td>
+                              <td class="n num">{fmtInt(cl.gain)} m</td>
+                              <td class="n num">{fmtPct(cl.avg)} %</td>
+                              <td class="n num">{fmtPct(cl.max)} %</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ),
+              )}
+          </div>
+        )}
+
+        {block === 'table' &&
+          table &&
+          charts.map((c) => (
+            <details class="rb-table rb-r" data-route={c.rid}>
+              <summary>
+                <span>Místa na trati ({c.r.name.toLowerCase()})</span>
+                <Icon name="chevron" class="rb-chev" />
+              </summary>
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">km</th>
+                    <th scope="col">Místo</th>
+                    <th scope="col">m n. m.</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {c.r.waypoints.map((w) => (
+                    <tr>
+                      <td class="num">{fmtKm(w.km)}</td>
+                      <td>
+                        {w.name}
+                        {w.note && <span class="note"> · {w.note}</span>}
+                      </td>
+                      <td class="num">{fmtInt(w.alt)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </details>
+          ))}
+      </>
     ))
   }
 </div>
@@ -270,42 +444,92 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     position: relative;
   }
 
-  /* route switch */
-  .rb-tabs {
-    display: inline-flex;
-    margin: 0 0 2rem;
-    padding: 0;
-    border: 1.5px solid var(--ink);
+  .rb:has(input[value='long']:checked) .rb-r[data-route='short'],
+  .rb:has(input[value='short']:checked) .rb-r[data-route='long'] {
+    display: none;
+  }
+
+  .rb-intro {
+    display: grid;
+    gap: 1.25rem;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+
+  /* ---------- stage header: one ruled line, like the head of a stage profile ---------- */
+  .rb-stage {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .rb-stage:not(.has-tabs) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rb--default .rb-stage {
+    margin-bottom: 0.75rem;
+  }
+
+  .rb-letter {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1.5px solid currentColor;
     border-radius: 2px;
+    font-stretch: 70%;
+    font-weight: 820;
+    font-size: 1.0625rem;
+    line-height: 1;
+  }
+
+  .rb-tabs {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
   }
 
   .rb-tabs label {
     display: flex;
-    align-items: baseline;
-    gap: 0.6rem;
-    padding: 0.7rem 1.1rem 0.6rem;
+    align-items: center;
+    gap: 0.4rem 0.65rem;
+    padding: 0.85rem 1.15rem;
     cursor: pointer;
     font-stretch: 72%;
     font-weight: 760;
     text-transform: uppercase;
     font-size: 1.0625rem;
     line-height: 1;
-    transition: background-color 0.2s, color 0.2s;
+    border-right: 1px solid var(--line-strong);
+    transition:
+      background-color 0.2s var(--ease-out),
+      color 0.2s var(--ease-out);
   }
 
-  .rb-tabs label + input + label,
-  .rb-tabs input + label + input + label {
-    border-left: 1.5px solid var(--ink);
+  .rb-tabs label:hover {
+    background: var(--ridge-100);
   }
 
   .tab-km {
     font-weight: 500;
+    text-transform: none;
     color: var(--ink-3);
+    white-space: nowrap;
   }
 
   .rb-tabs input:checked + label {
     background: var(--ink);
     color: #fff;
+  }
+
+  .rb-tabs input:checked + label .rb-letter {
+    background: #fff;
+    border-color: #fff;
+    color: var(--ink);
   }
 
   .rb-tabs input:checked + label .tab-km {
@@ -314,48 +538,83 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
 
   .rb-tabs input:focus-visible + label {
     outline: 3px solid var(--red);
-    outline-offset: 3px;
+    outline-offset: -3px;
   }
 
-  .rb:has(input[value='long']:checked) .rb-route[data-route='short'],
-  .rb:has(input[value='short']:checked) .rb-route[data-route='long'] {
-    display: none;
+  .rb-facts {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
   }
 
-  /* stats */
-  .rb-stats {
-    display: grid;
-    grid-template-columns: repeat(4, auto);
-    justify-content: start;
-    gap: 1rem clamp(1.5rem, 4vw, 4rem);
-    margin: 0 0 1.5rem;
+  .rb-fact {
+    padding: 0.7rem clamp(0.9rem, 1.6vw, 1.5rem) 0.75rem;
   }
 
-  .rb-stats dt {
+  .rb-fact + .rb-fact {
+    border-left: 1px solid var(--line);
+  }
+
+  .rb-fact dt {
+    color: var(--ink-3);
+    font-size: 0.75rem;
+  }
+
+  .rb-fact dd {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 0.4rem;
+    margin: 0.3rem 0 0;
+  }
+
+  .rb-fact .v {
+    font-stretch: 70%;
+    font-weight: 780;
+    font-size: 1.375rem;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+
+  .rb-fact .q {
+    font-size: 0.875rem;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  .rb-fact--title dd {
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0;
+    height: 100%;
+  }
+
+  .rb-fact--title .v {
+    text-transform: uppercase;
+  }
+
+  .rb-note {
+    margin: 0.65rem 0 0;
+    max-width: 80ch;
+    font-size: 0.875rem;
+    line-height: 1.45;
     color: var(--ink-3);
   }
 
-  .rb-stats dd {
-    margin: 0.35rem 0 0;
-    font-stretch: 66%;
-    font-weight: 800;
-    font-size: clamp(2rem, 3.6vw, 3rem);
-    line-height: 1;
+  .rb--default .rb-note {
+    margin-bottom: 1.5rem;
   }
 
-  .rb-stats dd span {
-    margin-left: 0.15em;
-    font-size: 0.45em;
-    font-weight: 650;
-    font-stretch: 80%;
-    color: var(--ink-2);
-  }
-
-  /* chart */
+  /* ---------- chart ---------- */
   .rb-chart {
+    --climb-band: 0rem;
     position: relative;
-    padding-top: var(--label-band);
+    padding-top: calc(var(--label-band) + var(--climb-band));
     padding-bottom: calc(var(--axis-h) + 1.75rem);
+  }
+
+  .rb-chart.has-climbs {
+    --climb-band: 1.6rem;
   }
 
   .rb-plot {
@@ -406,12 +665,45 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     color: var(--ink-3);
   }
 
+  /* climbs: a thin bracket under the label band, from the foot to the top of each climb */
+  .rb-brackets {
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    top: var(--label-band);
+    height: var(--climb-band);
+    pointer-events: none;
+  }
+
+  .rb-bracket {
+    position: absolute;
+    bottom: 0.2rem;
+    height: 0.45rem;
+    border: 1.5px solid var(--ink-2);
+    border-bottom: 0;
+  }
+
+  .rb-bracket .num {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 0.1rem);
+    transform: translateX(-50%);
+    padding: 0 0.3rem;
+    background: var(--snow);
+    font-size: 0.75rem;
+    font-weight: 650;
+    line-height: 1.1;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
   /* place markers: vertical names on stems, the road book's signature */
   .rb-mark {
     position: absolute;
     left: var(--x);
     top: 0;
-    height: calc(var(--label-band) + var(--plot-h) * var(--y));
+    height: calc(var(--label-band) + var(--climb-band) + var(--plot-h) * var(--y));
     width: 0;
   }
 
@@ -526,7 +818,7 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     position: absolute;
     left: 0;
     right: 0;
-    top: calc(var(--label-band) + var(--plot-h) - 2.4rem);
+    top: calc(var(--label-band) + var(--climb-band) + var(--plot-h) - 2.4rem);
     height: 2rem;
     pointer-events: none;
   }
@@ -558,7 +850,7 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     position: absolute;
     left: 0;
     right: 0;
-    top: var(--label-band);
+    top: calc(var(--label-band) + var(--climb-band));
     height: var(--plot-h);
     cursor: crosshair;
     touch-action: pan-y;
@@ -589,28 +881,45 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     transform: translateY(-50%);
   }
 
+  /* the readout lives inside the plot, beside the cursor; it never touches the label band */
   .rb-read {
     position: absolute;
-    top: -2.6rem;
+    top: 0;
     left: 0;
-    transform: translateX(-50%);
-    padding: 0.35rem 0.6rem 0.3rem;
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.4rem 0.6rem 0.4rem;
     background: var(--ink);
     color: #fff;
     border-radius: 2px;
+    box-shadow: 0 6px 18px -8px rgba(6, 18, 33, 0.45);
     white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .rb-read[hidden] {
+    display: none;
+  }
+
+  .rd-top {
     font-stretch: 75%;
     font-weight: 650;
     font-size: 0.9375rem;
     line-height: 1.2;
   }
 
-  .rb-read[data-side='right'] {
-    transform: none;
+  .rd-name {
+    font-stretch: 66%;
+    font-weight: 760;
+    font-size: 0.8125rem;
+    line-height: 1.1;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--ridge-200);
   }
 
-  .rb-read[data-side='left'] {
-    transform: translateX(-100%);
+  .rd-name:empty {
+    display: none;
   }
 
   /* foot */
@@ -620,6 +929,10 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     align-items: center;
     justify-content: space-between;
     gap: 1rem 2rem;
+  }
+
+  .rb--chart-first .rb-foot {
+    margin-top: 1.25rem;
   }
 
   .rb-legend {
@@ -658,22 +971,155 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     background: var(--grade-3);
   }
 
+  .sw-bracket {
+    width: 1.35rem;
+    height: 0.45rem;
+    border: 1.5px solid var(--ink-2);
+    border-bottom: 0;
+    transform: translateY(0.1rem);
+  }
+
+  /* lead: heading and lede beside the climbs (chart-first), or the climbs alone */
+  .rb-lead {
+    display: grid;
+    gap: 2.5rem clamp(2.5rem, 6vw, 6rem);
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+    align-items: start;
+  }
+
+  .rb-lead.has-copy {
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+  }
+
+  .rb-lead-copy {
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+  }
+
+  .rb-h3 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.6rem;
+    margin-bottom: 0.9rem;
+    font-stretch: 72%;
+    font-weight: 780;
+    text-transform: uppercase;
+    font-size: clamp(1.375rem, 2.2vw, 1.75rem);
+    line-height: 1;
+  }
+
+  .rb-h3-sub {
+    font-weight: 560;
+    font-size: 0.65em;
+    color: var(--ink-3);
+  }
+
+  .rb-climbs table {
+    width: 100%;
+  }
+
+  .rb-climbs th,
+  .rb-climbs td {
+    padding: 0.6rem 0.75rem 0.6rem 0;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: baseline;
+  }
+
+  .rb-climbs th:last-child,
+  .rb-climbs td:last-child {
+    padding-right: 0;
+  }
+
+  .rb-climbs thead th {
+    padding-block: 0 0.5rem;
+    border-bottom: 1.5px solid var(--ink);
+    font-stretch: 66%;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.75rem;
+    line-height: 1.15;
+    color: var(--ink-3);
+    vertical-align: bottom;
+  }
+
+  .rb-climbs .n {
+    text-align: right;
+  }
+
+  .rb-climbs tbody th {
+    font-weight: 400;
+  }
+
+  .rb-climbs tbody th b {
+    display: block;
+    font-stretch: 72%;
+    font-weight: 760;
+    text-transform: uppercase;
+    font-size: 1.0625rem;
+    line-height: 1.1;
+  }
+
+  .rb-climbs .span {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8125rem;
+    color: var(--ink-3);
+  }
+
+  .rb-climbs td {
+    font-stretch: 80%;
+    font-weight: 650;
+    font-size: 1.0625rem;
+    white-space: nowrap;
+  }
+
+  /* places table */
   .rb-table {
-    margin-top: 1.75rem;
+    margin-top: clamp(2rem, 4vw, 3rem);
     border-top: 1px solid var(--line);
   }
 
+  .rb--default .rb-table {
+    margin-top: 1.75rem;
+  }
+
   .rb-table summary {
-    padding-block: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-block: 0.6rem;
     cursor: pointer;
+    list-style: none;
     font-stretch: 75%;
     font-weight: 720;
     text-transform: uppercase;
     letter-spacing: 0.02em;
   }
 
-  .rb-table summary::marker {
-    color: var(--red);
+  .rb-table summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .rb-table summary:hover span {
+    text-decoration: underline;
+    text-decoration-color: var(--red);
+    text-underline-offset: 0.2em;
+  }
+
+  .rb-table summary :global(.rb-chev) {
+    flex: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    transition: transform 0.3s var(--ease-out);
+  }
+
+  .rb-table[open] summary :global(.rb-chev) {
+    transform: rotate(180deg);
   }
 
   .rb-table table {
@@ -706,13 +1152,14 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     color: var(--ink-3);
   }
 
-  /* the ride: the profile is drawn left to right once, stems land as it passes */
+  /* the ride: the profile is drawn left to right once, stems and climbs land as it passes */
   :global(.js) .rb-route .rb-svg {
     clip-path: inset(0 100% 0 0);
   }
 
   :global(.js) .rb-route .rb-mark,
-  :global(.js) .rb-route .svc {
+  :global(.js) .rb-route .svc,
+  :global(.js) .rb-route .rb-bracket {
     opacity: 0;
   }
 
@@ -722,7 +1169,8 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
   }
 
   :global(.js) .rb-chart.is-in .rb-mark,
-  :global(.js) .rb-chart.is-in .svc {
+  :global(.js) .rb-chart.is-in .svc,
+  :global(.js) .rb-chart.is-in .rb-bracket {
     opacity: 1;
     transition: opacity 0.5s var(--ease-out);
     transition-delay: var(--t, 0s);
@@ -733,14 +1181,52 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
       clip-path: none;
     }
     :global(.js) .rb-route .rb-mark,
-    :global(.js) .rb-route .svc {
+    :global(.js) .rb-route .svc,
+    :global(.js) .rb-route .rb-bracket {
       opacity: 1;
+    }
+  }
+
+  @media (max-width: 75rem) {
+    .rb-stage.has-tabs {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rb-stage.has-tabs .rb-tabs {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .rb-stage.has-tabs .rb-tabs label:last-of-type {
+      border-right: 0;
+    }
+
+    .rb-stage.has-tabs .rb-fact:first-child {
+      padding-left: 0;
+    }
+  }
+
+  @media (max-width: 60rem) {
+    .rb-lead.has-copy {
+      grid-template-columns: minmax(0, 1fr);
     }
   }
 
   @media (max-width: 48rem) {
     .rb {
       --label-band: 7.5rem;
+    }
+
+    .rb-chart.has-climbs {
+      --climb-band: 0.9rem;
+    }
+
+    .rb-bracket {
+      bottom: 0.15rem;
+      height: 0.35rem;
+    }
+
+    .rb-bracket .num {
+      display: none;
     }
 
     .tier-2 {
@@ -751,18 +1237,49 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
       display: none;
     }
 
-    .rb-stats {
-      grid-template-columns: repeat(2, auto);
-    }
-
-    .rb-tabs {
-      display: flex;
-    }
-
     .rb-tabs label {
       flex: 1;
-      flex-direction: column;
-      gap: 0.3rem;
+      flex-wrap: wrap;
+      padding: 0.75rem 0.85rem;
+    }
+
+    .rb-tabs label:last-of-type {
+      border-right: 0;
+    }
+
+    .tab-km {
+      flex-basis: 100%;
+      padding-left: 2.4rem;
+    }
+
+    .rb-facts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .rb-fact {
+      padding: 0.6rem 0 0.65rem;
+    }
+
+    .rb-fact + .rb-fact {
+      border-left: 0;
+    }
+
+    .rb-fact:nth-child(n + 3) {
+      border-top: 1px solid var(--line);
+    }
+
+    .rb-fact:nth-child(even) {
+      padding-left: 1rem;
+      border-left: 1px solid var(--line);
+    }
+
+    .rb-fact:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+
+    .rb-fact .v {
+      font-size: 1.25rem;
     }
 
     .tick:not(.major) {
@@ -786,6 +1303,23 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     .tick.major:nth-of-type(4n + 3) span {
       display: none;
     }
+
+    .rb-climbs th,
+    .rb-climbs td {
+      padding-right: 0.5rem;
+    }
+
+    .rb-climbs tbody th b {
+      font-size: 0.9375rem;
+    }
+
+    .rb-climbs td {
+      font-size: 0.9375rem;
+    }
+
+    .rb-climbs .span {
+      font-size: 0.75rem;
+    }
   }
 </style>
 
@@ -800,19 +1334,26 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     const cursor = chart.querySelector<HTMLElement>('.rb-cursor')!;
     const dot = chart.querySelector<HTMLElement>('.rb-dot')!;
     const read = chart.querySelector<HTMLElement>('.rb-read')!;
+    const readTop = read.querySelector<HTMLElement>('.rd-top')!;
+    const readName = read.querySelector<HTMLElement>('.rd-name')!;
     const ALT_MIN = 300;
     const ALT_MAX = 1150;
+    const pts = data.p;
 
+    // binary search: 675 samples, called on every pointer move
     const altAt = (km: number) => {
-      const p = data.p;
-      for (let i = 1; i < p.length; i++) {
-        if (p[i][0] >= km) {
-          const [k0, a0] = p[i - 1];
-          const [k1, a1] = p[i];
-          return a0 + ((a1 - a0) * (km - k0)) / (k1 - k0 || 1);
-        }
+      let lo = 0;
+      let hi = pts.length - 1;
+      if (km <= pts[0][0]) return pts[0][1];
+      if (km >= pts[hi][0]) return pts[hi][1];
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >> 1;
+        if (pts[mid][0] <= km) lo = mid;
+        else hi = mid;
       }
-      return p[p.length - 1][1];
+      const [k0, a0] = pts[lo];
+      const [k1, a1] = pts[hi];
+      return a0 + ((a1 - a0) * (km - k0)) / (k1 - k0 || 1);
     };
 
     let km = 0;
@@ -822,13 +1363,36 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
       const near = data.w.find((w) => Math.abs(w[0] - km) <= Math.max(0.9, data.L / 150));
       const alt = near ? near[1] : line;
       const x = (km / data.L) * 100;
+      const yf = 1 - (line - ALT_MIN) / (ALT_MAX - ALT_MIN);
       cursor.hidden = false;
+      read.hidden = false;
       cursor.style.left = `${x}%`;
-      dot.style.top = `${(1 - (line - ALT_MIN) / (ALT_MAX - ALT_MIN)) * 100}%`;
-      read.textContent = `km ${fmt(km, 1)} · ${fmt(alt)} m${near ? ` · ${near[2]}` : ''}`;
-      read.dataset.side = x < 12 ? 'right' : x > 88 ? 'left' : '';
+      dot.style.top = `${yf * 100}%`;
+      readTop.textContent = `km ${fmt(km, 1)} · ${fmt(alt)} m`;
+      readName.textContent = near ? near[2] : '';
+
+      // beside the cursor, flipping sides near the edges; above or below the dot, inside the plot
+      const W = scrub.clientWidth;
+      const H = scrub.clientHeight;
+      const rw = read.offsetWidth;
+      const rh = read.offsetHeight;
+      const cx = (x / 100) * W;
+      const cy = yf * H;
+      const gap = 12;
+      let left = cx + gap;
+      if (left + rw > W) left = cx - gap - rw;
+      if (left < 0) left = Math.max(0, Math.min(W - rw, cx - rw / 2));
+      let top = cy < H * 0.45 ? cy + gap + 4 : cy - gap - 4 - rh;
+      top = Math.max(4, Math.min(H - rh - 4, top));
+      read.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+
       scrub.setAttribute('aria-valuenow', String(Math.round(km)));
       scrub.setAttribute('aria-valuetext', `km ${fmt(km, 1)}, ${fmt(alt)} metrů${near ? `, ${near[2]}` : ''}`);
+    };
+
+    const hide = () => {
+      cursor.hidden = true;
+      read.hidden = true;
     };
 
     const fromPointer = (e: PointerEvent) => {
@@ -839,10 +1403,10 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
     scrub.addEventListener('pointermove', fromPointer);
     scrub.addEventListener('pointerdown', fromPointer);
     scrub.addEventListener('pointerleave', (e) => {
-      if (e.pointerType === 'mouse' && document.activeElement !== scrub) cursor.hidden = true;
+      if (e.pointerType === 'mouse' && document.activeElement !== scrub) hide();
     });
     scrub.addEventListener('focus', () => show(km));
-    scrub.addEventListener('blur', () => (cursor.hidden = true));
+    scrub.addEventListener('blur', hide);
     scrub.addEventListener('keydown', (e) => {
       const step = e.shiftKey ? 10 : 1;
       const keys: Record<string, number> = {
@@ -850,6 +1414,8 @@ const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
         ArrowUp: km + step,
         ArrowLeft: km - step,
         ArrowDown: km - step,
+        PageUp: km + 10,
+        PageDown: km - 10,
         Home: 0,
         End: data.L,
       };
