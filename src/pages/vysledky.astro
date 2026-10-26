@@ -6,9 +6,10 @@ import splits from '../data/splits-2026.json';
 import routes from '../data/routes.json';
 
 type Link = { label: string; href: string };
-// A group of secondary results. Its label carries the words a link label no longer repeats
-// ("Dětské závody" + "BABY"); a group without a label keeps its links' full names.
-type Group = { label?: string; links: Link[] };
+// A group of secondary results. With `prefixed`, its label carries the words its link labels
+// no longer repeat ("Dětské závody" + "BABY"); screen readers still hear the full name.
+// A group without a label keeps its links' full names.
+type Group = { label?: string; prefixed?: boolean; links: Link[] };
 type Edition = { n: number; date: string; main: Link; groups?: Group[] };
 
 const MAIN = 'Hlavní závod (online)';
@@ -20,6 +21,7 @@ const editions: Edition[] = [
     groups: [
       {
         label: 'Dětské závody',
+        prefixed: true,
         links: [
           { label: 'BABY', href: '/docs/Vysledky-deti-BABY.pdf' },
           { label: 'MINI, ŽÁCI I a II', href: '/docs/Vysledky-deti-MINI-ZACI-I-ZACI-II.pdf' },
@@ -127,6 +129,7 @@ const winners = [
                         <li>
                           <a href={l.href}>
                             <Icon name="download" />
+                            {g.prefixed && <span class="visually-hidden">{g.label} - </span>}
                             {l.label}
                             <span class="fmt">PDF</span>
                           </a>
@@ -165,6 +168,7 @@ const winners = [
                         <li>
                           <a href={l.href}>
                             <Icon name="download" />
+                            {g.prefixed && <span class="visually-hidden">{g.label} - </span>}
                             {l.label}
                             <span class="fmt">PDF</span>
                           </a>
@@ -371,33 +375,42 @@ const winners = [
     display: grid;
   }
 
-  /* the label sits tight on its own links and clear of the ones above */
   .grp-label {
-    padding-top: 0.65rem;
     color: var(--ink-3);
   }
 
+  /* in an archive row a label opens a new group, well clear of the links above */
+  .ed .grp-label {
+    padding-top: 1.25rem;
+  }
+
+  /* The PDFs run as words in a line: wrapped lines balance (no lone link) and stack at the
+     2rem target pitch, so a group reads as one block. Each link carries its gap on its leading
+     side and the list pulls that gap back, so every line starts flush and no trailing gap
+     forces an early wrap.
+     The label keeps 0.625rem clear, enough for the focus ring (3px at 3px offset). */
   .grp ul {
     list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    column-gap: 1.25rem;
-    margin-top: -0.3rem;
+    margin-inline-start: -1rem;
+    line-height: 1;
+    text-wrap: balance;
   }
 
   .grp-label + ul {
-    margin-top: -0.2rem;
+    margin-top: 0.625rem;
   }
 
-  .grp:not(:has(.grp-label)) ul {
-    margin-top: -0.3rem;
+  .grp li {
+    display: inline;
   }
 
   .grp a {
     display: inline-flex;
+    vertical-align: top;
     align-items: center;
     gap: 0.4rem;
-    min-height: 2.5rem;
+    min-height: 2rem;
+    margin-inline-start: 1rem;
     color: var(--ink-2);
     font-size: 0.9375rem;
     font-weight: 560;
@@ -436,8 +449,13 @@ const winners = [
       align-items: start;
     }
 
-    .lt-head {
-      grid-row: span 2;
+    /* the edition beside its winners; the results run along the foot of the plate */
+    .lt-links {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 1.25rem clamp(2rem, 5vw, 3.5rem);
     }
 
     .ed {
@@ -464,6 +482,15 @@ const winners = [
     }
   }
 
+  /* once the first column fits the button, the results take the plate's columns:
+     the button under the date, the PDFs under the winners */
+  @media (min-width: 50rem) {
+    .lt-links {
+      display: grid;
+      grid-template-columns: subgrid;
+    }
+  }
+
   /* ---------- desktop: the latest edition beside the archive ---------- */
 
   @media (min-width: 75rem) {
@@ -485,10 +512,6 @@ const winners = [
 
     .plate {
       grid-template-columns: minmax(0, 1fr);
-    }
-
-    .lt-head {
-      grid-row: auto;
     }
   }
 
