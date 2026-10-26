@@ -1,0 +1,179 @@
+{
+ "source": "Oficiální výsledky 2026, SportSoft (vysledky.sportsoft.cz/race/805), mezičasy Pomezní bouda a Pražská bouda; ostatní místa dopočítána lineárně mezi měřenými body.",
+ "year": 2026,
+ "date": "13. 6. 2026",
+ "stats": {
+  "long": {
+   "finishers": 223,
+   "winner": "Kerl Maximilian",
+   "winnerTime": "3:34:52"
+  },
+  "short": {
+   "finishers": 254,
+   "winner": "Holan Pavel",
+   "winnerTime": "2:19:52"
+  }
+ },
+ "spots": [
+  {
+   "id": "start",
+   "name": "Start · Trutnov, UFFO",
+   "km": {
+    "long": 0,
+    "short": 0
+   },
+   "kind": "start",
+   "measured": true,
+   "window": {
+    "long": {
+     "km": 0,
+     "first": "10:00",
+     "last": "10:00"
+    },
+    "short": {
+     "km": 0,
+     "first": "10:05",
+     "last": "10:05"
+    }
+   }
+  },
+  {
+   "id": "prkenny",
+   "name": "Prkenný Důl · Žacléř",
+   "km": {
+    "long": 20.1,
+    "short": 20.7
+   },
+   "kind": "climb",
+   "measured": false,
+   "window": {
+    "long": {
+     "km": 20.1,
+     "first": "10:34",
+     "last": "11:06"
+    },
+    "short": {
+     "km": 20.7,
+     "first": "10:42",
+     "last": "11:26"
+    }
+   }
+  },
+  {
+   "id": "lubawka",
+   "name": "Lubawka (PL)",
+   "km": {
+    "long": 31.2,
+    "short": 31.1
+   },
+   "kind": "town",
+   "measured": false,
+   "window": {
+    "long": {
+     "km": 31.2,
+     "first": "10:53",
+     "last": "11:43"
+    },
+    "short": {
+     "km": 31.1,
+     "first": "11:01",
+     "last": "12:06"
+    }
+   }
+  },
+  {
+   "id": "pomezni",
+   "name": "Pomezní Boudy",
+   "km": {
+    "long": 51.5,
+    "short": 51.5
+   },
+   "kind": "summit",
+   "measured": true,
+   "split": "Pomezní bouda",
+   "window": {
+    "long": {
+     "km": 51.5,
+     "first": "11:27",
+     "last": "12:49"
+    },
+    "short": {
+     "km": 51.5,
+     "first": "11:38",
+     "last": "13:26"
+    }
+   }
+  },
+  {
+   "id": "prazska",
+   "name": "Pražská bouda",
+   "km": {
+    "long": 72.5
+   },
+   "kind": "summit",
+   "measured": true,
+   "split": "Pražská bouda",
+   "window": {
+    "long": {
+     "km": 72.5,
+     "first": "12:02",
+     "last": "14:04"
+    }
+   }
+  },
+  {
+   "id": "strazne",
+   "name": "Strážné",
+   "km": {
+    "long": 90.0
+   },
+   "kind": "climb",
+   "measured": false,
+   "window": {
+    "long": {
+     "km": 90.0,
+     "first": "12:28",
+     "last": "14:53"
+    }
+   }
+  },
+  {
+   "id": "janske",
+   "name": "Janské Lázně",
+   "km": {
+    "long": 112.5
+   },
+   "kind": "climb",
+   "measured": false,
+   "window": {
+    "long": {
+     "km": 112.5,
+     "first": "13:02",
+     "last": "15:57"
+    }
+   }
+  },
+  {
+   "id": "cil",
+   "name": "Cíl · Trutnov, UFFO",
+   "km": {
+    "long": 134.7,
+    "short": 88.5
+   },
+   "kind": "finish",
+   "measured": true,
+   "window": {
+    "long": {
+     "km": 134.7,
+     "first": "13:35",
+     "last": "16:59"
+    },
+    "short": {
+     "km": 88.5,
+     "first": "12:25",
+     "last": "15:02"
+    }
+   }
+  }
+ ]
+}

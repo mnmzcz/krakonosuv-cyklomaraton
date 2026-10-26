@@ -1,0 +1,236 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import dres1 from '../assets/shop/dres1.png';
+import dres2 from '../assets/shop/dres2.png';
+import trickoLove from '../assets/shop/tricko-love.jpg';
+import tricko3 from '../assets/shop/tricko3.png';
+import ponCerv1 from '../assets/shop/ponozky-cervene-2.jpg';
+import ponCerv2 from '../assets/shop/ponozky-cervene-1.jpg';
+import ponZel1 from '../assets/shop/ponozky1.png';
+import ponZel2 from '../assets/shop/ponozky2.png';
+import lahev3 from '../assets/shop/lahev3.png';
+import lahev from '../assets/shop/lahev.png';
+import ksilt1 from '../assets/shop/ksiltovka.png';
+import ksilt2 from '../assets/shop/ksiltovka2.png';
+import privesek from '../assets/shop/privesek.png';
+import klicenka from '../assets/shop/klicenka.png';
+
+const products = [
+  {
+    name: 'Krátký dres',
+    specs: ['Výrobce: Sýkora Sportswear', 'Velikosti: dámské S, L a pánské S, M (dámské M a pánské L, XL – NA DOTAZ)'],
+    price: '2 100 Kč',
+    images: [dres1, dres2],
+  },
+  {
+    name: 'Tričko I <3 Krakonošův cyklomaraton',
+    specs: ['Výrobce: Gildan', 'Velikosti: dámksé S, M, L a pánské M, L, XL'],
+    price: '200 Kč',
+    images: [trickoLove, tricko3],
+  },
+  { name: 'Sportovní ponožky červenožluté', specs: ['Velikosti: 36-41 a 42-46'], price: '150 Kč', images: [ponCerv1, ponCerv2] },
+  { name: 'Sportovní ponožky zelenomodré', specs: ['Velikosti: 36-41 a 42-46'], price: '150 Kč', images: [ponZel1, ponZel2] },
+  { name: 'Zdravá lahev', specs: ['Výrobce: R&B'], price: '250 Kč', images: [lahev3, lahev] },
+  { name: 'Kšiltovka', specs: ['Velikost: UNI'], price: '350 Kč', images: [ksilt1, ksilt2] },
+  { name: 'Přívěsek Krakonoš', specs: [], price: '50 Kč', images: [privesek] },
+  { name: 'Klíčenka', specs: [], price: '50 Kč', images: [klicenka] },
+];
+---
+
+<Base title="E-shop" description="Dárkové předměty Krakonošova cyklomaratonu: dres, trička, ponožky, lahve, kšiltovky a další.">
+  <PageHead
+    title="E-shop"
+    lede="Vybíráte Vánoční dárek a nechcete dávat jen voucher? Nebo máte Krakonošův cyklomaraton v lásce a chcete mít i fyzickou památku na závod? Pak se podívejte na naší nabídku a vyplňte formulář na konci stránky."
+  />
+
+  <section class="section" aria-label="Nabídka">
+    <div class="wrap">
+      <ul class="products">
+        {
+          products.map((p, i) => (
+            <li class="product">
+              <div class:list={['shots', { single: p.images.length === 1 }]}>
+                {p.images.map((img, j) => (
+                  <Image src={img} alt={j === 0 ? p.name : `${p.name}, další pohled`} widths={[300, 600]} sizes="(max-width: 40rem) 45vw, 18vw" />
+                ))}
+              </div>
+              <div class="p-info">
+                <h2 class="p-name">{p.name}</h2>
+                {p.specs.length > 0 && (
+                  <ul class="p-specs">
+                    {p.specs.map((s) => (
+                      <li>{s}</li>
+                    ))}
+                  </ul>
+                )}
+                <p class="p-price num">
+                  <span class="t-label">Cena</span> {p.price}
+                </p>
+                <a class="link-arrow" href="#poptavka" data-product={p.name}>
+                  Mám zájem <Icon name="arrow" />
+                </a>
+              </div>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="section field-dark" id="poptavka" aria-labelledby="poptavka-title">
+    <div class="wrap order">
+      <div>
+        <h2 class="t-title" id="poptavka-title">Poptávka</h2>
+        <p class="t-lede">Napište nám, o které produkty máte zájem. Ozveme se s dostupností a platbou.</p>
+      </div>
+      <form class="form shop-form" name="e-shop" method="POST" action="/dekujeme/" data-netlify="true" netlify-honeypot="bot-field">
+        <input type="hidden" name="form-name" value="e-shop" />
+        <p class="visually-hidden"><label>Nevyplňujte: <input name="bot-field" tabindex="-1" autocomplete="off" /></label></p>
+        <div class="field">
+          <label for="s-name">Jméno a příjmení</label>
+          <input id="s-name" name="jmeno" required autocomplete="name" />
+          <p class="field-error">Vyplňte jméno a příjmení.</p>
+        </div>
+        <div class="field">
+          <label for="s-mail">Kontaktní e-mail</label>
+          <input id="s-mail" name="email" type="email" required autocomplete="email" />
+          <p class="field-error">Zadejte platný e-mail, např. jmeno@domena.cz.</p>
+        </div>
+        <div class="field">
+          <label for="s-what">O jaké produkty máte zájem?</label>
+          <textarea id="s-what" name="produkty" required data-products></textarea>
+          <p class="field-error">Napište, o co máte zájem.</p>
+        </div>
+        <button class="btn" type="submit">Odeslat poptávku <Icon name="arrow" /></button>
+      </form>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .products {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(2.5rem, 5vw, 4rem) clamp(2rem, 4vw, 3.5rem);
+  }
+
+  .product {
+    display: grid;
+    grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+    gap: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1.5px solid var(--ink);
+  }
+
+  .shots {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    align-content: start;
+  }
+
+  .shots.single {
+    grid-template-columns: 1fr;
+  }
+
+  .shots :global(img) {
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: contain;
+    background: var(--paper);
+  }
+
+  .p-info {
+    display: grid;
+    gap: 0.75rem;
+    align-content: start;
+    justify-items: start;
+  }
+
+  .p-name {
+    font-stretch: 72%;
+    font-weight: 800;
+    font-size: 1.5rem;
+    line-height: 1.05;
+  }
+
+  .p-specs {
+    list-style: none;
+    display: grid;
+    gap: 0.25rem;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .p-price {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    font-stretch: 66%;
+    font-weight: 800;
+    font-size: 1.875rem;
+    line-height: 1;
+  }
+
+  .p-price .t-label {
+    color: var(--ink-3);
+  }
+
+  .order {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: start;
+  }
+
+  .order > div {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  .shop-form .btn {
+    justify-self: start;
+  }
+
+  .shop-form .field input,
+  .shop-form .field textarea {
+    border-color: transparent;
+  }
+
+  .shop-form .field-error {
+    color: #ffb3b8;
+  }
+
+  @media (max-width: 70rem) {
+    .products {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .product {
+      grid-template-columns: 1fr;
+    }
+
+    .order {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script>
+  // "Mám zájem" carries the product into the enquiry
+  const box = document.querySelector<HTMLTextAreaElement>('[data-products]');
+  document.querySelectorAll<HTMLAnchorElement>('[data-product]').forEach((a) =>
+    a.addEventListener('click', () => {
+      if (!box) return;
+      const name = a.dataset.product!;
+      const lines = box.value.split('\n').filter(Boolean);
+      if (!lines.includes(name)) box.value = [...lines, name].join('\n');
+    }),
+  );
+</script>

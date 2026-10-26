@@ -1,0 +1,143 @@
+---
+import { Image } from 'astro:assets';
+import { render } from 'astro:content';
+import Base from '../../../../layouts/Base.astro';
+import Icon from '../../../../components/Icon.astro';
+import { getPosts, postDate, postUrl, type Post } from '../../../../lib/news';
+
+export async function getStaticPaths() {
+  const posts = await getPosts();
+  return posts.map((post) => {
+    const [, year, month, day, slug] = postUrl(post).split('/');
+    return { params: { year, month, day, slug }, props: { post, posts } };
+  });
+}
+
+const { post, posts } = Astro.props as { post: Post; posts: Post[] };
+const { Content } = await render(post);
+const i = posts.findIndex((p) => p.id === post.id);
+const newer = posts[i - 1];
+const older = posts[i + 1];
+---
+
+<Base title={post.data.title} description={post.data.excerpt} ogImage={post.data.image} type="article">
+  <article>
+    <header class="a-head">
+      <div class="wrap">
+        <p class="a-meta t-label num">
+          <a href="/aktuality/">Aktuality</a> · <time datetime={post.data.date.toISOString().slice(0, 10)}>{postDate(post)}</time> · {post.data.category}
+        </p>
+        <h1 class="a-title">{post.data.title}</h1>
+      </div>
+    </header>
+    <div class="wrap a-img">
+      <Image src={post.data.image} alt={post.data.imageAlt} widths={[640, 1000, 1400]} sizes="(max-width: 70rem) 100vw, 70rem" loading="eager" />
+    </div>
+    <div class="wrap a-body">
+      <div class="prose">
+        <Content />
+      </div>
+    </div>
+  </article>
+
+  <nav class="wrap a-nav" aria-label="Další aktuality">
+    {
+      older ? (
+        <a href={postUrl(older)} class="a-prev">
+          <span class="t-label">Starší</span>
+          <span class="a-nav-title">{older.data.title}</span>
+        </a>
+      ) : (
+        <span />
+      )
+    }
+    {
+      newer && (
+        <a href={postUrl(newer)} class="a-next">
+          <span class="t-label">Novější</span>
+          <span class="a-nav-title">{newer.data.title}</span>
+        </a>
+      )
+    }
+  </nav>
+  <div class="wrap a-back">
+    <a class="link-arrow" href="/aktuality/">Všechny aktuality <Icon name="arrow" /></a>
+  </div>
+</Base>
+
+<style>
+  .a-head {
+    padding-top: clamp(3rem, 7vw, 6rem);
+    padding-bottom: 2.5rem;
+  }
+
+  .a-meta {
+    color: var(--ink-3);
+  }
+
+  .a-meta a {
+    color: inherit;
+  }
+
+  .a-title {
+    margin-top: 1rem;
+    max-width: 22ch;
+    font-stretch: 66%;
+    font-weight: 820;
+    font-size: clamp(2.5rem, 6vw, 4.75rem);
+    line-height: 0.98;
+    text-transform: uppercase;
+  }
+
+  .a-img :global(img) {
+    width: 100%;
+    max-height: 42rem;
+    object-fit: cover;
+  }
+
+  .a-body {
+    padding-block: clamp(2.5rem, 5vw, 4rem) var(--space-section);
+  }
+
+  .a-body .prose {
+    font-size: 1.125rem;
+  }
+
+  .a-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding-block: 2rem;
+    border-top: 1.5px solid var(--ink);
+  }
+
+  .a-nav a {
+    display: grid;
+    gap: 0.4rem;
+    text-decoration: none;
+  }
+
+  .a-nav .t-label {
+    color: var(--ink-3);
+  }
+
+  .a-nav-title {
+    font-stretch: 78%;
+    font-weight: 740;
+    font-size: 1.25rem;
+    line-height: 1.15;
+  }
+
+  .a-nav a:hover .a-nav-title {
+    text-decoration: underline;
+    text-decoration-color: var(--red);
+  }
+
+  .a-next {
+    text-align: right;
+  }
+
+  .a-back {
+    padding-bottom: var(--space-section);
+  }
+</style>

@@ -1,0 +1,254 @@
+---
+// Startovné as a climb: every step up the staircase is a later deadline.
+import Icon from './Icon.astro';
+import { currentTierIndex, kc, priceNote, priceTiers } from '../data/race';
+
+interface Props {
+  title?: string;
+  lede?: string;
+  cta?: boolean;
+  headingLevel?: 'h2' | 'h3';
+}
+
+const {
+  title = 'Využijte zvýhodněné startovné!',
+  lede = 'Kdo se dřív registruje, ten platí méně! Využijte možnosti brzké registrace a získejte tu nejvýhodnější možnou cenu.',
+  cta = true,
+  headingLevel: H = 'h2',
+} = Astro.props;
+
+const max = 2600;
+const now = currentTierIndex();
+const steps = priceTiers.map((t, i) => {
+  const top = t.long ?? t.cash!;
+  return { ...t, i, h: (top / max) * 100, state: i < now ? 'past' : i === now ? 'now' : 'next' };
+});
+---
+
+<div class="climb" data-climb>
+  <div class="copy">
+    <H class="t-title">{title}</H>
+    <p class="t-lede">{lede}</p>
+    {
+      cta && (
+        <a class="btn" href="/registrace/">
+          Registrace <Icon name="arrow" />
+        </a>
+      )
+    }
+  </div>
+
+  <figure class="chart">
+    <ol class="steps">
+      {
+        steps.map((s) => (
+          <li class="step" data-state={s.state} data-until={s.until ?? ''} style={`--h:${s.h}%`}>
+            <span class="now-flag t-label">Teď platí</span>
+            <span class="price num">
+              {s.short ? (
+                <>
+                  <b>{kc(s.short)}</b>
+                  <span>/ {kc(s.long!)}*</span>
+                </>
+              ) : (
+                <b>{kc(s.cash!)}</b>
+              )}
+            </span>
+            <span class="bar" />
+            <span class="when t-label num">{s.label}</span>
+          </li>
+        ))
+      }
+    </ol>
+    <figcaption class="note">{priceNote}</figcaption>
+  </figure>
+</div>
+
+<style>
+  .climb {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2.5rem, 6vw, 6rem);
+    align-items: end;
+  }
+
+  .copy {
+    display: grid;
+    gap: 1.5rem;
+    justify-items: start;
+    align-self: start;
+  }
+
+  .copy .btn {
+    margin-top: 0.5rem;
+  }
+
+  .chart {
+    margin: 0;
+  }
+
+  .steps {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    align-items: end;
+    height: clamp(17rem, 30vw, 24rem);
+    border-bottom: 2px solid currentColor;
+  }
+
+  .step {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    height: 100%;
+  }
+
+  .bar {
+    order: 2;
+    height: calc(var(--h) - 5.5rem);
+    min-height: 2rem;
+    background: var(--ridge-700);
+    border-top: 3px solid var(--ridge-200);
+    margin-right: 2px;
+  }
+
+  .price {
+    order: 1;
+    display: grid;
+    gap: 0.1rem;
+    padding: 0 0.5rem 0.7rem 0.1rem;
+    line-height: 1.1;
+  }
+
+  .price b {
+    font-stretch: 66%;
+    font-weight: 800;
+    font-size: clamp(1.5rem, 2.6vw, 2.25rem);
+    line-height: 1;
+  }
+
+  .price span {
+    font-size: 0.9375rem;
+    color: var(--on-dark-2);
+  }
+
+  .when {
+    position: absolute;
+    top: calc(100% + 0.8rem);
+    left: 0.1rem;
+    right: 0.5rem;
+    color: var(--on-dark-2);
+    font-size: 0.8125rem;
+    line-height: 1.2;
+  }
+
+  .now-flag {
+    display: none;
+    order: 0;
+    align-self: flex-start;
+    margin-bottom: 0.6rem;
+    padding: 0.3rem 0.5rem 0.25rem;
+    background: var(--red);
+    color: #fff;
+    font-size: 0.75rem;
+  }
+
+  .step[data-state='now'] .now-flag {
+    display: inline-block;
+  }
+
+  .step[data-state='now'] .bar {
+    background: var(--red);
+    border-top-color: #fff;
+  }
+
+  .step[data-state='now'] .when {
+    color: #fff;
+  }
+
+  .step[data-state='past'] {
+    opacity: 0.4;
+  }
+
+  .step[data-state='past'] .price b {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+  }
+
+  .note {
+    margin-top: 4rem;
+    color: var(--on-dark-2);
+    font-size: 0.9375rem;
+  }
+
+  @media (max-width: 60rem) {
+    .climb {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 34rem) {
+    .steps {
+      height: auto;
+      grid-template-columns: 1fr;
+      border-bottom: 0;
+      gap: 0.5rem;
+    }
+
+    .step {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      grid-template-areas:
+        'when flag'
+        'bar bar'
+        'price price';
+      gap: 0.4rem 1rem;
+      height: auto;
+      padding-bottom: 1rem;
+    }
+
+    .bar {
+      grid-area: bar;
+      height: 0.75rem;
+      min-height: 0;
+      width: var(--h);
+      border-top: 0;
+      margin: 0;
+    }
+
+    .when {
+      grid-area: when;
+      position: static;
+    }
+
+    .price {
+      grid-area: price;
+      padding: 0;
+      grid-auto-flow: column;
+      justify-content: start;
+      align-items: baseline;
+      gap: 0.5rem;
+    }
+
+    .now-flag {
+      grid-area: flag;
+      margin: 0;
+    }
+
+    .note {
+      margin-top: 1rem;
+    }
+  }
+</style>
+
+<script>
+  // keep the "now" step honest for visitors of a cached build
+  const day = new Date().toISOString().slice(0, 10);
+  document.querySelectorAll<HTMLElement>('[data-climb]').forEach((c) => {
+    const steps = [...c.querySelectorAll<HTMLElement>('.step')];
+    let now = steps.findIndex((s) => s.dataset.until && day <= s.dataset.until);
+    if (now === -1) now = steps.length - 1;
+    steps.forEach((s, i) => (s.dataset.state = i < now ? 'past' : i === now ? 'now' : 'next'));
+  });
+</script>

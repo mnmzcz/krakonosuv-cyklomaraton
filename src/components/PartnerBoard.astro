@@ -1,0 +1,295 @@
+---
+// The sponsor board, tier by tier, like the backdrop behind the podium.
+import { Image } from 'astro:assets';
+import { general, main, media, partners, patronage, support, titular, towns, townMarks, union } from '../data/partners';
+import type { Partner } from '../data/partners';
+
+interface Props {
+  headingLevel?: 'h2' | 'h3';
+  showTitle?: boolean;
+}
+const { headingLevel: H = 'h2', showTitle = true } = Astro.props;
+const Tier = H === 'h2' ? 'h3' : 'h4';
+
+const ext = (p: Partner) => (p.href && p.href !== '#' ? { href: p.href, target: '_blank', rel: 'noopener' } : {});
+---
+
+<div class="board">
+  {showTitle && <H class="t-title board-title">Partneři</H>}
+
+  <div class="top">
+    <section class="tier tier-titular" aria-labelledby="pt-titular">
+      <Tier class="t-label" id="pt-titular">Titulární partner</Tier>
+      <div class="cell cell-xl">
+        <Image src={titular.logo} alt={titular.name} width={420} />
+      </div>
+    </section>
+    <section class="tier tier-general" aria-labelledby="pt-general">
+      <Tier class="t-label" id="pt-general">Generální partner</Tier>
+      <a class="cell cell-xl" {...ext(general)}>
+        <Image src={general.logo} alt={general.name} width={480} />
+      </a>
+    </section>
+  </div>
+
+  <section class="tier" aria-labelledby="pt-main">
+    <Tier class="t-label" id="pt-main">Hlavní partneři</Tier>
+    <ul class="row row-3">
+      {
+        main.map((p) => (
+          <li>
+            <a class="cell cell-l" {...ext(p)}>
+              <Image src={p.logo} alt={p.name} width={360} />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="patronage">{patronage}</p>
+  </section>
+
+  <section class="tier" aria-labelledby="pt-partners">
+    <Tier class="t-label" id="pt-partners">Partneři</Tier>
+    <ul class="row row-wall">
+      {
+        partners.map((p) => (
+          <li>
+            {p.href ? (
+              <a class="cell" {...ext(p)}>
+                <Image src={p.logo} alt={p.name} width={240} />
+              </a>
+            ) : (
+              <span class="cell">
+                <Image src={p.logo} alt={p.name} width={240} />
+              </span>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="tier" aria-labelledby="pt-media">
+    <Tier class="t-label" id="pt-media">Mediální partneři</Tier>
+    <ul class="row row-4">
+      {
+        media.map((p) => (
+          <li>
+            <a class="cell" {...ext(p)}>
+              <Image src={p.logo} alt={p.name} width={260} />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="tier towns" aria-labelledby="pt-towns">
+    <Tier class="t-label" id="pt-towns">Partnerské obce</Tier>
+    <div class="towns-grid">
+      <a class="cell cell-l union" {...ext(union)}>
+        <Image src={union.logo} alt={union.name} width={360} />
+      </a>
+      <ul class="town-list">
+        {
+          towns.map((t) => (
+            <li>
+              <a href={t.href} target="_blank" rel="noopener">
+                {t.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <ul class="marks" aria-hidden="true">
+      {townMarks.map((m) => <li><Image src={m} alt="" height={64} /></li>)}
+    </ul>
+  </section>
+
+  <div class="support">
+    <p>
+      <span>{support.region.text}</span>
+      <Image src={support.region.logo} alt="Královéhradecký kraj" width={220} />
+    </p>
+    <p>
+      <span>{support.cooperation.text}</span>
+      <Image src={support.cooperation.logo} alt="NOVUM, Evropské seskupení pro územní spolupráci" width={300} />
+    </p>
+  </div>
+</div>
+
+<style>
+  .board {
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .board-title {
+    margin-bottom: -0.5rem;
+  }
+
+  .tier {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .tier > :global(.t-label) {
+    color: var(--ink-3);
+    padding-bottom: 0.6rem;
+    border-bottom: 1.5px solid var(--ink);
+  }
+
+  .top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .row {
+    list-style: none;
+    display: grid;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+
+  .row > li {
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .row-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .row-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .row-wall {
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  }
+
+  .cell {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    min-height: 6.5rem;
+    padding: 1.1rem 1.4rem;
+    background: var(--paper);
+    transition: background-color 0.2s;
+  }
+
+  a.cell:hover {
+    background: var(--ridge-100);
+  }
+
+  .cell :global(img) {
+    width: auto;
+    max-width: 100%;
+    max-height: 3.5rem;
+    object-fit: contain;
+  }
+
+  .cell-l {
+    min-height: 8rem;
+  }
+
+  .cell-l :global(img) {
+    max-height: 4.25rem;
+  }
+
+  .cell-xl {
+    min-height: 11rem;
+    border: 1px solid var(--line);
+  }
+
+  .cell-xl :global(img) {
+    max-height: 6.5rem;
+    max-width: 80%;
+  }
+
+  .patronage {
+    color: var(--ink-2);
+  }
+
+  .towns-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 1.5rem 3rem;
+    align-items: center;
+  }
+
+  .union {
+    border: 1px solid var(--line);
+  }
+
+  .town-list {
+    list-style: none;
+    columns: 3 9rem;
+    column-gap: 2rem;
+  }
+
+  .town-list a {
+    display: inline-block;
+    padding-block: 0.3rem;
+    font-weight: 560;
+    text-decoration-color: var(--line-strong);
+  }
+
+  .marks {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 2rem;
+    margin-top: 1rem;
+  }
+
+  .marks :global(img) {
+    height: 3rem;
+    width: auto;
+  }
+
+  .support {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .support p {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .support :global(img) {
+    height: 3.25rem;
+    width: auto;
+  }
+
+  @media (max-width: 48rem) {
+    .top,
+    .support,
+    .towns-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .row-3,
+    .row-4 {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .row-wall {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .cell-xl {
+      min-height: 8rem;
+    }
+  }
+</style>

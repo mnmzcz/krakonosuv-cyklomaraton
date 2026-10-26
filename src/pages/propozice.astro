@@ -1,0 +1,497 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import { kc, priceTiers, program, programNote, race } from '../data/race';
+
+const toc = [
+  ['rozpis', 'Rozpis závodu'],
+  ['kategorie', 'Kategorie'],
+  ['tymy', 'Soutěž týmů'],
+  ['prihlasky', 'Přihlášky a startovné'],
+  ['storno', 'Storno podmínky'],
+  ['vyhlaseni', 'Vyhlášení'],
+  ['program', 'Program závodu'],
+  ['technicke', 'Technické pokyny'],
+  ['podminky', 'Závazné podmínky účasti'],
+  ['protesty', 'Protesty'],
+];
+
+const catLong = [
+  ['M18', 'muži 29 a ml.', 'ročníky 1998 a ml.'],
+  ['M30', 'muži 30 – 39 let', 'ročníky 1997 – 1988'],
+  ['M40', 'muži 40 – 49 let', 'ročníky 1987 – 1978'],
+  ['M50', 'muži 50 – 59 let', 'ročníky 1977 – 1968'],
+  ['M60', 'muži 60 let a starší', 'ročníky 1967 a st.'],
+  ['Z', 'ženy', ''],
+];
+const catShort = [
+  ['MK18', 'muži 29 let a ml.', 'ročníky 1998 a ml.'],
+  ['MK30', 'muži 30 – 39 let', 'ročníky 1997 – 1988'],
+  ['MK40', 'muži 40 – 49 let', 'ročníky 1987 – 1978'],
+  ['MK50', 'muži 50 – 59 let', 'ročníky 1977 – 1968'],
+  ['MK60', 'muži 60 let a starší', 'ročníky 1967 a st.'],
+  ['ZK18', 'ženy 29 let a ml.', 'ročníky 1998 a ml.'],
+  ['ZK30', 'ženy 30 – 39 let', 'ročníky 1997 – 1988'],
+  ['ZK40', 'ženy 40 let a starší', 'ročníky 1987 a starší'],
+];
+---
+
+<Base title="Propozice" description="Propozice Krakonošova cyklomaratonu 2027: rozpis závodu, kategorie, startovné, program a podmínky účasti.">
+  <PageHead title="Propozice" lede="Krakonošův cyklomaraton 2027 · Rozpis závodu">
+    <div class="head-actions on-dark">
+      <a class="btn btn--ghost btn--small" href="/docs/SOUHLAS-ZAKONNEHO-ZASTUPCE-KCM2027.pdf">
+        <Icon name="download" /> Souhlas zákonného zástupce (PDF)
+      </a>
+    </div>
+  </PageHead>
+
+  <div class="section wrap doc">
+    <nav class="toc" aria-label="Obsah propozic">
+      <p class="t-label toc-title">Obsah</p>
+      <ol>{toc.map(([id, label]) => <li><a href={`#${id}`}>{label}</a></li>)}</ol>
+    </nav>
+
+    <div class="doc-body">
+      <section id="rozpis" aria-labelledby="h-rozpis">
+        <h2 id="h-rozpis" class="doc-h">Rozpis závodu</h2>
+        <dl class="facts">
+          <div><dt>Pořadatel</dt><dd>{race.organiser} ve spolupráci se {race.coOrganiser}</dd></div>
+          <div><dt>Datum konání</dt><dd>{race.dateDay}</dd></div>
+          <div><dt>Místo startu a cíle</dt><dd>{race.venue}</dd></div>
+          <div><dt>Popis závodu</dt><dd>Silniční cyklomaraton, veřejný závod</dd></div>
+          <div>
+            <dt>Tratě</dt>
+            <dd>A / dlouhá trať (135 km*)<br />B / krátká trať (86 km*)<br /><small>* {race.routesNote}</small></dd>
+          </div>
+          <div><dt>Start závodu</dt><dd class="num">10:00 hodin-dlouhá trasa, 10:05 hodin-krátká trasa</dd></div>
+          <div><dt>Doprovodná vozidla</dt><dd>Závod se jede za plného provozu. Oficiální doprovodná vozidla nejsou povolena.</dd></div>
+        </dl>
+      </section>
+
+      <section id="kategorie" aria-labelledby="h-kategorie">
+        <h2 id="h-kategorie" class="doc-h">Kategorie</h2>
+        <div class="cats">
+          {
+            [
+              ['A / dlouhá trať', catLong],
+              ['B / krátká trať', catShort],
+            ].map(([title, rows]) => (
+              <table class="table">
+                <caption class="t-sub">{title}</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Kat.</th>
+                    <th scope="col">Věk</th>
+                    <th scope="col">Ročníky</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(rows as string[][]).map(([code, age, years]) => (
+                    <tr>
+                      <th scope="row" class="num">{code}</th>
+                      <td>{age}</td>
+                      <td class="num">{years}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ))
+          }
+        </div>
+      </section>
+
+      <section id="tymy" aria-labelledby="h-tymy" class="prose">
+        <h2 id="h-tymy" class="doc-h">Soutěž týmů</h2>
+        <ul>
+          <li>Soutěž týmů je vypsána na krátké i dlouhé trati.</li>
+          <li>Každý tým tvoří minimálně tři a maximálně šest závodníků, kteří jedou stejnou trať a startují za stejný tým i v kategorii jednotlivců.</li>
+          <li>Výsledným časem týmu se rozumí součet časů jeho tří nejrychlejších členů.</li>
+          <li>Vyhlášen a věcnými cenami odměněn bude vždy nejrychlejší tým na každé trati.</li>
+        </ul>
+      </section>
+
+      <section id="prihlasky" aria-labelledby="h-prihlasky" class="prose">
+        <h2 id="h-prihlasky" class="doc-h">Přihlášky a startovné</h2>
+        <ul>
+          <li>na internetu: www.krakonosuvcyklomaraton.cz v sekci <a href="/registrace/">REGISTRACE</a></li>
+          <li>v kanceláři závodu za zvýšené startovné</li>
+        </ul>
+        <p class="warn">
+          <strong
+            >UPOZORNĚNÍ – POČET REGISTRACÍ NA MÍSTĚ BUDE OMEZEN! V PŘÍPADĚ VAŠEHO ZÁJMU O START DŮRAZNĚ DOPORUČUJEME PROVÉST ON-LINE REGISTRACI A JEJÍ VČASNOU
+            ÚHRADU. MÍSTO NA STARTU ZAJIŠŤUJE POUZE UHRAZENÁ REGISTRACE!!!</strong
+          >
+        </p>
+        <p>Výše startovného je odvislá od termínu jeho připsání na účet pořadatele:</p>
+        <table class="table prices">
+          <thead>
+            <tr>
+              <th scope="col">Termín</th>
+              <th scope="col">Krátká trať</th>
+              <th scope="col">Dlouhá trať</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              priceTiers.map((t) =>
+                t.short ? (
+                  <tr>
+                    <th scope="row">{t.label}</th>
+                    <td class="num">{kc(t.short)}</td>
+                    <td class="num">{kc(t.long!)}</td>
+                  </tr>
+                ) : (
+                  <tr>
+                    <th scope="row">Startovné v hotovosti v kanceláři závodu</th>
+                    <td class="num" colspan="2">{kc(t.cash!)}</td>
+                  </tr>
+                ),
+              )
+            }
+          </tbody>
+        </table>
+        <p>
+          Startovné je možno uhradit bankovním převodem na účet č.: <strong class="num">2203525113/2010</strong> (Fio Banka, a.s.)<br />
+          IBAN: <span class="num">CZ71 2010 0000 0022 0352 5113</span> SWIFT/BIC <span class="num">FIOBCZPPXXX</span>
+        </p>
+        <h3>Startovné zahrnuje:</h3>
+        <ul>
+          <li>startovní číslo</li>
+          <li>pamětní medaili</li>
+          <li>propagační předměty od partnerů závodu (pouze pro předem přihlášené)</li>
+          <li>2x občerstvovací stanice na trati</li>
+          <li>občerstvení v cíli (jídlo, pití)</li>
+          <li>zdravotní a pořadatelskou službu</li>
+          <li>měření časů a zpracování výsledků čipovou technologií</li>
+        </ul>
+        <h3>Doplňková platba:</h3>
+        <ul>
+          <li>Účastnické tričko – 390 Kč (možnost on-line objednání zároveň s registrací do 12. 5. 2027)</li>
+          <li>Závodní pojištění od SportHelp – 290 Kč</li>
+        </ul>
+      </section>
+
+      <section id="storno" aria-labelledby="h-storno" class="prose">
+        <h2 id="h-storno" class="doc-h">Storno podmínky úhrady startovného, změny v registraci</h2>
+        <p>
+          V případě, že se závodník s již uhrazeným startovným závodu nezúčastní a oznámí toto pořadateli písemně nejpozději do 12. 5. 2027 má nárok na vrácení
+          startovného po odečtení poplatku 200,- Kč za závodníka. V případě pozdějšího oznámení neúčasti, je storno poplatek za zrušení registrace 50 % z uhrazené
+          částky startovného.
+        </p>
+        <p>
+          V případě, že závodník svou neúčast v závodě pořadateli neoznámí anebo tak provede po termínu 9. 6. 2027, nárok na vrácení jakékoliv části startovného
+          propadá.
+        </p>
+        <p>
+          Převedení startovného na jiného účastníka nebo změna původně přihlášené trasy je na základě žádosti přihlášeného možná bezplatně, nejpozději však do 9. 6.
+          2027. Pozdější změny nejsou možné.
+        </p>
+      </section>
+
+      <section id="vyhlaseni" aria-labelledby="h-vyhlaseni" class="prose">
+        <h2 id="h-vyhlaseni" class="doc-h">Vyhlášení (dlouhá a krátká trasa hlavního závodu)</h2>
+        <p>Vyhlášení závodníci, budou odměněni finančními cenami nebo věcnými cenami od partnerů závodu.</p>
+        <p>Vítěz závodu v každé kategorii má právo na volné startovné v ročníku 2028.</p>
+      </section>
+
+      <section id="program" aria-labelledby="h-program">
+        <h2 id="h-program" class="doc-h">Program závodu</h2>
+        {
+          program.map((d) => (
+            <table class="table program">
+              <caption class="t-sub">{d.day}</caption>
+              <tbody>
+                {d.items.map((it) => (
+                  <tr>
+                    <th scope="row" class="num">{it.time}</th>
+                    <td>{it.what}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ))
+        }
+        <p class="small">{programNote}</p>
+      </section>
+
+      <section id="technicke" aria-labelledby="h-technicke" class="prose">
+        <h2 id="h-technicke" class="doc-h">Technické pokyny</h2>
+        <p>
+          <strong>Značení:</strong> Trať je vyznačena šipkami (svislé směrovky a ploché značení na cestě). Na nepřehledných místech bude pořadatelská služba. Z hlediska
+          orientace je trasa náročná, a proto je třeba značení trati věnovat zvýšenou pozornost.
+        </p>
+        <p><strong>Kontroly:</strong> Čipové, elektronické zaznamenání průjezdu na několika místech trati.</p>
+        <p>
+          <strong>Časový limit:</strong> Pořadatel si vyhrazuje právo z důvodu zajištění bezpečnosti určit časový limit pro průjezd limit pointem. Pokud bude limit point
+          vyhlášen, bude pořadatel zajišťovat v dalším úseku za tímto bodem trať pouze pro závodníky, kteří projeli limit pointem před uplynutím určeného limitu.
+          Závodníci, kteří na místo limit pointu přijedou po určeném limitu, budou ve výsledcích závodu hodnoceni jako „nedokončil“ a jejich další pohyb na trati
+          závodu i mimo trať již nebude pořadatel zajišťovat.
+        </p>
+        <p>
+          <strong>Odstoupení ze závodu:</strong> V případě odstoupení ze závodu závodník toto ohlásí nejbližším bufetu nebo na tel.
+          <a class="num" href="tel:+420739008143">+420 739 008 143</a>
+        </p>
+      </section>
+
+      <section id="podminky" aria-labelledby="h-podminky" class="prose">
+        <h2 id="h-podminky" class="doc-h">Závazné podmínky účasti</h2>
+        <p>
+          Všichni účastníci závodu jsou povinni dodržovat tento rozpis závodu. Podmínkou účasti je řádně vyplněná, podepsaná a pořadateli doručená přihláška
+          účastníka závodu (a to bez požadavku jakékoliv změny nebo s jakýmikoli výhradami) nebo odeslání řádně vyplněného elektronického přihlašovacího formuláře.
+          Závodník svým podpisem na přihlášce či vyplněním a odesláním elektronické přihlášky vyjadřuje souhlas s podmínkami závodu a prohlašuje, že bere na
+          vědomí podmínky závodu uvedené v těchto propozicích a zároveň souhlasí s Informacemi o zpracování osobních údajů.
+        </p>
+        <p>
+          U závodníků, kteří nedosáhnou ke dni závodu, tj. k 12. 6. 2027 věku 18 let, bude při prezentaci vyžadován vyplněný a potvrzený <a
+            href="/docs/SOUHLAS-ZAKONNEHO-ZASTUPCE-KCM2027.pdf">Souhlas zákonného zástupce</a
+          >.
+        </p>
+        <p>Každý účastník startuje na vlastní nebezpečí a je povinen mít po celou dobou trvání závodů cyklistickou přilbu na hlavě.</p>
+        <p>
+          Závod jede za plného silničního provozu a závodníci jsou povinni dodržovat jeho pravidla stanovená platnou právní úpravou (zpravidla vyhláška o pravidlech
+          provozu na pozemních komunikacích). Porušení těchto pravidel bude mít za následek diskvalifikaci.
+        </p>
+        <p>Pokud závodník, ať úmyslně, či neúmyslně, odstartuje v předstihu, neprojede startovací branou nebo předjede zaváděcí vozidlo bude diskvalifikován.</p>
+        <p>
+          Každý závodník je dále povinen řídit se pokyny pořadatele, regulovčíků na trati a orgánů policie a dodržovat pravidla silničního provozu. Závodník je
+          odpovědný za bezpečný provoz svého doprovodného vozidla. Závodník je povinen se při závodu chovat fair play.
+        </p>
+        <p>Závodníkovi není známa žádná překážka spočívající v jeho zdravotním stavu, která by mu bránila ve startu.</p>
+        <p>
+          Závodník bere na vědomí, že pořadatel závodu neodpovídá za případnou škodu na zdraví a věcech, pokud nebude prokázáno jeho zavinění nebo pokud odložené
+          věci nepřevzal do úschovy.
+        </p>
+        <p>
+          Závodník se bude řídit pokyny pořadatele, udržovat pořádek a bude v maximální možné míře, kterou po něm lze spravedlivě požadovat ohleduplný k životnímu
+          prostředí; v opačném případě odpovídá pořadateli za škody, které mu způsobí.
+        </p>
+        <p>Závodník bere na vědomí, že závod se z části jede po chráněném území KRNAPu, a je proto nutné dodržovat pravidla pro tuto oblast určená.</p>
+        <p>
+          Závodník potvrzuje, že všechny údaje v přihlášce jsou vyplněny pravdivě a je si vědom, že v případě uvedení nepravdivých údajů odpovídá pořadateli za
+          všechny škody, které mu tím vzniknou.
+        </p>
+        <p>Závodník bere na vědomí, že porušení některé ze závazných podmínek účasti v závodě, může mít za následek diskvalifikaci.</p>
+      </section>
+
+      <section id="protesty" aria-labelledby="h-protesty" class="prose">
+        <h2 id="h-protesty" class="doc-h">Protesty</h2>
+        <p>
+          Závodník má právo podat protest podle ustanovení tohoto rozpisu do 15 minut po zveřejnění výsledků spolu s vkladem 500,- Kč. V případě zamítnutí protestu
+          propadá uvedená částka ve prospěch pořadatele. Na pozdější protesty nebude brán zřetel.
+        </p>
+        <p class="sign">Mgr. Jan Slavíček, v.r.<br />ředitel závodu</p>
+      </section>
+
+      <div class="downloads">
+        <a class="btn btn--ghost" href="/docs/SOUHLAS-ZAKONNEHO-ZASTUPCE-KCM2027.pdf"><Icon name="download" /> Souhlas zákonného zástupce (PDF)</a>
+        <a class="btn btn--ghost" href="/docs/SOUHLAS-ZAKONNEHO-ZASTUPCE.docx"><Icon name="download" /> Souhlas zákonného zástupce (DOCX)</a>
+      </div>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .head-actions {
+    margin-top: 2rem;
+  }
+
+  .doc {
+    display: grid;
+    grid-template-columns: 15rem minmax(0, 1fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: start;
+  }
+
+  .toc {
+    position: sticky;
+    top: calc(var(--header-h) + 2rem);
+  }
+
+  .toc-title {
+    padding-bottom: 0.6rem;
+    border-bottom: 1.5px solid var(--ink);
+    color: var(--ink-3);
+  }
+
+  .toc ol {
+    list-style: none;
+    counter-reset: none;
+  }
+
+  .toc a {
+    display: block;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--line);
+    text-decoration: none;
+    font-weight: 560;
+    font-size: 0.9375rem;
+  }
+
+  .toc a:hover {
+    color: var(--red-deep);
+  }
+
+  .doc-body {
+    display: grid;
+    gap: clamp(3rem, 6vw, 4.5rem);
+    max-width: 52rem;
+  }
+
+  .doc-body > section {
+    scroll-margin-top: calc(var(--header-h) + 1.5rem);
+  }
+
+  .doc-h {
+    margin-bottom: 1.25rem;
+    font-stretch: 68%;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: clamp(1.875rem, 3.4vw, 2.75rem);
+    line-height: 1;
+    color: var(--ink);
+  }
+
+  .prose .doc-h {
+    margin-top: 0;
+  }
+
+  .facts {
+    margin: 0;
+    border-top: 1.5px solid var(--ink);
+  }
+
+  .facts > div {
+    display: grid;
+    grid-template-columns: 13rem 1fr;
+    gap: 1rem;
+    padding-block: 0.9rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .facts dt {
+    font-stretch: 75%;
+    font-weight: 720;
+    text-transform: uppercase;
+    font-size: 0.9375rem;
+  }
+
+  .facts dd {
+    margin: 0;
+    color: var(--ink-2);
+  }
+
+  .facts small {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--ink-3);
+    font-size: 0.875rem;
+  }
+
+  .cats {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+  }
+
+  .table {
+    width: 100%;
+  }
+
+  .table caption {
+    text-align: left;
+    padding-bottom: 0.75rem;
+  }
+
+  .table th,
+  .table td {
+    padding: 0.6rem 1rem 0.6rem 0;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: top;
+  }
+
+  .table thead th {
+    font-stretch: 75%;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8125rem;
+    color: var(--ink-3);
+    border-bottom: 1.5px solid var(--ink);
+  }
+
+  .table tbody th {
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .prices td {
+    font-weight: 650;
+    color: var(--ink);
+    white-space: nowrap;
+  }
+
+  .program + .program {
+    margin-top: 2rem;
+  }
+
+  .program th {
+    width: 9rem;
+    white-space: nowrap;
+  }
+
+  .small {
+    margin-top: 1rem;
+    color: var(--ink-3);
+    font-size: 0.9375rem;
+  }
+
+  .warn {
+    padding: 1rem 1.25rem;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--red);
+  }
+
+  .sign {
+    margin-top: 2rem;
+    font-weight: 600;
+    color: var(--ink);
+  }
+
+  .downloads {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  @media (max-width: 60rem) {
+    .doc {
+      grid-template-columns: 1fr;
+    }
+
+    .toc {
+      position: static;
+    }
+
+    .toc ol {
+      columns: 2;
+      column-gap: 1.5rem;
+    }
+  }
+
+  @media (max-width: 40rem) {
+    .cats {
+      grid-template-columns: 1fr;
+    }
+
+    .facts > div {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+
+    .toc ol {
+      columns: 1;
+    }
+  }
+</style>

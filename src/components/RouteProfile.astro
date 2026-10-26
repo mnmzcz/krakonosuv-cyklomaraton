@@ -1,0 +1,890 @@
+---
+// The road book: the real elevation profile of a route, places standing at their kilometre.
+import data from '../data/routes.json';
+import Icon from './Icon.astro';
+
+type RouteId = 'long' | 'short';
+export type Marker = {
+  km: number;
+  name: string;
+  alt?: number;
+  note?: string | null;
+  tier?: 1 | 2;
+  kind?: 'spot';
+};
+
+interface Props {
+  id: string;
+  routes?: RouteId[];
+  /** replaces the route's own waypoints (used for spectator spots) */
+  markers?: Marker[];
+  stats?: boolean;
+  table?: boolean;
+}
+
+const { id, routes = ['long', 'short'], markers, stats = true, table = true } = Astro.props;
+
+const ALT_MIN = 300;
+const ALT_MAX = 1150;
+const yFrac = (alt: number) => 1 - (alt - ALT_MIN) / (ALT_MAX - ALT_MIN);
+
+// level-1 labels survive on phones; the rest appear from 48rem
+const TIER1: Record<RouteId, string[]> = {
+  long: ['Trutnov', 'Lubawka', 'Pomezní Boudy', 'Pražská bouda', 'Strážné', 'Janské Lázně'],
+  short: ['Trutnov', 'Lubawka', 'Pomezní Boudy', 'Pec pod Sněžkou', 'Svoboda nad Úpou'],
+};
+
+// timing points of 2026 and feed stations from the organisers' pre-race information
+const SERVICES: Record<RouteId, { km: number; kind: 'clock' | 'bottle'; label: string }[]> = {
+  long: [
+    { km: 51.5, kind: 'clock', label: 'Kontrola Pomezní Boudy' },
+    { km: 51.5, kind: 'bottle', label: 'Bufet Pomezní Boudy' },
+    { km: 72.5, kind: 'clock', label: 'Kontrola Pražská bouda' },
+    { km: 72.5, kind: 'bottle', label: 'Bufet Pražská bouda (pití)' },
+    { km: 90, kind: 'bottle', label: 'Bufet Strážné' },
+  ],
+  short: [
+    { km: 51.5, kind: 'clock', label: 'Kontrola Pomezní Boudy' },
+    { km: 51.5, kind: 'bottle', label: 'Bufet Pomezní Boudy' },
+  ],
+};
+
+const grade = (a: number[], b: number[]) => {
+  const run = (b[0] - a[0]) * 1000;
+  const g = run > 0 ? ((b[1] - a[1]) / run) * 100 : 0;
+  return g > 6 ? 3 : g > 4 ? 2 : g > 2 ? 1 : 0;
+};
+
+const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+const fmtInt = (n: number) => n.toLocaleString('cs-CZ').replace(/\s/g, ' ');
+
+const charts = routes.map((rid) => {
+  const r = data.routes[rid];
+  const L = r.points[r.points.length - 1][0];
+  const X = (km: number) => (km / L) * 1000;
+  const Y = (alt: number) => yFrac(alt) * 100;
+  const segs = r.points.slice(0, -1).map((p, i) => {
+    const q = r.points[i + 1];
+    const x1 = X(p[0]);
+    const x2 = Math.min(1000, X(q[0]) + 0.4);
+    return {
+      d: `M${x1.toFixed(2)} ${Y(p[1]).toFixed(2)}L${x2.toFixed(2)} ${Y(q[1]).toFixed(2)}L${x2.toFixed(2)} 100L${x1.toFixed(2)} 100Z`,
+      g: grade(p, q),
+    };
+  });
+  const line = r.points.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(2)} ${Y(p[1]).toFixed(2)}`).join('');
+
+  const source: Marker[] = markers ?? r.waypoints.map((w) => ({ ...w, tier: TIER1[rid].includes(w.name) ? 1 : 2 }));
+  const marks = source
+    .filter((m) => m.km <= L + 0.5)
+    .map((m) => {
+      // the stem lands on the drawn line, the label carries the true altitude
+      const near = r.points.reduce((best, p) => (Math.abs(p[0] - m.km) < Math.abs(best[0] - m.km) ? p : best));
+      const alt = m.alt ?? near[1];
+      const x = Math.min(100, (m.km / L) * 100);
+      return { ...m, alt, x, y: yFrac(near[1]), edge: x < 3 ? 'start' : x > 97 ? 'end' : '' };
+    });
+
+  const ticks = [];
+  for (let k = 0; k <= L; k += 5) ticks.push({ k, x: (k / L) * 100, major: k % 10 === 0 });
+
+  const top = r.waypoints.reduce((a, b) => (b.alt > a.alt ? b : a));
+  return {
+    rid,
+    r,
+    L,
+    segs,
+    line,
+    marks,
+    ticks,
+    top,
+    services: SERVICES[rid].map((s) => ({ ...s, x: (s.km / L) * 100 })),
+    json: JSON.stringify({ L, p: r.points.map((p) => [p[0], p[1]]), w: marks.map((m) => [m.km, m.alt, m.name]) }),
+  };
+});
+
+const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
+---
+
+<div class="rb" data-rb id={id}>
+  {
+    charts.length > 1 && (
+      <fieldset class="rb-tabs">
+        <legend class="visually-hidden">Vyberte trať</legend>
+        {charts.map((c, i) => (
+          <>
+            <input type="radio" name={`${id}-route`} id={`${id}-${c.rid}`} value={c.rid} checked={i === 0} class="visually-hidden" />
+            <label for={`${id}-${c.rid}`}>
+              <span class="tab-name">{c.r.name}</span>
+              <span class="tab-km num">{c.r.official_km} km</span>
+            </label>
+          </>
+        ))}
+      </fieldset>
+    )
+  }
+
+  {
+    charts.map((c) => (
+      <section class="rb-route" data-route={c.rid} aria-label={`${c.r.name}, profil trasy`}>
+        {stats && (
+          <dl class="rb-stats">
+            <div>
+              <dt class="t-label">Délka trasy 2026</dt>
+              <dd class="num">
+                {fmtKm(c.r.km)}
+                <span>km</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="t-label">Převýšení</dt>
+              <dd class="num">
+                {fmtInt(c.r.gain)}
+                <span>m</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="t-label">Nejvýš · {c.top.name}</dt>
+              <dd class="num">
+                {fmtInt(c.top.alt)}
+                <span>m n. m.</span>
+              </dd>
+            </div>
+            <div>
+              <dt class="t-label">Start</dt>
+              <dd class="num">{c.r.start}</dd>
+            </div>
+          </dl>
+        )}
+
+        <div class="rb-chart" data-chart={c.json}>
+          <div class="rb-plot">
+            {grid.map((g) => (
+              <div class="rb-grid" style={`top:${g.y}%`}>
+                <span class="num">{g.a}</span>
+              </div>
+            ))}
+            <svg class="rb-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+              {c.segs.map((s) => (
+                <path d={s.d} class={`g${s.g}`} />
+              ))}
+              <path d={c.line} class="rb-line" vector-effect="non-scaling-stroke" />
+            </svg>
+          </div>
+
+          {c.marks.map((m) => (
+            <div
+              class:list={['rb-mark', `tier-${m.tier ?? 1}`, m.edge && `edge-${m.edge}`, m.kind === 'spot' && 'is-spot']}
+              style={`--x:${m.x}%;--y:${m.y};--t:${((m.x / 100) * 1.1).toFixed(2)}s`}
+              aria-hidden="true"
+            >
+              <span class="rb-name">
+                <b>{m.name}</b> <span class="num">{fmtInt(m.alt)}</span>
+              </span>
+            </div>
+          ))}
+
+          <div class="rb-axis" aria-hidden="true">
+            {c.ticks.map((t) => (
+              <span class:list={['tick', { major: t.major }]} style={`left:${t.x}%`}>
+                {t.major && <span class="num">{t.k}</span>}
+              </span>
+            ))}
+            <span class="unit t-label">km</span>
+          </div>
+
+          <div class="rb-services" aria-hidden="true">
+            {c.services.map((s) => (
+              <span class:list={['svc', s.kind]} style={`left:${s.x}%;--t:${((s.x / 100) * 1.1).toFixed(2)}s`} title={s.label}>
+                <Icon name={s.kind} />
+              </span>
+            ))}
+          </div>
+
+          <div
+            class="rb-scrub"
+            tabindex="0"
+            role="slider"
+            aria-label={`Projet ${c.r.name.toLowerCase()} po kilometrech`}
+            aria-valuemin="0"
+            aria-valuemax={Math.round(c.L)}
+            aria-valuenow="0"
+            aria-valuetext="km 0, Trutnov"
+          >
+            <span class="rb-cursor" hidden>
+              <span class="rb-dot" />
+              <span class="rb-read num" />
+            </span>
+          </div>
+        </div>
+
+        <div class="rb-foot">
+          <ul class="rb-legend" aria-label="Legenda">
+            <li><i class="sw g1" />2–4 %</li>
+            <li><i class="sw g2" />4–6 %</li>
+            <li><i class="sw g3" />přes 6 %</li>
+            <li><Icon name="clock" />kontrola</li>
+            <li><Icon name="bottle" />bufet</li>
+          </ul>
+          <a class="link-arrow" href={c.r.mapUrl} target="_blank" rel="noopener">
+            {c.r.name} 2026 v Mapy.com <Icon name="external" />
+          </a>
+        </div>
+
+        {table && (
+          <details class="rb-table">
+            <summary>Místa na trati ({c.r.name.toLowerCase()})</summary>
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">km</th>
+                  <th scope="col">Místo</th>
+                  <th scope="col">m n. m.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {c.r.waypoints.map((w) => (
+                  <tr>
+                    <td class="num">{fmtKm(w.km)}</td>
+                    <td>
+                      {w.name}
+                      {w.note && <span class="note"> · {w.note}</span>}
+                    </td>
+                    <td class="num">{fmtInt(w.alt)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </details>
+        )}
+      </section>
+    ))
+  }
+</div>
+
+<style>
+  .rb {
+    --label-band: clamp(6.5rem, 12vw, 10rem);
+    --plot-h: clamp(10rem, 22vw, 17rem);
+    --axis-h: 2.25rem;
+    position: relative;
+  }
+
+  /* route switch */
+  .rb-tabs {
+    display: inline-flex;
+    margin: 0 0 2rem;
+    padding: 0;
+    border: 1.5px solid var(--ink);
+    border-radius: 2px;
+  }
+
+  .rb-tabs label {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    padding: 0.7rem 1.1rem 0.6rem;
+    cursor: pointer;
+    font-stretch: 72%;
+    font-weight: 760;
+    text-transform: uppercase;
+    font-size: 1.0625rem;
+    line-height: 1;
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .rb-tabs label + input + label,
+  .rb-tabs input + label + input + label {
+    border-left: 1.5px solid var(--ink);
+  }
+
+  .tab-km {
+    font-weight: 500;
+    color: var(--ink-3);
+  }
+
+  .rb-tabs input:checked + label {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .rb-tabs input:checked + label .tab-km {
+    color: var(--ridge-200);
+  }
+
+  .rb-tabs input:focus-visible + label {
+    outline: 3px solid var(--red);
+    outline-offset: 3px;
+  }
+
+  .rb:has(input[value='long']:checked) .rb-route[data-route='short'],
+  .rb:has(input[value='short']:checked) .rb-route[data-route='long'] {
+    display: none;
+  }
+
+  /* stats */
+  .rb-stats {
+    display: grid;
+    grid-template-columns: repeat(4, auto);
+    justify-content: start;
+    gap: 1rem clamp(1.5rem, 4vw, 4rem);
+    margin: 0 0 1.5rem;
+  }
+
+  .rb-stats dt {
+    color: var(--ink-3);
+  }
+
+  .rb-stats dd {
+    margin: 0.35rem 0 0;
+    font-stretch: 66%;
+    font-weight: 800;
+    font-size: clamp(2rem, 3.6vw, 3rem);
+    line-height: 1;
+  }
+
+  .rb-stats dd span {
+    margin-left: 0.15em;
+    font-size: 0.45em;
+    font-weight: 650;
+    font-stretch: 80%;
+    color: var(--ink-2);
+  }
+
+  /* chart */
+  .rb-chart {
+    position: relative;
+    padding-top: var(--label-band);
+    padding-bottom: calc(var(--axis-h) + 1.75rem);
+  }
+
+  .rb-plot {
+    position: relative;
+    height: var(--plot-h);
+  }
+
+  .rb-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .g0 {
+    fill: var(--grade-0);
+  }
+  .g1 {
+    fill: var(--grade-1);
+  }
+  .g2 {
+    fill: var(--grade-2);
+  }
+  .g3 {
+    fill: var(--grade-3);
+  }
+
+  .rb-line {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .rb-grid {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed var(--line-strong);
+  }
+
+  .rb-grid span {
+    position: absolute;
+    left: 0.5rem;
+    top: -1.2rem;
+    font-size: 0.75rem;
+    color: var(--ink-3);
+  }
+
+  /* place markers: vertical names on stems, the road book's signature */
+  .rb-mark {
+    position: absolute;
+    left: var(--x);
+    top: 0;
+    height: calc(var(--label-band) + var(--plot-h) * var(--y));
+    width: 0;
+  }
+
+  .rb-mark::before {
+    content: '';
+    position: absolute;
+    left: -0.5px;
+    top: calc(var(--label-band) - 0.5rem);
+    bottom: 0;
+    width: 1px;
+    background: var(--ink);
+    opacity: 0.55;
+  }
+
+  .rb-mark::after {
+    content: '';
+    position: absolute;
+    left: -3.5px;
+    bottom: -3.5px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+  }
+
+  .rb-name {
+    position: absolute;
+    bottom: calc(100% - var(--label-band) + 0.75rem);
+    left: 0;
+    transform: translateX(-50%) rotate(180deg);
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+    font-stretch: 62%;
+    font-size: 0.875rem;
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .rb-name b {
+    font-weight: 780;
+  }
+
+  .rb-name .num {
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+
+  .edge-start .rb-name {
+    transform: translateX(-15%) rotate(180deg);
+  }
+
+  .edge-end .rb-name {
+    transform: translateX(-85%) rotate(180deg);
+  }
+
+  .is-spot::after {
+    width: 11px;
+    height: 11px;
+    left: -5.5px;
+    bottom: -5.5px;
+    background: var(--red);
+    border-color: var(--paper);
+  }
+
+  .is-spot::before {
+    background: var(--red);
+    opacity: 1;
+  }
+
+  /* km axis */
+  .rb-axis {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1.75rem;
+    height: var(--axis-h);
+    border-top: 1.5px solid var(--ink);
+  }
+
+  .tick {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 0.4rem;
+    background: var(--ink);
+  }
+
+  .tick.major {
+    height: 0.7rem;
+  }
+
+  .tick span {
+    position: absolute;
+    top: 0.85rem;
+    left: 0;
+    transform: translateX(-50%);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .unit {
+    position: absolute;
+    right: 0;
+    top: 0.85rem;
+    transform: translateY(1.35rem);
+    color: var(--ink-3);
+  }
+
+  .rb-services {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--label-band) + var(--plot-h) - 2.4rem);
+    height: 2rem;
+    pointer-events: none;
+  }
+
+  .svc {
+    position: absolute;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    transform: translateX(-50%);
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+  }
+
+  .svc.bottle {
+    transform: translateX(-50%) translateY(-2.1rem);
+  }
+
+  .svc :global(svg) {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  /* scrub */
+  .rb-scrub {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: var(--label-band);
+    height: var(--plot-h);
+    cursor: crosshair;
+    touch-action: pan-y;
+  }
+
+  .rb-scrub:focus-visible {
+    outline-offset: 6px;
+  }
+
+  .rb-cursor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    border-left: 1.5px solid var(--red);
+    pointer-events: none;
+  }
+
+  .rb-dot {
+    position: absolute;
+    left: -6.5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 0 3px var(--paper);
+    transform: translateY(-50%);
+  }
+
+  .rb-read {
+    position: absolute;
+    top: -2.6rem;
+    left: 0;
+    transform: translateX(-50%);
+    padding: 0.35rem 0.6rem 0.3rem;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 2px;
+    white-space: nowrap;
+    font-stretch: 75%;
+    font-weight: 650;
+    font-size: 0.9375rem;
+    line-height: 1.2;
+  }
+
+  .rb-read[data-side='right'] {
+    transform: none;
+  }
+
+  .rb-read[data-side='left'] {
+    transform: translateX(-100%);
+  }
+
+  /* foot */
+  .rb-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  .rb-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    list-style: none;
+    font-size: 0.9375rem;
+    color: var(--ink-2);
+  }
+
+  .rb-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .rb-legend :global(svg) {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .sw {
+    width: 1.1rem;
+    height: 0.75rem;
+    border-radius: 1px;
+  }
+
+  .sw.g1 {
+    background: var(--grade-1);
+  }
+  .sw.g2 {
+    background: var(--grade-2);
+  }
+  .sw.g3 {
+    background: var(--grade-3);
+  }
+
+  .rb-table {
+    margin-top: 1.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .rb-table summary {
+    padding-block: 1rem;
+    cursor: pointer;
+    font-stretch: 75%;
+    font-weight: 720;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .rb-table summary::marker {
+    color: var(--red);
+  }
+
+  .rb-table table {
+    width: 100%;
+    max-width: 40rem;
+    margin-bottom: 1rem;
+  }
+
+  .rb-table th,
+  .rb-table td {
+    padding: 0.45rem 1rem 0.45rem 0;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+  }
+
+  .rb-table th {
+    font-stretch: 75%;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    color: var(--ink-3);
+  }
+
+  .rb-table td:first-child,
+  .rb-table td:last-child {
+    width: 5rem;
+  }
+
+  .note {
+    color: var(--ink-3);
+  }
+
+  /* the ride: the profile is drawn left to right once, stems land as it passes */
+  :global(.js) .rb-route .rb-svg {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  :global(.js) .rb-route .rb-mark,
+  :global(.js) .rb-route .svc {
+    opacity: 0;
+  }
+
+  :global(.js) .rb-chart.is-in .rb-svg {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 1.9s var(--ease-out);
+  }
+
+  :global(.js) .rb-chart.is-in .rb-mark,
+  :global(.js) .rb-chart.is-in .svc {
+    opacity: 1;
+    transition: opacity 0.5s var(--ease-out);
+    transition-delay: var(--t, 0s);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .rb-route .rb-svg {
+      clip-path: none;
+    }
+    :global(.js) .rb-route .rb-mark,
+    :global(.js) .rb-route .svc {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .rb {
+      --label-band: 7.5rem;
+    }
+
+    .tier-2 {
+      display: none;
+    }
+
+    .rb-name .num {
+      display: none;
+    }
+
+    .rb-stats {
+      grid-template-columns: repeat(2, auto);
+    }
+
+    .rb-tabs {
+      display: flex;
+    }
+
+    .rb-tabs label {
+      flex: 1;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .tick:not(.major) {
+      display: none;
+    }
+
+    .svc {
+      width: 1.4rem;
+      height: 1.4rem;
+    }
+
+    .svc.bottle {
+      transform: translateX(-50%) translateY(-1.65rem);
+    }
+
+    .svc :global(svg) {
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+
+    .tick.major:nth-of-type(4n + 3) span {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  type ChartData = { L: number; p: [number, number][]; w: [number, number, string][] };
+
+  const fmt = (n: number, d = 0) => n.toLocaleString('cs-CZ', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  document.querySelectorAll<HTMLElement>('[data-chart]').forEach((chart) => {
+    const data: ChartData = JSON.parse(chart.dataset.chart!);
+    const scrub = chart.querySelector<HTMLElement>('.rb-scrub')!;
+    const cursor = chart.querySelector<HTMLElement>('.rb-cursor')!;
+    const dot = chart.querySelector<HTMLElement>('.rb-dot')!;
+    const read = chart.querySelector<HTMLElement>('.rb-read')!;
+    const ALT_MIN = 300;
+    const ALT_MAX = 1150;
+
+    const altAt = (km: number) => {
+      const p = data.p;
+      for (let i = 1; i < p.length; i++) {
+        if (p[i][0] >= km) {
+          const [k0, a0] = p[i - 1];
+          const [k1, a1] = p[i];
+          return a0 + ((a1 - a0) * (km - k0)) / (k1 - k0 || 1);
+        }
+      }
+      return p[p.length - 1][1];
+    };
+
+    let km = 0;
+    const show = (value: number) => {
+      km = Math.max(0, Math.min(data.L, value));
+      const line = altAt(km);
+      const near = data.w.find((w) => Math.abs(w[0] - km) <= Math.max(0.9, data.L / 150));
+      const alt = near ? near[1] : line;
+      const x = (km / data.L) * 100;
+      cursor.hidden = false;
+      cursor.style.left = `${x}%`;
+      dot.style.top = `${(1 - (line - ALT_MIN) / (ALT_MAX - ALT_MIN)) * 100}%`;
+      read.textContent = `km ${fmt(km, 1)} · ${fmt(alt)} m${near ? ` · ${near[2]}` : ''}`;
+      read.dataset.side = x < 12 ? 'right' : x > 88 ? 'left' : '';
+      scrub.setAttribute('aria-valuenow', String(Math.round(km)));
+      scrub.setAttribute('aria-valuetext', `km ${fmt(km, 1)}, ${fmt(alt)} metrů${near ? `, ${near[2]}` : ''}`);
+    };
+
+    const fromPointer = (e: PointerEvent) => {
+      const r = scrub.getBoundingClientRect();
+      show(((e.clientX - r.left) / r.width) * data.L);
+    };
+
+    scrub.addEventListener('pointermove', fromPointer);
+    scrub.addEventListener('pointerdown', fromPointer);
+    scrub.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'mouse' && document.activeElement !== scrub) cursor.hidden = true;
+    });
+    scrub.addEventListener('focus', () => show(km));
+    scrub.addEventListener('blur', () => (cursor.hidden = true));
+    scrub.addEventListener('keydown', (e) => {
+      const step = e.shiftKey ? 10 : 1;
+      const keys: Record<string, number> = {
+        ArrowRight: km + step,
+        ArrowUp: km + step,
+        ArrowLeft: km - step,
+        ArrowDown: km - step,
+        Home: 0,
+        End: data.L,
+      };
+      if (e.key in keys) {
+        e.preventDefault();
+        show(keys[e.key]);
+      }
+    });
+  });
+
+  // the ride: reveal once when the chart comes into view
+  const charts = document.querySelectorAll<HTMLElement>('.rb-chart');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((en) => {
+          if (en.isIntersecting) {
+            en.target.classList.add('is-in');
+            io.unobserve(en.target);
+          }
+        }),
+      { threshold: 0.35 },
+    );
+    charts.forEach((c) => io.observe(c));
+    // a route revealed by the switch is already in view
+    document.querySelectorAll<HTMLInputElement>('.rb-tabs input').forEach((input) =>
+      input.addEventListener('change', () => {
+        const rb = input.closest('[data-rb]')!;
+        rb.querySelectorAll('.rb-chart').forEach((c) => {
+          c.classList.remove('is-in');
+          requestAnimationFrame(() => requestAnimationFrame(() => c.classList.add('is-in')));
+        });
+      }),
+    );
+  } else {
+    charts.forEach((c) => c.classList.add('is-in'));
+  }
+</script>

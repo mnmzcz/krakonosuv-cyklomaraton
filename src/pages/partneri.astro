@@ -1,0 +1,14 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import PartnerBoard from '../components/PartnerBoard.astro';
+---
+
+<Base title="Partneři" description="Partneři Krakonošova cyklomaratonu: titulární partner Casia, generální partner Kasper, hlavní a mediální partneři, partnerské obce.">
+  <PageHead title="Partneři" lede="Bez nich by závod nejel. Děkujeme." />
+  <section class="section field-paper" aria-label="Partneři">
+    <div class="wrap">
+      <PartnerBoard showTitle={false} />
+    </div>
+  </section>
+</Base>

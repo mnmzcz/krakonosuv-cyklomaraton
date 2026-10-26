@@ -1,0 +1,116 @@
+---
+// Subpage header: a ridge-blue band whose lower edge is the real long-route profile.
+import { Picture } from 'astro:assets';
+import data from '../data/routes.json';
+
+interface Props {
+  title: string;
+  lede?: string;
+  image?: ImageMetadata;
+  imagePosition?: string;
+}
+const { title, lede, image, imagePosition = '50% 50%' } = Astro.props;
+
+const r = data.routes.long;
+const L = r.points[r.points.length - 1][0];
+const area =
+  r.points.map((p, i) => `${i ? 'L' : 'M'}${((p[0] / L) * 1000).toFixed(1)} ${((1 - (p[1] - 250) / 900) * 100).toFixed(1)}`).join('') +
+  'L1000 100L0 100Z';
+---
+
+<header class:list={['page-head', { 'has-image': image }]}>
+  {
+    image && (
+      <div class="ph-media">
+        <Picture src={image} formats={['webp']} widths={[640, 1024, 1600, 2200]} sizes="100vw" alt="" loading="eager" style={`object-position:${imagePosition}`} />
+      </div>
+    )
+  }
+  <div class="wrap ph-inner">
+    <h1 class="t-display ph-title">{title}</h1>
+    {lede && <p class="ph-lede">{lede}</p>}
+    <slot />
+  </div>
+  <svg class="ph-ridge" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+    <path d={area} />
+  </svg>
+</header>
+
+<style>
+  .page-head {
+    position: relative;
+    overflow: hidden;
+    background: var(--ridge-900);
+    color: #fff;
+    isolation: isolate;
+  }
+
+  .ph-media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+  }
+
+  .ph-media::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, rgba(6, 18, 33, 0.82), rgba(6, 18, 33, 0.25) 75%);
+  }
+
+  .ph-media :global(img),
+  .ph-media :global(picture) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .ph-inner {
+    position: relative;
+    padding-top: clamp(3.5rem, 8vw, 6.5rem);
+    padding-bottom: clamp(6rem, 12vw, 10rem);
+  }
+
+  .has-image .ph-inner {
+    padding-top: clamp(8rem, 18vw, 15rem);
+  }
+
+  .ph-title {
+    font-size: clamp(3rem, 8vw, 6rem);
+    max-width: 16ch;
+  }
+
+  .ph-lede {
+    margin-top: 1.25rem;
+    max-width: 52ch;
+    font-size: clamp(1.125rem, 1.8vw, 1.375rem);
+    line-height: 1.45;
+    color: var(--ridge-100);
+  }
+
+  .ph-ridge {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -1px;
+    width: 100%;
+    height: clamp(3.5rem, 8vw, 7rem);
+  }
+
+  .ph-ridge path {
+    fill: var(--snow);
+  }
+
+  :global(.js) .ph-ridge {
+    animation: ph-ride 1.6s var(--ease-out) 0.1s both;
+  }
+
+  @keyframes ph-ride {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+</style>

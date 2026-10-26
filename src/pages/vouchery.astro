@@ -1,0 +1,89 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import voucher from '../assets/news/voucher.png';
+---
+
+<Base title="Vouchery" description="Startovné na Krakonošův cyklomaraton jako dárek: dárkový poukaz v elektronické podobě.">
+  <PageHead title="Startovné jako dárek!" />
+
+  <section class="section" aria-labelledby="voucher-title">
+    <div class="wrap gift">
+      <div class="gift-copy">
+        <h2 class="t-title" id="voucher-title">Nevíš, čím obdarovat cyklistu? Daruj mu zážitek!</h2>
+        <p class="t-lede">
+          Stačí vyplnit e-mail a další pracovní den obdržíte veškeré informace o tom, jak získat originální dárek v podobě startovného na Krakonošově cyklomaratonu
+          2026. Chcete-li mít jistotu dárku pod stromečkem, zašlete objednávku nejpozději do 21. 12. 2025. Dárkový poukaz vám po zaplacení zašleme v elektronické
+          podobě.
+        </p>
+        <p>Nechcete darovat jen voucher? Podívejte se i na <a href="/e-shop/">náš e-shop</a>!</p>
+
+        <form class="form voucher-form" name="voucher" method="POST" action="/dekujeme/" data-netlify="true" netlify-honeypot="bot-field">
+          <input type="hidden" name="form-name" value="voucher" />
+          <p class="visually-hidden"><label>Nevyplňujte: <input name="bot-field" tabindex="-1" autocomplete="off" /></label></p>
+          <div class="field">
+            <label for="v-mail">Kontaktní e-mail</label>
+            <input id="v-mail" name="email" type="email" required autocomplete="email" />
+            <p class="field-error">Zadejte platný e-mail, např. jmeno@domena.cz.</p>
+          </div>
+          <button class="btn" type="submit">Mám zájem o voucher <Icon name="arrow" /></button>
+        </form>
+      </div>
+      <figure class="gift-img">
+        <Image src={voucher} alt="Ukázka dárkového poukazu: startovné zdarma na Krakonošův cyklomaraton" widths={[600, 1000, 1596]} sizes="(max-width: 60rem) 100vw, 50vw" />
+      </figure>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .gift {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: start;
+  }
+
+  .gift-copy {
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .gift-copy a {
+    text-decoration-color: var(--red);
+  }
+
+  .voucher-form {
+    margin-top: 0.5rem;
+    padding: clamp(1.5rem, 3vw, 2rem);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--ink);
+  }
+
+  .voucher-form .btn {
+    justify-self: start;
+  }
+
+  .gift-img {
+    margin: 0;
+    box-shadow: 0 30px 60px -30px rgba(6, 18, 33, 0.35);
+    transform: rotate(1.2deg);
+  }
+
+  .gift-img :global(img) {
+    width: 100%;
+  }
+
+  @media (max-width: 60rem) {
+    .gift {
+      grid-template-columns: 1fr;
+    }
+
+    .gift-img {
+      transform: none;
+    }
+  }
+</style>

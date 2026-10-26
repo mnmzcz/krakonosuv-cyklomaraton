@@ -1,0 +1,206 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import splits from '../data/splits-2026.json';
+
+type Link = { label: string; href: string };
+const editions: { n: number; date: string; links: Link[] }[] = [
+  {
+    n: 13,
+    date: '13. června 2026',
+    links: [
+      { label: 'Hlavní závod (online)', href: 'https://vysledky.sportsoft.cz/race/805' },
+      { label: 'Dětské závody - BABY', href: '/docs/Vysledky-deti-BABY.pdf' },
+      { label: 'Dětské závody - MINI, ŽÁCI I a II', href: '/docs/Vysledky-deti-MINI-ZACI-I-ZACI-II.pdf' },
+    ],
+  },
+  {
+    n: 12,
+    date: '14. června 2025',
+    links: [
+      { label: 'Hlavní závod (online)', href: 'https://vysledky.sportsoft.cz/race/423' },
+      { label: 'Dětské závody', href: '/docs/Vysledky-deti-2025.pdf' },
+    ],
+  },
+  {
+    n: 11,
+    date: '15. června 2024',
+    links: [
+      { label: 'Hlavní závod (online)', href: 'https://vysledky.sportsoft.cz/race/143' },
+      { label: 'Baby odrážedla', href: '/docs/Baby-odrazedla.pdf' },
+      { label: 'Baby kola', href: '/docs/Baby-kola.pdf' },
+      { label: 'Mini', href: '/docs/Mini.pdf' },
+      { label: 'Žáci I', href: '/docs/Zaci-I.pdf' },
+      { label: 'Žáci II', href: '/docs/Zaci-II.pdf' },
+      { label: '135 km', href: '/docs/Report-Results.pdf' },
+      { label: '95 km', href: '/docs/Report-Results-1.pdf' },
+    ],
+  },
+  { n: 10, date: '17. června 2023', links: [{ label: 'Hlavní závod (online)', href: 'https://sportsoft.cz/cs/zavod/results/7638?rid=7156' }] },
+  { n: 9, date: '18. června 2022', links: [{ label: 'Hlavní závod (online)', href: 'https://www.sportsoft.cz/cs/zavod/results/7144?rid=6638&eventid=1' }] },
+  { n: 8, date: '19. června 2021', links: [{ label: 'Hlavní závod (online)', href: 'https://www.sportsoft.cz/cs/zavod/results/5601?rid=5041' }] },
+  { n: 7, date: '20. června 2020', links: [{ label: 'Hlavní závod (online)', href: 'https://www.sportsoft.cz/cs/zavod/results/5193?rid=4612' }] },
+  { n: 6, date: '15. června 2019', links: [{ label: 'Hlavní závod (online)', href: 'https://www.sportsoft.cz/cs/zavod/results/3780?rid=3094' }] },
+  { n: 5, date: '16. června 2018', links: [{ label: 'Hlavní závod (online)', href: 'https://wyniki.b4sport.pl/krakono-v-cyklomaraton/m120.html' }] },
+  { n: 4, date: '29. července 2017', links: [{ label: 'Hlavní závod (online)', href: 'https://www.sportchallenge.cz/cz/krakonosuvcyklomaraton/2017/vysledky' }] },
+  { n: 3, date: '6. srpna 2016', links: [{ label: 'Hlavní závod (online)', href: 'https://www.sportchallenge.cz/cz/krakonosuvcyklomaraton/2016/vysledky' }] },
+  { n: 2, date: '1. srpna 2015', links: [{ label: 'Hlavní závod (online)', href: 'https://www.sportchallenge.cz/cz/krakonosuvcyklomaraton/2015/vysledky' }] },
+  { n: 1, date: '2. srpna 2014', links: [{ label: 'Hlavní závod (online)', href: 'https://www.sportchallenge.cz/cz/krakonosuvcyklomaraton/2014/vysledky' }] },
+];
+const isPdf = (href: string) => href.endsWith('.pdf');
+const winners = [
+  { route: 'Dlouhá trať', ...splits.stats.long },
+  { route: 'Krátká trať', ...splits.stats.short },
+];
+---
+
+<Base title="Výsledky" description="Výsledky všech ročníků Krakonošova cyklomaratonu od roku 2014.">
+  <PageHead title="Výsledky" lede="Třináct ročníků od roku 2014. Hlavní závod online na SportSoftu, dětské závody v PDF." />
+
+  <section class="section" aria-label="Ročníky">
+    <div class="wrap">
+      <ol class="editions">
+        {
+          editions.map((e) => (
+            <li class="edition" id={`rocnik-${e.n}`}>
+              <div class="ed-head">
+                <h2 class="ed-n num">
+                  {e.n}. <span>ročník</span>
+                </h2>
+                <p class="ed-date num">{e.date}</p>
+              </div>
+              <div class="ed-body">
+                {e.n === 13 && (
+                  <dl class="podium">
+                    {winners.map((w) => (
+                      <div>
+                        <dt class="t-label">Vítěz · {w.route}</dt>
+                        <dd>
+                          {w.winner} <span class="num">{w.winnerTime}</span>
+                        </dd>
+                      </div>
+                    ))}
+                  </dl>
+                )}
+                <ul class="ed-links">
+                  {e.links.map((l) => (
+                    <li>
+                      <a href={l.href} target={isPdf(l.href) ? undefined : '_blank'} rel={isPdf(l.href) ? undefined : 'noopener'}>
+                        <Icon name={isPdf(l.href) ? 'download' : 'external'} />
+                        {l.label}
+                        {isPdf(l.href) && <span class="fmt">PDF</span>}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .editions {
+    list-style: none;
+    border-top: 1.5px solid var(--ink);
+  }
+
+  .edition {
+    display: grid;
+    grid-template-columns: minmax(12rem, 3fr) minmax(0, 8fr);
+    gap: 1.5rem 3rem;
+    padding-block: 1.75rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .ed-n {
+    font-stretch: 62%;
+    font-weight: 820;
+    font-size: clamp(2.25rem, 4vw, 3.25rem);
+    line-height: 0.95;
+  }
+
+  .ed-n span {
+    font-stretch: 75%;
+    font-weight: 700;
+    font-size: 0.42em;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--ink-3);
+  }
+
+  .ed-date {
+    margin-top: 0.4rem;
+    color: var(--ink-2);
+    font-weight: 560;
+  }
+
+  .ed-body {
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+    padding-top: 0.35rem;
+  }
+
+  .podium {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 3rem;
+    margin: 0;
+  }
+
+  .podium dt {
+    color: var(--ink-3);
+  }
+
+  .podium dd {
+    margin: 0.3rem 0 0;
+    font-stretch: 75%;
+    font-weight: 760;
+    font-size: 1.25rem;
+  }
+
+  .podium dd span {
+    margin-left: 0.4rem;
+    color: var(--ink-2);
+    font-weight: 600;
+  }
+
+  .ed-links {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+  }
+
+  .ed-links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 2.5rem;
+    font-weight: 600;
+    text-decoration-color: var(--red);
+  }
+
+  .ed-links :global(svg) {
+    width: 1.05rem;
+    height: 1.05rem;
+    color: var(--red);
+  }
+
+  .fmt {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 48rem) {
+    .edition {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

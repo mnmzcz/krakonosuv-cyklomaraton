@@ -1,0 +1,23 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+---
+
+<Base title="Stránka nenalezena">
+  <PageHead title="Tudy trať nevede" lede="Tahle stránka neexistuje nebo se přestěhovala. Zkuste úvodní stránku nebo registraci.">
+    <div class="actions on-dark">
+      <a class="btn" href="/registrace/">Registrace <Icon name="arrow" /></a>
+      <a class="btn btn--ghost" href="/">Úvodní stránka</a>
+    </div>
+  </PageHead>
+</Base>
+
+<style>
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+</style>
