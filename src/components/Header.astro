@@ -353,7 +353,7 @@ const groupCurrent = (children?: { href?: string }[]) => children?.some((c) => i
     height: 3rem;
   }
 
-  @media (max-width: 68rem) {
+  @media (max-width: 75rem) {
     .nav-desktop {
       display: none;
     }
@@ -427,6 +427,6 @@ const groupCurrent = (children?: { href?: string }[]) => children?.some((c) => i
       }
       closeAll();
     });
-    window.matchMedia('(min-width: 68.01rem)').addEventListener('change', (e) => e.matches && setOpen(false));
+    window.matchMedia('(min-width: 75.01rem)').addEventListener('change', (e) => e.matches && setOpen(false));
   }
 </script>
