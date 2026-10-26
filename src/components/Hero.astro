@@ -292,6 +292,11 @@ const tiersJson = JSON.stringify(priceTiers);
     height: 0.95rem;
   }
 
+  /* the embed refused to play: no pause control for a video that isn't there, only the link out */
+  .no-video .vbtn {
+    display: none;
+  }
+
   /* the real long-route profile rising out of the video: it is the ground the page stands on.
      The route spans the content column, on the same scale as the road book directly below it. */
   .ridge {
@@ -465,6 +470,10 @@ const tiersJson = JSON.stringify(priceTiers);
       display: none;
     }
 
+    .no-video .vlink {
+      display: inline-flex;
+    }
+
     .vbtn span {
       position: absolute;
       width: 1px;
@@ -511,8 +520,27 @@ const tiersJson = JSON.stringify(priceTiers);
     let frame: HTMLIFrameElement | null = null;
     let paused = false;
 
-    const command = (func: string) =>
-      frame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), 'https://www.youtube-nocookie.com');
+    const YT = 'https://www.youtube-nocookie.com';
+    const command = (func: string) => frame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args: [] }), YT);
+
+    // the poster stays until the player reports PLAYING; an embed error (e.g. YouTube's sign-in check) drops the frame for good
+    const fail = () => {
+      frame?.remove();
+      media.classList.remove('is-playing');
+      toggle.closest('.video-ctrl')?.classList.add('no-video');
+    };
+    window.addEventListener('message', (e) => {
+      if (e.origin !== YT || e.source !== frame?.contentWindow) return;
+      let msg: { event?: string; info?: any };
+      try {
+        msg = JSON.parse(e.data);
+      } catch {
+        return;
+      }
+      const state = msg.event === 'onStateChange' ? msg.info : msg.info?.playerState;
+      if (msg.event === 'onError' || msg.info?.videoData?.errorCode) fail();
+      else if (state === 1) media.classList.add('is-playing');
+    });
 
     const setPaused = (p: boolean) => {
       paused = p;
@@ -537,12 +565,21 @@ const tiersJson = JSON.stringify(priceTiers);
         enablejsapi: '1',
         origin: location.origin,
       });
-      frame.src = `https://www.youtube-nocookie.com/embed/${id}?${params}`;
+      frame.src = `${YT}/embed/${id}?${params}`;
       frame.title = 'Úvodní video Krakonošova cyklomaratonu';
       frame.allow = 'autoplay; encrypted-media; picture-in-picture';
       frame.tabIndex = -1;
       frame.setAttribute('aria-hidden', 'true');
-      frame.addEventListener('load', () => setTimeout(() => media.classList.add('is-playing'), 1400));
+      // subscribe to player events; repeat until the player answers, since it may boot after the frame's load event
+      frame.addEventListener('load', () => {
+        let tries = 0;
+        const listen = () => {
+          if (!frame?.isConnected || media.classList.contains('is-playing') || ++tries > 20) return;
+          frame.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), YT);
+          setTimeout(listen, 500);
+        };
+        listen();
+      });
       media.insertBefore(frame, media.querySelector('.scrim'));
     };
 
