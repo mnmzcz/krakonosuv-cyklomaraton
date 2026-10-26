@@ -48,7 +48,7 @@ A long-running regional race (14th edition on 12 June 2027) on real mountain roa
 
 ## Evidence on Hand
 
-- Route geometry and elevation of the 2026 routes, sampled from Mapy.com (`src/data/routes.json`): long 134.7 km, +2 489 m, max 1 115 m; short 88.5 km, +1 523 m, max 1 048 m.
+- Route geometry of the 2026 routes from Mapy.com, resampled every 200 m with elevations from the EU-DEM 25 m model (`src/data/routes.json`): long 134.7 km, highest point 1 118 m (Pražská bouda); short 88.5 km, highest point 1 053 m (Pomezní Boudy). Total climbing as published by Mapy.com: +2 489 m and +1 523 m. Climbs (length, average and steepest 1 km) are computed from the same samples.
 - Official 2026 results with split times at Pomezní bouda and Pražská bouda (SportSoft race 805): 223 finishers on the long route, 254 on the short; long-route winner 3:34:52, short-route winner 2:19:52. Pass-time windows on the fans page are computed from these splits.
 - Race photography from the organisers' own uploads (`public/photos/`), partner logos (`public/partners/`), six news posts, six rider testimonials.
 - Not on hand, never fabricate: 2027 route details, KOM/sprint locations, a total participant count across editions, road closures for 2027, fan-zone attractions beyond the official program.

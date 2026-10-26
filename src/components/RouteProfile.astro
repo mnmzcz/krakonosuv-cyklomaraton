@@ -37,15 +37,15 @@ const TIER1: Record<RouteId, string[]> = {
 // timing points of 2026 and feed stations from the organisers' pre-race information
 const SERVICES: Record<RouteId, { km: number; kind: 'clock' | 'bottle'; label: string }[]> = {
   long: [
-    { km: 51.5, kind: 'clock', label: 'Kontrola Pomezní Boudy' },
-    { km: 51.5, kind: 'bottle', label: 'Bufet Pomezní Boudy' },
-    { km: 72.5, kind: 'clock', label: 'Kontrola Pražská bouda' },
-    { km: 72.5, kind: 'bottle', label: 'Bufet Pražská bouda (pití)' },
+    { km: 51.4, kind: 'clock', label: 'Kontrola Pomezní Boudy' },
+    { km: 51.4, kind: 'bottle', label: 'Bufet Pomezní Boudy' },
+    { km: 71.6, kind: 'clock', label: 'Kontrola Pražská bouda' },
+    { km: 71.6, kind: 'bottle', label: 'Bufet Pražská bouda (pití)' },
     { km: 90, kind: 'bottle', label: 'Bufet Strážné' },
   ],
   short: [
-    { km: 51.5, kind: 'clock', label: 'Kontrola Pomezní Boudy' },
-    { km: 51.5, kind: 'bottle', label: 'Bufet Pomezní Boudy' },
+    { km: 51.4, kind: 'clock', label: 'Kontrola Pomezní Boudy' },
+    { km: 51.4, kind: 'bottle', label: 'Bufet Pomezní Boudy' },
   ],
 };
 
@@ -69,7 +69,7 @@ const charts = routes.map((rid) => {
     const x2 = Math.min(1000, X(q[0]) + 0.4);
     return {
       d: `M${x1.toFixed(2)} ${Y(p[1]).toFixed(2)}L${x2.toFixed(2)} ${Y(q[1]).toFixed(2)}L${x2.toFixed(2)} 100L${x1.toFixed(2)} 100Z`,
-      g: grade(p, q),
+      g: p[4] ?? grade(p, q),
     };
   });
   const line = r.points.map((p, i) => `${i ? 'L' : 'M'}${X(p[0]).toFixed(2)} ${Y(p[1]).toFixed(2)}`).join('');

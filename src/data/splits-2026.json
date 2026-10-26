@@ -41,21 +41,21 @@
    "id": "prkenny",
    "name": "Prkenný Důl · Žacléř",
    "km": {
-    "long": 20.1,
-    "short": 20.7
+    "long": 20.0,
+    "short": 20.0
    },
    "kind": "climb",
    "measured": false,
    "window": {
     "long": {
-     "km": 20.1,
+     "km": 20.0,
      "first": "10:34",
      "last": "11:06"
     },
     "short": {
-     "km": 20.7,
-     "first": "10:42",
-     "last": "11:26"
+     "km": 20.0,
+     "first": "10:41",
+     "last": "11:23"
     }
    }
   },
@@ -77,7 +77,7 @@
     "short": {
      "km": 31.1,
      "first": "11:01",
-     "last": "12:06"
+     "last": "12:07"
     }
    }
   },
@@ -85,20 +85,20 @@
    "id": "pomezni",
    "name": "Pomezní Boudy",
    "km": {
-    "long": 51.5,
-    "short": 51.5
+    "long": 51.4,
+    "short": 51.4
    },
    "kind": "summit",
    "measured": true,
    "split": "Pomezní bouda",
    "window": {
     "long": {
-     "km": 51.5,
+     "km": 51.4,
      "first": "11:27",
      "last": "12:49"
     },
     "short": {
-     "km": 51.5,
+     "km": 51.4,
      "first": "11:38",
      "last": "13:26"
     }
@@ -108,14 +108,14 @@
    "id": "prazska",
    "name": "Pražská bouda",
    "km": {
-    "long": 72.5
+    "long": 71.6
    },
    "kind": "summit",
    "measured": true,
    "split": "Pražská bouda",
    "window": {
     "long": {
-     "km": 72.5,
+     "km": 71.6,
      "first": "12:02",
      "last": "14:04"
     }
@@ -132,8 +132,8 @@
    "window": {
     "long": {
      "km": 90.0,
-     "first": "12:28",
-     "last": "14:53"
+     "first": "12:29",
+     "last": "14:55"
     }
    }
   },
@@ -141,13 +141,13 @@
    "id": "janske",
    "name": "Janské Lázně",
    "km": {
-    "long": 112.5
+    "long": 112.4
    },
    "kind": "climb",
    "measured": false,
    "window": {
     "long": {
-     "km": 112.5,
+     "km": 112.4,
      "first": "13:02",
      "last": "15:57"
     }
