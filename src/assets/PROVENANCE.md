@@ -28,9 +28,9 @@ predstartovni.jpg (2024/06/dsc-38.jpg), casia.jpg (2026/02/WhatsApp-Image-2026-0
 
 The three route-marking images in the 2024 pre-race article were hosted on `lh7-us.googleusercontent.com` and already returned 404 on the old site; they are not carried over.
 
-## shop/, riders/, partners/, obce/
+## shop/, partners/, obce/
 
-E-shop product photos (2023/11/…), the four rider portraits from the testimonials block (2023/09/Screenshot-2023-09-23-at-12.34.*.png), partner logos and municipal coats of arms, all from the same uploads folder. Three SVG partner logos (Ethanol Energy, Tufo, Královéhradecký kraj) had their `viewBox` cropped to the artwork; the drawing itself is unchanged.
+E-shop product photos (2023/11/…), partner logos and municipal coats of arms, all from the same uploads folder. Three SVG partner logos (Ethanol Energy, Tufo, Královéhradecký kraj) had their `viewBox` cropped to the artwork; the drawing itself is unchanged.
 
 ## Brand (public/brand/)
 

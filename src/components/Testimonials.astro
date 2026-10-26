@@ -1,12 +1,6 @@
 ---
-import { Image } from 'astro:assets';
 import { testimonials } from '../data/race';
 import splits from '../data/splits-2026.json';
-
-const riders = import.meta.glob<{ default: ImageMetadata }>('../assets/riders/*.png', { eager: true });
-const portraits = Object.keys(riders)
-  .sort()
-  .map((k) => riders[k].default);
 
 const finishers = splits.stats.long.finishers + splits.stats.short.finishers;
 // Jana Kynčlová's long voice leads the register; the others follow in the order of the data.
@@ -17,6 +11,9 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
   <div class="head">
     <h2 class="t-title">13 let pozitivních ohlasů</h2>
     <p class="t-lede">Třináct ročníků a tisíce spokojených cyklonadšenců, amatérů i profesionálů.</p>
+    <p class="stat num">
+      V roce 2026 dojelo do cíle <strong>{finishers} závodníků</strong>: {splits.stats.long.finishers} na dlouhé a {splits.stats.short.finishers} na krátké trati.
+    </p>
   </div>
 
   {/* A ruled register, read top to bottom: the rider's name heads each row, like a place in the timetable. */}
@@ -37,33 +34,17 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
       ))
     }
   </ul>
-
-  {/* The portraits stand for the finishers of 2026, not for the voices of the register:
-      a ruled block of its own, the sentence first and the faces under it. */}
-  <figure class="finishers">
-    <figcaption class="stat num">
-      V roce 2026 dojelo do cíle <strong>{finishers} závodníků</strong>: {splits.stats.long.finishers} na dlouhé a {splits.stats.short.finishers} na krátké trati.
-    </figcaption>
-    <div class="faces">
-      {portraits.map((src) => <Image src={src} alt="Účastník Krakonošova cyklomaratonu" widths={[200, 360]} sizes="(max-width: 40rem) 25vw, (max-width: 72rem) 15vw, 9rem" />)}
-    </div>
-  </figure>
 </div>
 
 <style>
-  /* Phones and tablets: heading, the register, then the finishers. */
+  /* Phones and tablets: the heading with its lede and the finishers, then the register. */
   .ohlasy {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    grid-template-areas:
-      'head'
-      'register'
-      'finishers';
     row-gap: clamp(2rem, 5vw, 3rem);
   }
 
   .head {
-    grid-area: head;
     display: grid;
     gap: 1.25rem;
     align-content: start;
@@ -72,7 +53,6 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
   /* ---------- the register ---------- */
 
   .register {
-    grid-area: register;
     list-style: none;
     border-top: 1.5px solid var(--ink);
     container-type: inline-size;
@@ -80,13 +60,6 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
 
   .voice {
     border-bottom: 1px solid var(--line);
-  }
-
-  /* stacked, the finishers' own rule follows and closes the register */
-  @media (max-width: 71.99rem) {
-    .voice:last-child {
-      border-bottom: 0;
-    }
   }
 
   figure {
@@ -167,30 +140,6 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
     }
   }
 
-  /* ---------- the finishers ---------- */
-
-  .finishers {
-    grid-area: finishers;
-    display: grid;
-    gap: 1rem;
-    align-self: start;
-    padding-top: 0.95rem;
-    border-top: 1.5px solid var(--ink);
-  }
-
-  .faces {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 3px;
-  }
-
-  .faces :global(img) {
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-    filter: saturate(0.9);
-  }
-
   .stat {
     max-width: 34rem;
     color: var(--ink-2);
@@ -203,29 +152,13 @@ const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
     font-weight: 700;
   }
 
-  /* Tablets and small laptops: the sentence and the strip of faces share one line. */
-  @media (min-width: 40rem) and (max-width: 71.99rem) {
-    .finishers {
-      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      column-gap: clamp(1.5rem, 4vw, 2.5rem);
-      align-items: start;
-    }
-  }
-
-  /* Wide screens: copy in 5fr, the register in 7fr. The finishers follow the heading at a fixed
-     step, as the evidence for its lede, and whatever height the register has left over stays
-     open at the foot of the left column instead of as a hole between the two. Below 72rem the
-     7fr column would be too narrow to keep the names in their own column, so the section stays
-     stacked. */
+  /* Wide screens: copy in 5fr, the register in 7fr. Below 72rem the 7fr column would be too
+     narrow to keep the names in their own column, so the section stays stacked. */
   @media (min-width: 72rem) {
     .ohlasy {
       grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-      grid-template-rows: auto 1fr;
-      grid-template-areas:
-        'head register'
-        'finishers register';
+      align-items: start;
       column-gap: clamp(2.5rem, 6vw, 6rem);
-      row-gap: 3rem;
     }
   }
 </style>
