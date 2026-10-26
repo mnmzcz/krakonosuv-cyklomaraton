@@ -9,71 +9,177 @@ const portraits = Object.keys(riders)
   .map((k) => riders[k].default);
 
 const finishers = splits.stats.long.finishers + splits.stats.short.finishers;
-const [featured, ...rest] = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
+// Jana Kynčlová's long voice leads the register; the others follow in the order of the data.
+const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
 ---
 
-<div class="voices">
-  <div class="intro">
+<div class="ohlasy">
+  <div class="head">
     <h2 class="t-title">13 let pozitivních ohlasů</h2>
     <p class="t-lede">Třináct ročníků a tisíce spokojených cyklonadšenců, amatérů i profesionálů.</p>
-    <p class="stat num">
-      V roce 2026 dojelo do cíle <strong>{finishers} závodníků</strong>: {splits.stats.long.finishers} na dlouhé a {splits.stats.short.finishers} na krátké trati.
-    </p>
-    <div class="faces">
-      {portraits.map((src) => <Image src={src} alt="Účastník Krakonošova cyklomaratonu" widths={[200, 360]} sizes="(max-width: 60rem) 25vw, 12vw" />)}
-    </div>
   </div>
 
-  <div class="quotes">
-    <figure class="q featured">
-      <blockquote><p>{featured.quote}</p></blockquote>
-      <figcaption>
-        <b>{featured.name}</b>
-        {featured.note && <span>{featured.note}</span>}
-      </figcaption>
-    </figure>
+  {/* A ruled register, read top to bottom: the rider's name heads each row, like a place in the timetable. */}
+  <ul class="register" role="list">
     {
-      rest.map((t) => (
-        <figure class="q">
-          <blockquote>
-            <p>{t.quote}</p>
-          </blockquote>
-          <figcaption>
-            <b>{t.name}</b>
-            {t.note && <span>{t.note}</span>}
-          </figcaption>
-        </figure>
+      voices.map((t, i) => (
+        <li class:list={['voice', { lead: i === 0 }]}>
+          <figure>
+            <figcaption>
+              <b class="name">{t.name}</b>
+              {t.note && <span class="note">{t.note}</span>}
+            </figcaption>
+            <blockquote>
+              <p>{t.quote}</p>
+            </blockquote>
+          </figure>
+        </li>
       ))
     }
-  </div>
+  </ul>
+
+  {/* The portraits stand for the finishers of 2026, not for the voices of the register:
+      a ruled block of its own, the sentence first and the faces under it. */}
+  <figure class="finishers">
+    <figcaption class="stat num">
+      V roce 2026 dojelo do cíle <strong>{finishers} závodníků</strong>: {splits.stats.long.finishers} na dlouhé a {splits.stats.short.finishers} na krátké trati.
+    </figcaption>
+    <div class="faces">
+      {portraits.map((src) => <Image src={src} alt="Účastník Krakonošova cyklomaratonu" widths={[200, 360]} sizes="(max-width: 40rem) 25vw, (max-width: 72rem) 15vw, 9rem" />)}
+    </div>
+  </figure>
 </div>
 
 <style>
-  .voices {
+  /* Phones and tablets: heading, the register, then the finishers. */
+  .ohlasy {
     display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    gap: clamp(2.5rem, 6vw, 6rem);
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      'head'
+      'register'
+      'finishers';
+    row-gap: clamp(2rem, 5vw, 3rem);
   }
 
-  .intro {
+  .head {
+    grid-area: head;
     display: grid;
     gap: 1.25rem;
     align-content: start;
   }
 
-  .stat {
-    color: var(--ink-2);
+  /* ---------- the register ---------- */
+
+  .register {
+    grid-area: register;
+    list-style: none;
+    border-top: 1.5px solid var(--ink);
+    container-type: inline-size;
   }
 
-  .stat strong {
+  .voice {
+    border-bottom: 1px solid var(--line);
+  }
+
+  /* stacked, the finishers' own rule follows and closes the register */
+  @media (max-width: 71.99rem) {
+    .voice:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .voice figure {
+    display: grid;
+    gap: 0.35rem;
+    padding-block: 0.95rem 1.05rem;
+  }
+
+  .voice figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.7rem;
+  }
+
+  .name {
+    font-stretch: 72%;
+    font-weight: 780;
+    font-size: 1.0625rem;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .note {
+    color: var(--ink-3);
+    font-size: 0.9375rem;
+    line-height: 1.3;
+  }
+
+  blockquote {
+    margin: 0;
+  }
+
+  blockquote p {
+    max-width: 60ch;
+    color: var(--ink-2);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+
+  /* the leading voice: the same row, set large at reading width so it stays easy to read */
+  .lead figure {
+    gap: 0.6rem;
+    padding-block: 1.35rem 1.6rem;
+  }
+
+  .lead blockquote p {
+    max-width: 38em;
     color: var(--ink);
+    font-weight: 450;
+    font-size: clamp(1.125rem, 1.6vw, 1.3125rem);
+    line-height: 1.5;
+  }
+
+  /* With room for it, the names stand in their own column and every quote starts on one line. */
+  @container (min-width: 34rem) {
+    .voice figure {
+      grid-template-columns: 9.5rem minmax(0, 1fr);
+      column-gap: clamp(1.5rem, 2.5vw, 2.25rem);
+      align-items: first baseline;
+      padding-block: 1.15rem 1.25rem;
+    }
+
+    .voice figcaption {
+      flex-direction: column;
+      align-items: start;
+    }
+
+    .lead figure {
+      padding-block: 1.6rem 1.9rem;
+    }
+  }
+
+  /* ---------- the finishers ---------- */
+
+  .finishers {
+    grid-area: finishers;
+    display: grid;
+    gap: 1rem;
+    align-self: end;
+    padding-top: 0.95rem;
+    border-top: 1.5px solid var(--ink);
   }
 
   .faces {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
-    margin-top: 1rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 3px;
   }
 
   .faces :global(img) {
@@ -83,55 +189,39 @@ const [featured, ...rest] = [testimonials[1], ...testimonials.filter((_, i) => i
     filter: saturate(0.9);
   }
 
-  .quotes {
-    columns: 2 18rem;
-    column-gap: clamp(2rem, 4vw, 3.5rem);
-  }
-
-  .q {
-    break-inside: avoid;
-    margin: 0 0 2.25rem;
-    padding-top: 1rem;
-    border-top: 1.5px solid var(--ink);
-  }
-
-  blockquote {
-    margin: 0;
-  }
-
-  blockquote p {
-    font-size: 1.125rem;
+  .stat {
+    max-width: 34rem;
+    color: var(--ink-2);
     line-height: 1.5;
+    text-wrap: pretty;
   }
 
-  .featured blockquote p {
-    font-stretch: 85%;
-    font-weight: 560;
-    font-size: clamp(1.25rem, 1.8vw, 1.5rem);
-    line-height: 1.35;
+  .stat strong {
+    color: var(--ink);
+    font-weight: 700;
   }
 
-  figcaption {
-    display: grid;
-    margin-top: 0.9rem;
-    line-height: 1.3;
+  /* Tablets and small laptops: the sentence and the strip of faces share one line. */
+  @media (min-width: 40rem) and (max-width: 71.99rem) {
+    .finishers {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: clamp(1.5rem, 4vw, 2.5rem);
+      align-items: start;
+    }
   }
 
-  figcaption b {
-    font-stretch: 72%;
-    font-weight: 780;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-  }
-
-  figcaption span {
-    color: var(--ink-3);
-    font-size: 0.9375rem;
-  }
-
-  @media (max-width: 60rem) {
-    .voices {
-      grid-template-columns: 1fr;
+  /* Wide screens: copy in 5fr, the register in 7fr. The heading opens the left column and the
+     finishers close it, level with the end of the register. Below 72rem the 7fr column would be
+     too narrow to keep the names in their own column, so the section stays stacked. */
+  @media (min-width: 72rem) {
+    .ohlasy {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        'head register'
+        'finishers register';
+      column-gap: clamp(2.5rem, 6vw, 6rem);
+      row-gap: 2.5rem;
     }
   }
 </style>
