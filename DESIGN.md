@@ -248,7 +248,7 @@ A cold, cartographic palette: one hue family of ridge blues from night to mist o
 
 A single content column of 84rem plus gutters of clamp(1rem, 4vw, 3rem) carries every page. Bands run full bleed and change the ground rather than drawing boxes: Snow, Paper, Mist (ridge-100) and dark Ridge Blue fields alternate, each padded clamp(4.5rem, 10vw, 9rem) top and bottom. Blocks inside a band are spaced clamp(2.5rem, 5vw, 4rem).
 
-The recurring split is asymmetric: copy in 5fr, data in 7fr, with a column gap of clamp(2.5rem, 6vw, 6rem) (price climb, testimonials, program, registration, the road book's heading beside its climbs table). Photographic bands invert it, photo 7fr full bleed and copy 5fr. All of these stack below 60rem.
+The recurring split is asymmetric: copy in 5fr, data in 7fr, with a column gap of clamp(2.5rem, 6vw, 6rem) (price climb, testimonials, program, registration, and the road book twice: its heading beside its stage header, its legend beside its climbs table). Photographic bands invert it, photo 7fr full bleed and copy 5fr. All of these stack below 60rem; the road book's heading row already stacks below 75rem, where the five stage facts no longer fit 7fr.
 
 **The Same Scale Rule.** Every profile on a page spans the content column on one km scale. The hero ridge, the road book directly below it and the ride rail align, so a place keeps its x position from band to band. Only the subpage header's ridge runs edge to edge.
 
@@ -310,7 +310,8 @@ There are no floating cards. Content sits in ruled rows and plates.
 
 ### Road Book Profile (signature)
 The route's stage profile, the heart of the system.
-- **Stage header:** a 2px ink top rule over a row of facts (Start, Cíl, Délka, Převýšení, Nejvýš), each a Fog Ink label over a Figure value and a qualifier, split by Hairlines. With two routes it begins with the route switch: lettered tabs (A, B in 1.75rem outlined squares) where the checked route inverts to ink.
+- **Order (home, `layout="split"`):** the section opens with its heading and lede; the stage header stands beside them in 7fr, sitting on the lede's last line, so the route tabs come before everything they switch. Then the profile full width, then the legend, the "Délky podle propozic" footnote and the Mapy.com link in 5fr beside the climbs table in 7fr, then the places disclosure. Source order is visual order.
+- **Stage header:** a 2px ink top rule over a row of facts (Start, Cíl, Délka, Převýšení, Nejvýš), each a Fog Ink label over a Figure value and a qualifier, split by Hairlines. With two routes it begins with the route switch: lettered tabs (A, B in 1.75rem outlined squares) where the checked route inverts to ink. In the 7fr column the tabs take their own row and each fact stacks its value over its qualifier.
 - **Plot:** the grade-0 base with grade 1–3 fills per 200 m sample, a 2px ink line on top, dashed altitude gridlines at 600, 800 and 1000 m.
 - **Places:** vertical Place labels on 1px ink stems (55 % opacity) ending in a paper dot on the line; second-tier places hide on phones. Spectator spots replace the stem and dot with red.
 - **Climbs:** open brackets above the plot from foot to top, labelled with the average grade where no stem passes.

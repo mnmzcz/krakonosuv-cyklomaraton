@@ -40,7 +40,7 @@ const stops = [
 
   <section class="route" id="trat" aria-labelledby="trat-title">
     <div class="wrap">
-      <RouteProfile id="profil-trate" layout="chart-first">
+      <RouteProfile id="profil-trate" layout="split">
         <h2 class="t-title" id="trat-title">Trať</h2>
         <p class="t-lede">
           Silniční okruh z Trutnova přes Polsko na Pomezní Boudy, dlouhá trať navíc přes Pražskou boudu a Strážné. Profil ukazuje trasy ročníku 2026 a projedete
@@ -93,9 +93,9 @@ const stops = [
 </Base>
 
 <style>
-  /* the road book sits right under the hero ridge, on the same km scale */
+  /* the road book opens with its heading right under the hero ridge; its profile keeps the same km scale */
   .route {
-    padding-top: clamp(1.5rem, 3vw, 2.5rem);
+    padding-top: clamp(2.5rem, 5vw, 4rem);
     padding-bottom: var(--space-section);
   }
 

@@ -25,13 +25,15 @@ interface Props {
   table?: boolean;
   /** climb brackets on the chart and the climb list; follows `stats` unless set */
   climbs?: boolean;
-  /** chart-first: the profile leads, stage header, heading (default slot) and climbs follow it.
-      The heading stays first in reading order; only the visual order changes. */
-  layout?: 'default' | 'chart-first';
+  /** default: heading (default slot), stage header and profile stacked like a stage page.
+      split: the heading beside the stage header, the profile full width under both, and the legend
+      with the footnote beside the climbs. The heading row stacks below 75rem, the rest below 60rem.
+      Both keep source order equal to visual order. */
+  layout?: 'default' | 'split';
 }
 
 const { id, routes = ['long', 'short'], markers, stats = true, table = true, climbs: showClimbs = stats, layout = 'default' } = Astro.props;
-const chartFirst = layout === 'chart-first';
+const split = layout === 'split';
 const hasIntro = Astro.slots.has('default');
 
 const ALT_MIN = 300;
@@ -157,301 +159,291 @@ const charts = routes.map((rid) => {
 const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
 const multi = charts.length > 1;
 const showStage = stats || multi;
-
-// the default reads like a stage page: title, header, profile. chart-first puts the profile on top
-// (a grid places the blocks), while the heading still comes first for screen readers.
-const order = chartFirst ? ['intro', 'chart', 'stage', 'legend', 'climbs', 'table'] : ['intro', 'stage', 'chart', 'legend', 'climbs', 'table'];
 ---
 
-<div class:list={['rb', `rb--${layout}`, { 'rb--intro': hasIntro, 'rb--climbs': showClimbs }]} data-rb id={id}>
-  {
-    order.map((block) => (
-      <>
-        {block === 'intro' && hasIntro && (
-          <div class="rb-intro">
-            <slot />
-          </div>
-        )}
+<div class:list={['rb', `rb--${layout}`, { 'rb--intro': hasIntro, 'rb--stage': showStage, 'rb--climbs': showClimbs }]} data-rb id={id}>
+  {hasIntro && (
+    <div class="rb-intro">
+      <slot />
+    </div>
+  )}
 
-        {block === 'stage' && showStage && (
-          <div class:list={['rb-stage', { 'has-tabs': multi }]}>
-            {multi && (
-              <fieldset class="rb-tabs">
-                <legend class="visually-hidden">Vyberte trať</legend>
-                {charts.map((c, i) => (
-                  <>
-                    <input type="radio" name={`${id}-route`} id={`${id}-${c.rid}`} value={c.rid} checked={i === 0} class="visually-hidden" />
-                    <label for={`${id}-${c.rid}`}>
-                      <span class="rb-letter" aria-hidden="true">
-                        {c.r.letter}
-                      </span>
-                      <span class="tab-name">{c.r.name}</span>
-                      <span class="tab-km num">
-                        {c.r.official_km} km<span aria-hidden="true">*</span>
-                        <span class="visually-hidden"> podle propozic 2027</span>
-                      </span>
-                    </label>
-                  </>
-                ))}
-              </fieldset>
-            )}
-            {stats &&
-              charts.map((c) => (
-                <dl class="rb-facts rb-r" data-route={c.rid}>
-                  {!multi && (
-                    <div class="rb-fact rb-fact--title">
-                      <dt class="visually-hidden">Trať</dt>
-                      <dd>
-                        <span class="rb-letter" aria-hidden="true">
-                          {c.r.letter}
-                        </span>
-                        <span class="v">{c.r.name}</span>
-                      </dd>
-                    </div>
-                  )}
-                  <div class="rb-fact">
-                    <dt class="t-label">Start</dt>
-                    <dd>
-                      <span class="v num">{c.r.start}</span> <span class="q">Trutnov</span>
-                    </dd>
-                  </div>
-                  <div class="rb-fact">
-                    <dt class="t-label">Cíl</dt>
-                    <dd>
-                      <span class="v">Trutnov</span>
-                    </dd>
-                  </div>
-                  <div class="rb-fact">
-                    <dt class="t-label">Délka</dt>
-                    <dd>
-                      <span class="v num">{fmtKm(c.r.km)} km</span> <span class="q">trasa 2026</span>
-                    </dd>
-                  </div>
-                  <div class="rb-fact">
-                    <dt class="t-label">Převýšení</dt>
-                    <dd>
-                      <span class="v num">{fmtInt(c.r.gain)} m</span> <span class="q">{c.r.gainSource}</span>
-                    </dd>
-                  </div>
-                  <div class="rb-fact">
-                    <dt class="t-label">Nejvýš</dt>
-                    <dd>
-                      <span class="v num">{fmtInt(c.top.alt)} m</span> <span class="q">{c.top.name}</span>
-                    </dd>
-                  </div>
-                </dl>
-              ))}
-          </div>
-        )}
-        {block === 'stage' && multi && (
-          <p class="rb-note">
-            <span aria-hidden="true">* </span>Délky podle propozic 2027. {race.routesNote}
-          </p>
-        )}
-
-        {block === 'chart' &&
-          charts.map((c) => (
-            <section class="rb-route rb-r" data-route={c.rid} aria-label={`${c.r.name}, profil trasy 2026`}>
-              <div class:list={['rb-chart', { 'has-climbs': showClimbs && c.climbs.length }]} data-chart={c.json}>
-                <div class="rb-plot">
-                  {grid.map((g) => (
-                    <div class="rb-grid" style={`top:${g.y}%`}>
-                      <span class="num">{g.a}</span>
-                    </div>
-                  ))}
-                  <svg class="rb-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
-                    <path d={c.base} class="g0" />
-                    {c.fills.map((s) => (
-                      <path d={s.d} class={`g${s.g}`} />
-                    ))}
-                    <path d={c.line} class="rb-line" vector-effect="non-scaling-stroke" />
-                  </svg>
-                </div>
-
-                {showClimbs && c.climbs.length > 0 && (
-                  <div class="rb-brackets" aria-hidden="true">
-                    {c.climbs.map((cl) => (
-                      <span class:list={['rb-bracket', { 'is-tight': cl.tight }]} style={`left:${cl.x0}%;width:${cl.x1 - cl.x0}%;--lx:${cl.lx.toFixed(1)}%;--t:${((cl.x0 / 100) * 1.1).toFixed(2)}s`}>
-                        <span class="num">{fmtPct(cl.avg)} %</span>
-                      </span>
-                    ))}
-                  </div>
-                )}
-
-                {c.marks.map((m) => (
-                  <div
-                    class:list={['rb-mark', `tier-${m.tier ?? 1}`, m.edge && `edge-${m.edge}`, m.kind === 'spot' && 'is-spot']}
-                    style={`--x:${m.x}%;--y:${m.y};--t:${((m.x / 100) * 1.1).toFixed(2)}s`}
-                    aria-hidden="true"
-                  >
-                    <span class="rb-name">
-                      <b>{m.name}</b> <span class="num">{fmtInt(m.alt)}</span>
-                    </span>
-                  </div>
-                ))}
-
-                <div class="rb-axis" aria-hidden="true">
-                  {c.ticks.map((t) => (
-                    <span class:list={['tick', { major: t.major }]} style={`left:${t.x}%`}>
-                      {t.major && <span class="num">{t.k}</span>}
-                    </span>
-                  ))}
-                  <span class="unit t-label">km</span>
-                </div>
-
-                <div class="rb-services" aria-hidden="true">
-                  {c.services.map((s) => (
-                    <span class:list={['svc', s.kind]} style={`left:${s.x}%;--t:${((s.x / 100) * 1.1).toFixed(2)}s`} title={s.label}>
-                      <Icon name={s.kind} />
-                    </span>
-                  ))}
-                </div>
-
-                <div
-                  class="rb-scrub"
-                  tabindex="0"
-                  role="slider"
-                  aria-label={`Projet ${c.r.name.toLowerCase()} po kilometrech`}
-                  aria-valuemin="0"
-                  aria-valuemax={Math.round(c.L)}
-                  aria-valuenow="0"
-                  aria-valuetext="km 0, Trutnov"
-                >
-                  <span class="rb-cursor" hidden>
-                    <span class="rb-dot" />
-                  </span>
-                  <span class="rb-read" hidden>
-                    <span class="rd-top num" />
-                    <span class="rd-name" />
-                  </span>
-                </div>
-              </div>
-            </section>
+  {showStage && (
+    <div class:list={['rb-stage', { 'has-tabs': multi }]}>
+      {multi && (
+        <fieldset class="rb-tabs">
+          <legend class="visually-hidden">Vyberte trať</legend>
+          {charts.map((c, i) => (
+            <>
+              <input type="radio" name={`${id}-route`} id={`${id}-${c.rid}`} value={c.rid} checked={i === 0} class="visually-hidden" />
+              <label for={`${id}-${c.rid}`}>
+                <span class="rb-letter" aria-hidden="true">
+                  {c.r.letter}
+                </span>
+                <span class="tab-name">{c.r.name}</span>
+                <span class="tab-km num">
+                  {c.r.official_km} km<span aria-hidden="true">*</span>
+                  <span class="visually-hidden"> podle propozic 2027</span>
+                </span>
+              </label>
+            </>
           ))}
+        </fieldset>
+      )}
+      {stats &&
+        charts.map((c) => (
+          <dl class="rb-facts rb-r" data-route={c.rid}>
+            {!multi && (
+              <div class="rb-fact rb-fact--title">
+                <dt class="visually-hidden">Trať</dt>
+                <dd>
+                  <span class="rb-letter" aria-hidden="true">
+                    {c.r.letter}
+                  </span>
+                  <span class="v">{c.r.name}</span>
+                </dd>
+              </div>
+            )}
+            <div class="rb-fact">
+              <dt class="t-label">Start</dt>
+              <dd>
+                <span class="v num">{c.r.start}</span> <span class="q">Trutnov</span>
+              </dd>
+            </div>
+            <div class="rb-fact">
+              <dt class="t-label">Cíl</dt>
+              <dd>
+                <span class="v">Trutnov</span>
+              </dd>
+            </div>
+            <div class="rb-fact">
+              <dt class="t-label">Délka</dt>
+              <dd>
+                <span class="v num">{fmtKm(c.r.km)} km</span> <span class="q">trasa 2026</span>
+              </dd>
+            </div>
+            <div class="rb-fact">
+              <dt class="t-label">Převýšení</dt>
+              <dd>
+                <span class="v num">{fmtInt(c.r.gain)} m</span> <span class="q">{c.r.gainSource}</span>
+              </dd>
+            </div>
+            <div class="rb-fact">
+              <dt class="t-label">Nejvýš</dt>
+              <dd>
+                <span class="v num">{fmtInt(c.top.alt)} m</span> <span class="q">{c.top.name}</span>
+              </dd>
+            </div>
+          </dl>
+        ))}
+    </div>
+  )}
+  {multi && !split && (
+    <p class="rb-note">
+      <span aria-hidden="true">* </span>Délky podle propozic 2027. {race.routesNote}
+    </p>
+  )}
 
-        {block === 'legend' && (
-          <div class="rb-foot">
-            <ul class="rb-legend" aria-label="Legenda">
-              <li>
-                <i class="sw g1" />
-                2–4 %
-              </li>
-              <li>
-                <i class="sw g2" />
-                4–6 %
-              </li>
-              <li>
-                <i class="sw g3" />
-                přes 6 %
-              </li>
-              {showClimbs && (
-                <li>
-                  <i class="sw-bracket" />
-                  <span>stoupání<span class="lg-avg">, průměrný sklon</span></span>
-                </li>
-              )}
-              <li>
-                <Icon name="clock" />
-                kontrola
-              </li>
-              <li>
-                <Icon name="bottle" />
-                bufet
-              </li>
-            </ul>
-            {charts.map((c) => (
-              <a class="link-arrow rb-r" data-route={c.rid} href={c.r.mapUrl} target="_blank" rel="noopener">
-                {c.r.name} 2026 v Mapy.com <Icon name="external" />
-              </a>
+  {charts.map((c) => (
+    <section class="rb-route rb-r" data-route={c.rid} aria-label={`${c.r.name}, profil trasy 2026`}>
+      <div class:list={['rb-chart', { 'has-climbs': showClimbs && c.climbs.length }]} data-chart={c.json}>
+        <div class="rb-plot">
+          {grid.map((g) => (
+            <div class="rb-grid" style={`top:${g.y}%`}>
+              <span class="num">{g.a}</span>
+            </div>
+          ))}
+          <svg class="rb-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+            <path d={c.base} class="g0" />
+            {c.fills.map((s) => (
+              <path d={s.d} class={`g${s.g}`} />
+            ))}
+            <path d={c.line} class="rb-line" vector-effect="non-scaling-stroke" />
+          </svg>
+        </div>
+
+        {showClimbs && c.climbs.length > 0 && (
+          <div class="rb-brackets" aria-hidden="true">
+            {c.climbs.map((cl) => (
+              <span class:list={['rb-bracket', { 'is-tight': cl.tight }]} style={`left:${cl.x0}%;width:${cl.x1 - cl.x0}%;--lx:${cl.lx.toFixed(1)}%;--t:${((cl.x0 / 100) * 1.1).toFixed(2)}s`}>
+                <span class="num">{fmtPct(cl.avg)} %</span>
+              </span>
             ))}
           </div>
         )}
 
-        {block === 'climbs' && showClimbs && (
-          <div class="rb-lead">
-            {showClimbs &&
-              charts.map(
-                (c) =>
-                  c.climbs.length > 0 && (
-                    <div class="rb-climbs rb-r" data-route={c.rid}>
-                      <h3 class="rb-h3" id={`${id}-${c.rid}-climbs`}>
-                        Stoupání <span class="rb-h3-sub">{c.r.name.toLowerCase()}</span>
-                      </h3>
-                      <table aria-labelledby={`${id}-${c.rid}-climbs`}>
-                        <thead>
-                          <tr>
-                            <th scope="col">Úsek</th>
-                            <th scope="col" class="n">
-                              Délka
-                            </th>
-                            <th scope="col" class="n">
-                              Převýšení
-                            </th>
-                            <th scope="col" class="n">
-                              Průměr
-                            </th>
-                            <th scope="col" class="n">
-                              Nejprudší km
-                            </th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {c.climbs.map((cl) => (
-                            <tr>
-                              <th scope="row">
-                                <b>{cl.name}</b>
-                                <span class="span num">
-                                  km {fmtKm(cl.from_km)}–{fmtKm(cl.to_km)}
-                                </span>
-                              </th>
-                              <td class="n num">{fmtKm(cl.length)} km</td>
-                              <td class="n num">{fmtInt(cl.gain)} m</td>
-                              <td class="n num">{fmtPct(cl.avg)} %</td>
-                              <td class="n num">{fmtPct(cl.max)} %</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ),
-              )}
+        {c.marks.map((m) => (
+          <div
+            class:list={['rb-mark', `tier-${m.tier ?? 1}`, m.edge && `edge-${m.edge}`, m.kind === 'spot' && 'is-spot']}
+            style={`--x:${m.x}%;--y:${m.y};--t:${((m.x / 100) * 1.1).toFixed(2)}s`}
+            aria-hidden="true"
+          >
+            <span class="rb-name">
+              <b>{m.name}</b> <span class="num">{fmtInt(m.alt)}</span>
+            </span>
           </div>
-        )}
+        ))}
 
-        {block === 'table' &&
-          table &&
-          charts.map((c) => (
-            <details class="rb-table rb-r" data-route={c.rid}>
-              <summary>
-                <span>Místa na trati ({c.r.name.toLowerCase()})</span>
-                <Icon name="chevron" class="rb-chev" />
-              </summary>
-              <table>
+        <div class="rb-axis" aria-hidden="true">
+          {c.ticks.map((t) => (
+            <span class:list={['tick', { major: t.major }]} style={`left:${t.x}%`}>
+              {t.major && <span class="num">{t.k}</span>}
+            </span>
+          ))}
+          <span class="unit t-label">km</span>
+        </div>
+
+        <div class="rb-services" aria-hidden="true">
+          {c.services.map((s) => (
+            <span class:list={['svc', s.kind]} style={`left:${s.x}%;--t:${((s.x / 100) * 1.1).toFixed(2)}s`} title={s.label}>
+              <Icon name={s.kind} />
+            </span>
+          ))}
+        </div>
+
+        <div
+          class="rb-scrub"
+          tabindex="0"
+          role="slider"
+          aria-label={`Projet ${c.r.name.toLowerCase()} po kilometrech`}
+          aria-valuemin="0"
+          aria-valuemax={Math.round(c.L)}
+          aria-valuenow="0"
+          aria-valuetext="km 0, Trutnov"
+        >
+          <span class="rb-cursor" hidden>
+            <span class="rb-dot" />
+          </span>
+          <span class="rb-read" hidden>
+            <span class="rd-top num" />
+            <span class="rd-name" />
+          </span>
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <div class="rb-foot">
+    <ul class="rb-legend" aria-label="Legenda">
+      <li>
+        <i class="sw g1" />
+        2–4 %
+      </li>
+      <li>
+        <i class="sw g2" />
+        4–6 %
+      </li>
+      <li>
+        <i class="sw g3" />
+        přes 6 %
+      </li>
+      {showClimbs && (
+        <li>
+          <i class="sw-bracket" />
+          <span>stoupání<span class="lg-avg">, průměrný sklon</span></span>
+        </li>
+      )}
+      <li>
+        <Icon name="clock" />
+        kontrola
+      </li>
+      <li>
+        <Icon name="bottle" />
+        bufet
+      </li>
+    </ul>
+    {multi && split && (
+      <p class="rb-note">
+        <span aria-hidden="true">* </span>Délky podle propozic 2027. {race.routesNote}
+      </p>
+    )}
+    {charts.map((c) => (
+      <a class="link-arrow rb-r" data-route={c.rid} href={c.r.mapUrl} target="_blank" rel="noopener">
+        {c.r.name} 2026 v Mapy.com <Icon name="external" />
+      </a>
+    ))}
+  </div>
+
+  {showClimbs && (
+    <div class="rb-lead">
+      {charts.map(
+        (c) =>
+          c.climbs.length > 0 && (
+            <div class="rb-climbs rb-r" data-route={c.rid}>
+              <h3 class="rb-h3" id={`${id}-${c.rid}-climbs`}>
+                Stoupání <span class="rb-h3-sub">{c.r.name.toLowerCase()}</span>
+              </h3>
+              <table aria-labelledby={`${id}-${c.rid}-climbs`}>
                 <thead>
                   <tr>
-                    <th scope="col">km</th>
-                    <th scope="col">Místo</th>
-                    <th scope="col">m n. m.</th>
+                    <th scope="col">Úsek</th>
+                    <th scope="col" class="n">
+                      Délka
+                    </th>
+                    <th scope="col" class="n">
+                      Převýšení
+                    </th>
+                    <th scope="col" class="n">
+                      Průměr
+                    </th>
+                    <th scope="col" class="n">
+                      Nejprudší km
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {c.r.waypoints.map((w) => (
+                  {c.climbs.map((cl) => (
                     <tr>
-                      <td class="num">{fmtKm(w.km)}</td>
-                      <td>
-                        {w.name}
-                        {w.note && <span class="note"> · {w.note}</span>}
-                      </td>
-                      <td class="num">{fmtInt(w.alt)}</td>
+                      <th scope="row">
+                        <b>{cl.name}</b>
+                        <span class="span num">
+                          km {fmtKm(cl.from_km)}–{fmtKm(cl.to_km)}
+                        </span>
+                      </th>
+                      <td class="n num">{fmtKm(cl.length)} km</td>
+                      <td class="n num">{fmtInt(cl.gain)} m</td>
+                      <td class="n num">{fmtPct(cl.avg)} %</td>
+                      <td class="n num">{fmtPct(cl.max)} %</td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-            </details>
-          ))}
-      </>
-    ))
-  }
+            </div>
+          ),
+      )}
+    </div>
+  )}
+
+  {table &&
+    charts.map((c) => (
+      <details class="rb-table rb-r" data-route={c.rid}>
+        <summary>
+          <span>Místa na trati ({c.r.name.toLowerCase()})</span>
+          <Icon name="chevron" class="rb-chev" />
+        </summary>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">km</th>
+              <th scope="col">Místo</th>
+              <th scope="col">m n. m.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {c.r.waypoints.map((w) => (
+              <tr>
+                <td class="num">{fmtKm(w.km)}</td>
+                <td>
+                  {w.name}
+                  {w.note && <span class="note"> · {w.note}</span>}
+                </td>
+                <td class="num">{fmtInt(w.alt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+    ))}
 </div>
 
 <style>
@@ -474,54 +466,139 @@ const order = chartFirst ? ['intro', 'chart', 'stage', 'legend', 'climbs', 'tabl
     margin-bottom: clamp(2rem, 4vw, 3rem);
   }
 
-  /* chart-first: the heading and lede come first in the source, the grid shows the profile first
-     and sets them beside the climbs. Nothing in the copy is focusable, so focus order follows the eye. */
-  .rb--chart-first {
+  /* split: one road-book page. The heading and lede open it, the stage header (whose tabs switch
+     everything below) sits beside them on wide screens, the profile runs full width under both, and
+     the legend with its footnote stands beside the climbs. Source order is visual order. */
+  .rb--split {
     display: grid;
-    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
-    column-gap: clamp(2.5rem, 6vw, 6rem);
-    grid-template-areas:
-      'chart chart'
-      'stage stage'
-      'note note'
-      'foot foot'
-      'copy climbs'
-      'table table';
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
   }
 
-  .rb--chart-first > .rb-route {
-    grid-area: chart;
+  .rb--split > .rb-route {
+    margin-top: clamp(1.25rem, 2.5vw, 2rem);
   }
 
-  .rb--chart-first > .rb-stage {
-    grid-area: stage;
+  .rb--split .rb-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 1rem;
   }
 
-  .rb--chart-first > .rb-note {
-    grid-area: note;
+  .rb--split .rb-note {
+    margin: 0;
   }
 
-  .rb--chart-first > .rb-foot {
-    grid-area: foot;
+  @media (width > 60rem) {
+    .rb--split {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: clamp(2.5rem, 6vw, 6rem);
+      grid-template-areas:
+        'intro intro'
+        'stage stage'
+        'chart chart'
+        'foot climbs'
+        'table table';
+    }
+
+    .rb--split > .rb-intro {
+      grid-area: intro;
+    }
+
+    .rb--split > .rb-stage {
+      grid-area: stage;
+    }
+
+    .rb--split > .rb-route {
+      grid-area: chart;
+    }
+
+    /* the key and the climbs open one row, a step below the km axis */
+    .rb--split > .rb-foot {
+      grid-area: foot;
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .rb--split > .rb-lead {
+      grid-area: climbs;
+      margin-top: 1rem;
+    }
+
+    .rb--split > .rb-table {
+      grid-area: table;
+    }
+
+    .rb--split:not(.rb--climbs) > .rb-foot {
+      grid-column: 1 / -1;
+    }
+
+    /* the key as two short columns: the grade swatches, then the drawn symbols */
+    .rb--split .rb-legend {
+      display: grid;
+      grid-template-columns: repeat(2, max-content);
+      grid-template-rows: repeat(3, auto);
+      grid-auto-flow: column;
+      gap: 0.55rem 2rem;
+    }
   }
 
-  .rb--chart-first > .rb-intro {
-    grid-area: copy;
-    margin: clamp(2.5rem, 5vw, 4rem) 0 0;
-  }
+  @media (width > 75rem) {
+    .rb--split {
+      grid-template-areas:
+        'intro stage'
+        'chart chart'
+        'foot climbs'
+        'table table';
+    }
 
-  .rb--chart-first > .rb-lead {
-    grid-area: climbs;
-  }
+    .rb--split > .rb-intro {
+      margin-bottom: 0;
+    }
 
-  .rb--chart-first > .rb-table {
-    grid-area: table;
-  }
+    /* the stage header stands on the lede's last line, straight above the profile it switches */
+    .rb--split > .rb-stage {
+      align-self: end;
+    }
 
-  .rb--chart-first:not(.rb--climbs) > .rb-intro,
-  .rb--chart-first:not(.rb--intro) > .rb-lead {
-    grid-column: 1 / -1;
+    .rb--split:not(.rb--stage) > .rb-intro,
+    .rb--split:not(.rb--intro) > .rb-stage {
+      grid-column: 1 / -1;
+    }
+
+    /* in the 7fr column the tabs take their own row and every fact stacks value over qualifier */
+    .rb--split .rb-stage.has-tabs {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rb--split .rb-stage.has-tabs .rb-tabs {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .rb--split .rb-stage.has-tabs .rb-tabs label:last-of-type {
+      border-right: 0;
+    }
+
+    .rb--split .rb-facts {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: auto;
+    }
+
+    .rb--split .rb-fact:first-child {
+      padding-left: 0;
+    }
+
+    .rb--split .rb-fact:last-child {
+      padding-right: 0;
+    }
+
+    .rb--split .rb-fact dd {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+    }
   }
 
   /* ---------- stage header: one ruled line, like the head of a stage profile ---------- */
@@ -1003,10 +1080,6 @@ const order = chartFirst ? ['intro', 'chart', 'stage', 'legend', 'climbs', 'tabl
     gap: 1rem 2rem;
   }
 
-  .rb--chart-first .rb-foot {
-    margin-top: 1.25rem;
-  }
-
   .rb-legend {
     display: flex;
     flex-wrap: wrap;
@@ -1051,7 +1124,7 @@ const order = chartFirst ? ['intro', 'chart', 'stage', 'legend', 'climbs', 'tabl
     transform: translateY(0.1rem);
   }
 
-  /* the climbs: beside the heading and lede (chart-first), or under the legend */
+  /* the climbs: under the legend, or beside it (split) */
   .rb-lead {
     display: grid;
     margin-top: clamp(2.5rem, 5vw, 4rem);
@@ -1268,11 +1341,6 @@ const order = chartFirst ? ['intro', 'chart', 'stage', 'legend', 'climbs', 'tabl
   @media (max-width: 60rem) {
     .rb-bracket.is-tight .num {
       display: none;
-    }
-
-    .rb--chart-first {
-      grid-template-columns: minmax(0, 1fr);
-      grid-template-areas: 'chart' 'stage' 'note' 'foot' 'copy' 'climbs' 'table';
     }
   }
 
