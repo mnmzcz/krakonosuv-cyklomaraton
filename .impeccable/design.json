@@ -1,0 +1,609 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-26T12:55:30+00:00",
+  "title": "Design System: Casia Krakonošův cyklomaraton",
+  "extensions": {
+    "colorMeta": {
+      "red": {
+        "role": "primary",
+        "displayName": "Casia Red",
+        "canonical": "oklch(57.7% 0.234 28)",
+        "tonalRamp": [
+          "#230806",
+          "#4d0f0b",
+          "#7c1210",
+          "#b4000c",
+          "#e30613",
+          "#fc7567",
+          "#ffb5ab",
+          "#fceae7"
+        ]
+      },
+      "red-deep": {
+        "role": "primary",
+        "displayName": "Pressed Casia Red",
+        "canonical": "oklch(48.4% 0.198 28)",
+        "tonalRamp": [
+          "#230806",
+          "#4d0f0b",
+          "#7c1210",
+          "#b4000c",
+          "#e30613",
+          "#fc7567",
+          "#ffb5ab",
+          "#fceae7"
+        ]
+      },
+      "ridge-950": {
+        "role": "secondary",
+        "displayName": "Night Ridge",
+        "canonical": "#061221",
+        "tonalRamp": [
+          "#061221",
+          "#0c2340",
+          "#12315a",
+          "#1d4a82",
+          "#4677b0",
+          "#8fb2d9",
+          "#b9cfe7",
+          "#dfe9f4"
+        ]
+      },
+      "ridge-900": {
+        "role": "secondary",
+        "displayName": "Ridge Blue",
+        "canonical": "oklch(25.5% 0.062 256)",
+        "tonalRamp": [
+          "#061221",
+          "#0c2340",
+          "#12315a",
+          "#1d4a82",
+          "#4677b0",
+          "#8fb2d9",
+          "#b9cfe7",
+          "#dfe9f4"
+        ]
+      },
+      "ridge-700": {
+        "role": "secondary",
+        "displayName": "Steep Blue",
+        "canonical": "#1d4a82",
+        "tonalRamp": [
+          "#061221",
+          "#0c2340",
+          "#12315a",
+          "#1d4a82",
+          "#4677b0",
+          "#8fb2d9",
+          "#b9cfe7",
+          "#dfe9f4"
+        ]
+      },
+      "ridge-500": {
+        "role": "secondary",
+        "displayName": "Mid Ridge",
+        "canonical": "#4677b0",
+        "tonalRamp": [
+          "#061221",
+          "#0c2340",
+          "#12315a",
+          "#1d4a82",
+          "#4677b0",
+          "#8fb2d9",
+          "#b9cfe7",
+          "#dfe9f4"
+        ]
+      },
+      "ridge-300": {
+        "role": "secondary",
+        "displayName": "Haze",
+        "canonical": "#8fb2d9",
+        "tonalRamp": [
+          "#061221",
+          "#0c2340",
+          "#12315a",
+          "#1d4a82",
+          "#4677b0",
+          "#8fb2d9",
+          "#b9cfe7",
+          "#dfe9f4"
+        ]
+      },
+      "ridge-200": {
+        "role": "secondary",
+        "displayName": "Pale Haze",
+        "canonical": "#b9cfe7",
+        "tonalRamp": [
+          "#061221",
+          "#0c2340",
+          "#12315a",
+          "#1d4a82",
+          "#4677b0",
+          "#8fb2d9",
+          "#b9cfe7",
+          "#dfe9f4"
+        ]
+      },
+      "ridge-100": {
+        "role": "secondary",
+        "displayName": "Mist",
+        "canonical": "#dfe9f4",
+        "tonalRamp": [
+          "#061221",
+          "#0c2340",
+          "#12315a",
+          "#1d4a82",
+          "#4677b0",
+          "#8fb2d9",
+          "#b9cfe7",
+          "#dfe9f4"
+        ]
+      },
+      "grade-0": {
+        "role": "tertiary",
+        "displayName": "Valley Floor Blue (under 2 %)",
+        "canonical": "#c9daee",
+        "tonalRamp": [
+          "#c9daee",
+          "#8fb2d9",
+          "#4677b0",
+          "#1d4a82"
+        ]
+      },
+      "grade-1": {
+        "role": "tertiary",
+        "displayName": "Grade 2–4 %",
+        "canonical": "#8fb2d9",
+        "tonalRamp": [
+          "#c9daee",
+          "#8fb2d9",
+          "#4677b0",
+          "#1d4a82"
+        ]
+      },
+      "grade-2": {
+        "role": "tertiary",
+        "displayName": "Grade 4–6 %",
+        "canonical": "#4677b0",
+        "tonalRamp": [
+          "#c9daee",
+          "#8fb2d9",
+          "#4677b0",
+          "#1d4a82"
+        ]
+      },
+      "grade-3": {
+        "role": "tertiary",
+        "displayName": "Grade over 6 %",
+        "canonical": "#1d4a82",
+        "tonalRamp": [
+          "#c9daee",
+          "#8fb2d9",
+          "#4677b0",
+          "#1d4a82"
+        ]
+      },
+      "snow": {
+        "role": "neutral",
+        "displayName": "Snow Ground",
+        "canonical": "oklch(97.5% 0.005 248)",
+        "tonalRamp": [
+          "#0b1b2e",
+          "#33465d",
+          "#566a82",
+          "#9fb3c9",
+          "#cfdae6",
+          "#dfe9f4",
+          "#f4f7fa",
+          "#ffffff"
+        ]
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Paper White",
+        "canonical": "#ffffff",
+        "tonalRamp": [
+          "#0b1b2e",
+          "#33465d",
+          "#566a82",
+          "#9fb3c9",
+          "#cfdae6",
+          "#dfe9f4",
+          "#f4f7fa",
+          "#ffffff"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Road Ink",
+        "canonical": "oklch(21.9% 0.043 254)",
+        "tonalRamp": [
+          "#0b1b2e",
+          "#33465d",
+          "#566a82",
+          "#9fb3c9",
+          "#cfdae6",
+          "#dfe9f4",
+          "#f4f7fa",
+          "#ffffff"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Slate Ink",
+        "canonical": "#33465d",
+        "tonalRamp": [
+          "#0b1b2e",
+          "#33465d",
+          "#566a82",
+          "#9fb3c9",
+          "#cfdae6",
+          "#dfe9f4",
+          "#f4f7fa",
+          "#ffffff"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Fog Ink",
+        "canonical": "#566a82",
+        "tonalRamp": [
+          "#0b1b2e",
+          "#33465d",
+          "#566a82",
+          "#9fb3c9",
+          "#cfdae6",
+          "#dfe9f4",
+          "#f4f7fa",
+          "#ffffff"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Hairline",
+        "canonical": "#cfdae6",
+        "tonalRamp": [
+          "#0b1b2e",
+          "#33465d",
+          "#566a82",
+          "#9fb3c9",
+          "#cfdae6",
+          "#dfe9f4",
+          "#f4f7fa",
+          "#ffffff"
+        ]
+      },
+      "line-strong": {
+        "role": "neutral",
+        "displayName": "Rule Steel (decorative rules only)",
+        "canonical": "#9fb3c9",
+        "tonalRamp": [
+          "#0b1b2e",
+          "#33465d",
+          "#566a82",
+          "#9fb3c9",
+          "#cfdae6",
+          "#dfe9f4",
+          "#f4f7fa",
+          "#ffffff"
+        ]
+      },
+      "on-dark-2": {
+        "role": "neutral",
+        "displayName": "Moonlit Text",
+        "canonical": "#b8cbe1",
+        "tonalRamp": [
+          "#061221",
+          "#0c2340",
+          "#12315a",
+          "#1d4a82",
+          "#4677b0",
+          "#8fb2d9",
+          "#b9cfe7",
+          "#dfe9f4"
+        ]
+      },
+      "on-dark-line": {
+        "role": "neutral",
+        "displayName": "Moonlit Hairline",
+        "canonical": "rgba(184, 203, 225, 0.28)",
+        "tonalRamp": [
+          "#061221",
+          "#0c2340",
+          "#12315a",
+          "#1d4a82",
+          "#4677b0",
+          "#8fb2d9",
+          "#b9cfe7",
+          "#dfe9f4"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Hero and subpage H1s; extra-condensed uppercase."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Section H2s; condensed uppercase."
+      },
+      "title": {
+        "displayName": "Caps Title",
+        "purpose": "Program day heads, footer edition line; base of the component caps titles."
+      },
+      "lede": {
+        "displayName": "Lede",
+        "purpose": "The paragraph under a section heading, Slate Ink, max 60ch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Reading text at normal width; prose max 68ch."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Data terms, column heads, tier and footer headings, map names; uppercase."
+      },
+      "place": {
+        "displayName": "Place",
+        "purpose": "Vertical place names on profile stems; uppercase, read bottom to top."
+      },
+      "figure": {
+        "displayName": "Figure",
+        "purpose": "Stage-header values: km, m, times, in tabular lining figures."
+      },
+      "button": {
+        "displayName": "Button",
+        "purpose": "Button labels; condensed uppercase."
+      }
+    },
+    "shadows": [
+      {
+        "name": "float-panel",
+        "value": "0 18px 40px -18px rgba(6, 18, 33, 0.35)",
+        "purpose": "Desktop submenus."
+      },
+      {
+        "name": "float-list",
+        "value": "0 18px 32px -20px rgba(6, 18, 33, 0.45)",
+        "purpose": "The compact ride rail's open list of stops."
+      },
+      {
+        "name": "docked-rail",
+        "value": "0 10px 24px -18px rgba(6, 18, 33, 0.4)",
+        "purpose": "The ride rail docked under the header."
+      },
+      {
+        "name": "readout",
+        "value": "0 6px 18px -8px rgba(6, 18, 33, 0.45)",
+        "purpose": "Scrub readout and ride-rail stop tooltips."
+      },
+      {
+        "name": "marker-ring",
+        "value": "0 0 0 3px var(--paper)",
+        "purpose": "Paper ring that lifts a red dot off the line it rides (2px on the rail). Separation, not elevation."
+      },
+      {
+        "name": "snow-halo",
+        "value": "text-shadow: 0 0 2px var(--snow), 0 0 2px var(--snow), 0 0 3px var(--snow)",
+        "purpose": "Label legibility where it crosses the profile; paper instead of snow on the map plate."
+      },
+      {
+        "name": "video-lift",
+        "value": "text-shadow: 0 2px 24px rgba(6, 18, 33, 0.35)",
+        "purpose": "Hero title over moving footage, with the lower-left scrim."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.16, 1, 0.3, 1)",
+        "purpose": "The only easing in use: state changes, reveals, docking."
+      },
+      {
+        "name": "state",
+        "value": "0.2s",
+        "purpose": "Color and background changes on buttons, tabs, cells, fields."
+      },
+      {
+        "name": "nudge",
+        "value": "0.35s",
+        "purpose": "Arrow icons moving 0.2em right on hover; nav underline growing from the left."
+      },
+      {
+        "name": "dock",
+        "value": "0.45s",
+        "purpose": "The ride rail sliding in under the header."
+      },
+      {
+        "name": "ride",
+        "value": "1.6s to 1.9s",
+        "purpose": "A profile drawn left to right once with clip-path (page head 1.6s, hero 1.8s, road book 1.9s)."
+      },
+      {
+        "name": "land",
+        "value": "0.5s to 0.6s, delay = km fraction x 1.1s",
+        "purpose": "Stems, summit dots, brackets and badges appearing as the drawn line passes them."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "prefers-reduced-motion: reduce",
+        "purpose": "Profiles shown complete, the rail marker jumps between stops, the hero video does not load."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "small-phone",
+        "value": "30rem"
+      },
+      {
+        "name": "phone",
+        "value": "48rem"
+      },
+      {
+        "name": "stack",
+        "value": "60rem"
+      },
+      {
+        "name": "rail-compact",
+        "value": "72rem"
+      },
+      {
+        "name": "nav-collapse",
+        "value": "75rem"
+      },
+      {
+        "name": "wide",
+        "value": "80rem"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The action: Registrace. Casia red, square corners, condensed caps, arrow nudging right on hover.",
+      "html": "<a class=\"ds-btn ds-btn-primary\" href=\"#\">Registrovat se <svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M4 12h15M13 6l6 6-6 6\"/></svg></a>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 0.6em; min-height: 3.25rem; padding: 0.75rem 1.4rem 0.7rem; border: 2px solid var(--ds-bg); border-radius: 2px; background: var(--ds-bg); color: var(--ds-fg); font-family: var(--font, 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif); font-stretch: 70%; font-weight: 780; font-size: 1.125rem; line-height: 1; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn svg { width: 1.15em; height: 1.15em; transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn:hover svg { transform: translateX(0.2em); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 3px solid var(--red, #e30613); outline-offset: 3px; } .ds-btn-primary { --ds-bg: var(--red, #e30613); --ds-fg: #fff; } .ds-btn-primary:hover { --ds-bg: var(--red-deep, #b4000c); }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Secondary command and jump links in subpage heads; ink outline that fills ink on hover. Small size shown.",
+      "html": "<a class=\"ds-btn ds-btn-ghost ds-btn-small\" href=\"#\">Kde fandit</a>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 0.6em; min-height: 3.25rem; padding: 0.75rem 1.4rem 0.7rem; border: 2px solid var(--ds-bg); border-radius: 2px; background: var(--ds-bg); color: var(--ds-fg); font-family: var(--font, 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif); font-stretch: 70%; font-weight: 780; font-size: 1.125rem; line-height: 1; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn svg { width: 1.15em; height: 1.15em; transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn:hover svg { transform: translateX(0.2em); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 3px solid var(--red, #e30613); outline-offset: 3px; } .ds-btn-ghost { --ds-bg: transparent; --ds-fg: var(--ink, #0b1b2e); border-color: var(--ink, #0b1b2e); } .ds-btn-ghost:hover { --ds-bg: var(--ink, #0b1b2e); --ds-fg: #fff; } .ds-btn-small { min-height: 2.5rem; padding: 0.55rem 1rem 0.5rem; font-size: 1rem; }"
+    },
+    {
+      "name": "Arrow Link",
+      "kind": "custom",
+      "refersTo": "link-arrow",
+      "description": "The secondary action in text: condensed caps on a 2px red underline with a trailing arrow.",
+      "html": "<a class=\"ds-link-arrow\" href=\"#\">Průvodce pro fanoušky <svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M4 12h15M13 6l6 6-6 6\"/></svg></a>",
+      "css": ".ds-link-arrow { display: inline-flex; align-items: center; gap: 0.45em; padding-bottom: 0.15em; border-bottom: 2px solid var(--red, #e30613); color: var(--ink, #0b1b2e); font-family: var(--font, 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif); font-stretch: 75%; font-weight: 750; font-size: 1.0625rem; line-height: 1.1; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; } .ds-link-arrow svg { width: 1em; height: 1em; transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); } .ds-link-arrow:hover svg { transform: translateX(0.2em); } .ds-link-arrow:focus-visible { outline: 3px solid var(--red, #e30613); outline-offset: 3px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input-text",
+      "description": "Paper field, 1.5px stroke, 2px corners, red focus ring. Resting stroke is Ink Muted (ink-3, 5.5:1 on paper), hover Ink; never Rule Steel.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">E-mail</span><input class=\"ds-input\" type=\"email\" placeholder=\"jmeno@example.cz\"></label>",
+      "css": ".ds-field { display: grid; gap: 0.4rem; max-width: 22rem; font-family: var(--font, 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif); color: var(--ink, #0b1b2e); } .ds-field-label { font-stretch: 75%; font-weight: 720; font-size: 0.9375rem; letter-spacing: 0.03em; text-transform: uppercase; } .ds-input { width: 100%; min-height: 3rem; padding: 0.7rem 0.9rem; border: 1.5px solid var(--ink-3, #566a82); border-radius: 2px; background: var(--paper, #fff); color: var(--ink, #0b1b2e); font: inherit; font-size: 1.0625rem; transition: border-color 0.2s; } .ds-input::placeholder { color: var(--ink-3, #566a82); } .ds-input:hover { border-color: var(--ink, #0b1b2e); } .ds-input:focus-visible { outline: 3px solid var(--red, #e30613); outline-offset: 0; border-color: var(--ink, #0b1b2e); }"
+    },
+    {
+      "name": "Header Navigation",
+      "kind": "nav",
+      "refersTo": "site-header",
+      "description": "Paper bar, condensed caps links whose red underline grows from the left on hover and stays on the current page; small red Registrace.",
+      "html": "<nav class=\"ds-nav\" aria-label=\"Hlavní navigace\"><button class=\"ds-nav-link\" type=\"button\">Info pro závodníky <svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M6 9l6 6 6-6\"/></svg></button><a class=\"ds-nav-link is-current\" href=\"#\" aria-current=\"page\">Fanoušci</a><a class=\"ds-nav-link\" href=\"#\">Partneři</a><a class=\"ds-btn ds-btn-primary ds-btn-small\" href=\"#\">Registrace <svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M4 12h15M13 6l6 6-6 6\"/></svg></a></nav>",
+      "css": ".ds-btn { display: inline-flex; align-items: center; gap: 0.6em; min-height: 3.25rem; padding: 0.75rem 1.4rem 0.7rem; border: 2px solid var(--ds-bg); border-radius: 2px; background: var(--ds-bg); color: var(--ds-fg); font-family: var(--font, 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif); font-stretch: 70%; font-weight: 780; font-size: 1.125rem; line-height: 1; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; cursor: pointer; transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn svg { width: 1.15em; height: 1.15em; transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); } .ds-btn:hover svg { transform: translateX(0.2em); } .ds-btn:active { transform: translateY(1px); } .ds-btn:focus-visible { outline: 3px solid var(--red, #e30613); outline-offset: 3px; } .ds-btn-primary { --ds-bg: var(--red, #e30613); --ds-fg: #fff; } .ds-btn-primary:hover { --ds-bg: var(--red-deep, #b4000c); } .ds-btn-small { min-height: 2.5rem; padding: 0.55rem 1rem 0.5rem; font-size: 1rem; } .ds-nav { display: flex; align-items: center; gap: 1.25rem; min-height: 4.5rem; padding: 0 1.5rem; background: var(--paper, #fff); border-bottom: 1px solid var(--line, #cfdae6); font-family: var(--font, 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif); color: var(--ink, #0b1b2e); } .ds-nav .ds-btn { margin-left: auto; } .ds-nav-link { position: relative; display: inline-flex; align-items: center; gap: 0.3em; min-height: 2.75rem; padding: 0 0.4rem; border: 0; background: none; color: inherit; font: inherit; font-stretch: 75%; font-weight: 720; font-size: 1rem; letter-spacing: 0.02em; text-transform: uppercase; text-decoration: none; cursor: pointer; } .ds-nav-link svg { width: 1rem; height: 1rem; } .ds-nav-link::after { content: ''; position: absolute; left: 0.4rem; right: 0.4rem; bottom: 0.45rem; height: 2px; background: var(--red, #e30613); transform: scaleX(0); transform-origin: left; transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1); } .ds-nav-link:hover::after, .ds-nav-link.is-current::after { transform: scaleX(1); } .ds-nav-link:focus-visible { outline: 3px solid var(--red, #e30613); outline-offset: 3px; }"
+    },
+    {
+      "name": "Stage Header",
+      "kind": "custom",
+      "refersTo": "route-tab",
+      "description": "The head of the road book: a 2px ink rule, lettered route tabs (checked route inverts to ink), then ruled facts with Fog Ink labels and tabular figures.",
+      "html": "<div class=\"ds-stage\"><div class=\"ds-tabs\"><button class=\"ds-tab is-on\" type=\"button\" aria-pressed=\"true\"><span class=\"ds-letter\">A</span>Dlouhá trať <span class=\"ds-tab-km\">135 km</span></button><button class=\"ds-tab\" type=\"button\" aria-pressed=\"false\"><span class=\"ds-letter\">B</span>Krátká trať <span class=\"ds-tab-km\">86 km</span></button></div><dl class=\"ds-facts\"><div><dt>Start</dt><dd><b>10:00</b> <span>Trutnov</span></dd></div><div><dt>Délka</dt><dd><b>134,7&nbsp;km</b> <span>trasa 2026</span></dd></div><div><dt>Převýšení</dt><dd><b>2&nbsp;489&nbsp;m</b> <span>Mapy.com</span></dd></div><div><dt>Nejvýš</dt><dd><b>1&nbsp;118&nbsp;m</b> <span>Pražská bouda</span></dd></div></dl></div>",
+      "css": ".ds-stage { display: grid; grid-template-columns: auto minmax(0, 1fr); border-top: 2px solid var(--ink, #0b1b2e); border-bottom: 1px solid var(--line-strong, #9fb3c9); font-family: var(--font, 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif); color: var(--ink, #0b1b2e); font-variant-numeric: tabular-nums lining-nums; } .ds-tabs { display: flex; } .ds-tab { display: flex; align-items: center; gap: 0.65rem; padding: 0.85rem 1.15rem; border: 0; border-right: 1px solid var(--line-strong, #9fb3c9); background: none; color: inherit; font: inherit; font-stretch: 72%; font-weight: 760; font-size: 1.0625rem; line-height: 1; text-transform: uppercase; cursor: pointer; transition: background-color 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s cubic-bezier(0.16, 1, 0.3, 1); } .ds-tab:hover { background: var(--ridge-100, #dfe9f4); } .ds-tab:focus-visible { outline: 3px solid var(--red, #e30613); outline-offset: -3px; } .ds-tab.is-on { background: var(--ink, #0b1b2e); color: #fff; } .ds-letter { display: inline-grid; place-items: center; width: 1.75rem; height: 1.75rem; border: 1.5px solid currentColor; border-radius: 2px; font-stretch: 70%; font-weight: 820; } .ds-tab.is-on .ds-letter { background: #fff; border-color: #fff; color: var(--ink, #0b1b2e); } .ds-tab-km { font-weight: 500; text-transform: none; color: var(--ink-3, #566a82); } .ds-tab.is-on .ds-tab-km { color: var(--ridge-200, #b9cfe7); } .ds-facts { display: flex; flex-wrap: wrap; margin: 0; } .ds-facts > div { padding: 0.7rem 1.25rem 0.75rem; } .ds-facts > div + div { border-left: 1px solid var(--line, #cfdae6); } .ds-facts dt { font-stretch: 62%; font-weight: 700; font-size: 0.75rem; letter-spacing: 0.045em; text-transform: uppercase; color: var(--ink-3, #566a82); } .ds-facts dd { display: flex; align-items: baseline; gap: 0.4rem; margin: 0.3rem 0 0; white-space: nowrap; } .ds-facts b { font-stretch: 70%; font-weight: 780; font-size: 1.375rem; line-height: 1.05; } .ds-facts dd span { font-size: 0.875rem; color: var(--ink-3, #566a82); }"
+    },
+    {
+      "name": "Road Book Profile",
+      "kind": "custom",
+      "refersTo": "road-book",
+      "description": "Signature: the real profile filled by grade, places standing vertically on stems at their km, a climb bracket with its average, a service badge and the km ruler.",
+      "html": "<figure class=\"ds-rb\" aria-label=\"Profil trasy\"><div class=\"ds-plot\"><svg viewBox=\"0 0 300 60\" preserveAspectRatio=\"none\" aria-hidden=\"true\"><path class=\"g0\" d=\"M0 52L30 50L55 44L70 34L82 22L90 12L100 20L120 32L150 38L165 30L180 16L192 6L205 14L230 32L260 44L300 50L300 60L0 60Z\"/><path class=\"g2\" d=\"M55 44L70 34L82 22L82 60L55 60Z\"/><path class=\"g3\" d=\"M70 34L82 22L90 12L90 60L70 60Z\"/><path class=\"g1\" d=\"M150 38L165 30L165 60L150 60Z\"/><path class=\"g3\" d=\"M165 30L180 16L192 6L192 60L165 60Z\"/><path class=\"ds-line\" d=\"M0 52L30 50L55 44L70 34L82 22L90 12L100 20L120 32L150 38L165 30L180 16L192 6L205 14L230 32L260 44L300 50\" vector-effect=\"non-scaling-stroke\"/></svg></div><span class=\"ds-bracket\" style=\"left:18.3%;width:11.7%\"><i>3,7 %</i></span><span class=\"ds-mark\" style=\"--x:30%;--y:0.2\"><span class=\"ds-name\"><b>Pomezní Boudy</b> <i>1&nbsp;053</i></span></span><span class=\"ds-mark\" style=\"--x:64%;--y:0.1\"><span class=\"ds-name\"><b>Pražská bouda</b> <i>1&nbsp;118</i></span></span><span class=\"ds-svc\" style=\"left:30%\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"13\" r=\"7.5\"/><path d=\"M12 9v4.2l2.6 1.6M10 2.8h4M12 2.8v2.7\"/></svg></span><div class=\"ds-axis\"><span class=\"ds-tick major\" style=\"left:0.00%\"><i>0</i></span><span class=\"ds-tick\" style=\"left:7.41%\"></span><span class=\"ds-tick major\" style=\"left:14.81%\"><i>20</i></span><span class=\"ds-tick\" style=\"left:22.22%\"></span><span class=\"ds-tick major\" style=\"left:29.63%\"><i>40</i></span><span class=\"ds-tick\" style=\"left:37.04%\"></span><span class=\"ds-tick major\" style=\"left:44.44%\"><i>60</i></span><span class=\"ds-tick\" style=\"left:51.85%\"></span><span class=\"ds-tick major\" style=\"left:59.26%\"><i>80</i></span><span class=\"ds-tick\" style=\"left:66.67%\"></span><span class=\"ds-tick major\" style=\"left:74.07%\"><i>100</i></span><span class=\"ds-tick\" style=\"left:81.48%\"></span><span class=\"ds-tick major\" style=\"left:88.89%\"><i>120</i></span><span class=\"ds-tick\" style=\"left:96.30%\"></span><span class=\"ds-unit\">km</span></div></figure>",
+      "css": ".ds-rb { --band: 8.5rem; --plot: 7rem; position: relative; margin: 0; padding: var(--band) 0 2.5rem; font-family: var(--font, 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif); color: var(--ink, #0b1b2e); background: var(--snow, #f4f7fa); font-variant-numeric: tabular-nums lining-nums; } .ds-plot { position: relative; height: var(--plot); } .ds-plot svg { position: absolute; inset: 0; width: 100%; height: 100%; } .g0 { fill: var(--grade-0, #c9daee); } .g1 { fill: var(--grade-1, #8fb2d9); } .g2 { fill: var(--grade-2, #4677b0); } .g3 { fill: var(--grade-3, #1d4a82); } .ds-line { fill: none; stroke: var(--ink, #0b1b2e); stroke-width: 2; stroke-linejoin: round; } .ds-bracket { position: absolute; top: calc(var(--band) - 0.7rem); height: 0.45rem; border: 1.5px solid var(--ink-2, #33465d); border-bottom: 0; } .ds-bracket i { position: absolute; left: 50%; bottom: calc(100% + 0.1rem); transform: translateX(-50%); font-style: normal; font-size: 0.75rem; font-weight: 650; color: var(--ink-2, #33465d); white-space: nowrap; text-shadow: 0 0 2px var(--snow, #f4f7fa), 0 0 2px var(--snow, #f4f7fa), 0 0 3px var(--snow, #f4f7fa); } .ds-mark { position: absolute; left: var(--x); top: 0; width: 0; height: calc(var(--band) + var(--plot) * var(--y)); } .ds-mark::before { content: ''; position: absolute; left: -0.5px; top: calc(var(--band) - 0.5rem); bottom: 0; width: 1px; background: var(--ink, #0b1b2e); opacity: 0.55; } .ds-mark::after { content: ''; position: absolute; left: -3.5px; bottom: -3.5px; width: 7px; height: 7px; border-radius: 50%; background: var(--paper, #fff); border: 2px solid var(--ink, #0b1b2e); box-sizing: border-box; } .ds-name { position: absolute; left: 0; bottom: calc(100% - var(--band) + 0.75rem); transform: translateX(-50%) rotate(180deg); writing-mode: vertical-rl; white-space: nowrap; font-stretch: 62%; font-size: 0.875rem; line-height: 1.05; letter-spacing: 0.03em; text-transform: uppercase; } .ds-name b { font-weight: 780; } .ds-name i { font-style: normal; font-weight: 500; color: var(--ink-3, #566a82); } .ds-svc { position: absolute; bottom: 3.6rem; display: grid; place-items: center; width: 1.75rem; height: 1.75rem; transform: translateX(-50%); background: var(--paper, #fff); border: 1.5px solid var(--ink, #0b1b2e); border-radius: 50%; box-sizing: border-box; } .ds-svc svg { width: 1.05rem; height: 1.05rem; } .ds-axis { position: absolute; left: 0; right: 0; bottom: 0.25rem; height: 2.25rem; border-top: 1.5px solid var(--ink, #0b1b2e); } .ds-tick { position: absolute; top: 0; width: 1px; height: 0.4rem; background: var(--ink, #0b1b2e); } .ds-tick.major { height: 0.7rem; } .ds-tick i { position: absolute; top: 0.85rem; left: 0; transform: translateX(-50%); font-style: normal; font-size: 0.8125rem; font-weight: 600; } .ds-unit { position: absolute; right: 0; top: 0.85rem; font-stretch: 62%; font-weight: 700; font-size: 0.8125rem; letter-spacing: 0.045em; text-transform: uppercase; color: var(--ink-3, #566a82); }"
+    },
+    {
+      "name": "Timetable Row",
+      "kind": "custom",
+      "refersTo": "spectator-pin",
+      "description": "A ruled row of the fans timetable: red numbered pin matching the map, condensed caps place, note and map link, km, and pass-time bars on an hour grid (solid = measured, hatched = computed).",
+      "html": "<div class=\"ds-tt\"><div class=\"ds-tt-place\"><h3><span class=\"ds-pin\">4</span>Pomezní Boudy</h3><p>Nejvyšší bod krátké trati (1&nbsp;053&nbsp;m) na česko-polské hranici.</p><a href=\"#\"><svg viewBox=\"0 0 24 24\" width=\"24\" height=\"24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"square\" stroke-linejoin=\"miter\" aria-hidden=\"true\"><path d=\"M12 21s-6.5-6.2-6.5-11.2a6.5 6.5 0 0 1 13 0C18.5 14.8 12 21 12 21z\"/><circle cx=\"12\" cy=\"9.8\" r=\"2.3\"/></svg> Na mapě</a></div><div class=\"ds-tt-km\"><span>51,4 <abbr>A</abbr></span><span>51,4 <abbr>B</abbr></span></div><div class=\"ds-tt-bars\"><div class=\"ds-bar-line\"><span class=\"ds-bar\" style=\"left:21%;width:19%\"></span><span class=\"ds-bar-text\" style=\"left:21%\"><abbr>A</abbr>11:27&nbsp;–&nbsp;12:49</span></div><div class=\"ds-bar-line\"><span class=\"ds-bar is-calc\" style=\"left:24%;width:26%\"></span><span class=\"ds-bar-text\" style=\"left:24%\"><abbr>B</abbr>11:38&nbsp;–&nbsp;13:26</span></div></div></div>",
+      "css": ".ds-tt { display: grid; grid-template-columns: minmax(12rem, 4fr) 4rem minmax(0, 6fr); gap: 1.25rem; padding-block: 1.25rem; border-top: 1.5px solid var(--ink, #0b1b2e); border-bottom: 1px solid var(--line, #cfdae6); font-family: var(--font, 'Archivo Variable', 'Archivo', 'Arial Narrow', Arial, sans-serif); color: var(--ink, #0b1b2e); font-variant-numeric: tabular-nums lining-nums; } .ds-tt h3 { display: flex; align-items: flex-start; gap: 0.55rem; margin: 0; font-stretch: 72%; font-weight: 800; font-size: 1.375rem; line-height: 1; text-transform: uppercase; } .ds-pin { display: grid; place-items: center; flex: none; width: 1.5rem; height: 1.5rem; border-radius: 50%; background: var(--red, #e30613); color: #fff; font-stretch: 75%; font-weight: 800; font-size: 0.875rem; line-height: 1; } .ds-tt p { margin: 0.5rem 0 0; color: var(--ink-2, #33465d); font-size: 0.9375rem; line-height: 1.45; max-width: 44ch; } .ds-tt-place a { display: inline-flex; align-items: center; gap: 0.3rem; margin-top: 0.6rem; color: inherit; font-weight: 650; font-size: 0.9375rem; text-decoration-color: var(--red, #e30613); } .ds-tt-place a svg { width: 1rem; height: 1rem; color: var(--red, #e30613); } .ds-tt-place a:focus-visible { outline: 3px solid var(--red, #e30613); outline-offset: 3px; } .ds-tt-km { display: grid; gap: 0.6rem; align-content: start; font-weight: 650; } .ds-tt abbr { text-decoration: none; color: var(--ink-3, #566a82); font-weight: 600; font-size: 0.8125rem; margin-left: 0.25rem; } .ds-tt-bars { position: relative; display: grid; gap: 1.4rem; background: repeating-linear-gradient(to right, var(--line, #cfdae6) 0 1px, transparent 1px calc(100% / 7)); } .ds-bar-line { position: relative; height: 3rem; } .ds-bar { position: absolute; top: 0.2rem; height: 1.2rem; border-radius: 1px; background: var(--ridge-700, #1d4a82); border: 1.5px solid var(--ridge-700, #1d4a82); box-sizing: border-box; } .ds-bar.is-calc { background: repeating-linear-gradient(135deg, var(--ridge-300, #8fb2d9) 0 4px, transparent 4px 8px); border-color: var(--ridge-500, #4677b0); } .ds-bar-text { position: absolute; top: 1.55rem; white-space: nowrap; font-weight: 650; font-size: 0.9375rem; } .ds-bar-text abbr { margin: 0 0.35rem 0 0; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Road Book",
+    "overview": "The site is the race's road book, the printed \"profil de l'étape\" a rider studies the night before a Tour stage. The real elevation profile of the route, drawn from 200 m samples of the actual road, is the spine of every page: it rises out of the bottom of the hero video, forms the lower edge of every subpage header, docks under the header as the ride rail, and carries the full road book with its places, climbs and km ruler. Everything else hangs off the road. Places stand at their kilometre on vertical labels with leader lines; peaks carry their altitude; page sections are stops at real waypoints.\n\nThe material is cartographic, not promotional. Ridge blue fields and snow white ground, ruled ink lines, tick marks, tabular figures, condensed caps for every name. The density is that of a printed stage sheet: data sits in ruled rows and plates, never in floating cards. Casia red is the single loud voice. It appears only where the visitor acts, where they are on the road, and what applies now.\n\nThe world rejects the category kit of sport-event sites: the italic sport headline, the countdown clock, the row of identical news cards, the decorative mountain silhouette. Every ridge on the site is the real route.",
+    "keyCharacteristics": [
+      "The real route profile is the recurring graphic; every silhouette is data, on one km scale across a page.",
+      "One grotesque (Archivo) in many widths: extra-condensed caps for names and headings, normal width for reading.",
+      "Vertical place labels on 1px stems that end on the profile line, with tabular km and metre figures.",
+      "Ridge blue tonal fields on snow; red reserved for action, position and \"now\".",
+      "Flat bands and ruled data; shadows only on layers that float over the page.",
+      "2px corners on every rectangle; circles only for markers on the road."
+    ],
+    "rules": [
+      {
+        "name": "The Red Means Go Rule",
+        "body": "Red marks only three things: what to do (register, the focused control), where you are on the road (cursor, rail marker, summit dots, spectator pins), and what applies now or matters most (the current price step, the small red square that flags a route fact or a key program time). It is never a band, a heading color or a step of the grade ramp.",
+        "section": "colors"
+      },
+      {
+        "name": "The Grade Is Blue Rule",
+        "body": "Steepness is told in the four grade blues, darker is steeper. A gradient never borrows red, green or a rainbow ramp, and every grade fill has a legend swatch.",
+        "section": "colors"
+      },
+      {
+        "name": "The Snow Ground Rule",
+        "body": "The ground is Snow, not white. Paper white is a material placed on the ground, and every ridge silhouette is filled with Snow so the page appears to stand on the road.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Grotesque Rule",
+        "body": "Archivo is the only typeface. Hierarchy comes from width, weight and case, never from a second family, a serif or italics.",
+        "section": "typography"
+      },
+      {
+        "name": "The Accent Clearance Rule",
+        "body": "Multi-line caps never set tighter than their leading token: 1.02 for display, 1.04 for headline, 1.08 for caps titles. Czech accents reach 0.89em (Á, Č, Ř, Š, Ž, Ě) and the ring of Ů 0.94em above the baseline, and collide with the line above below 1.0.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tabular Figures Rule",
+        "body": "Every kilometre, metre, percentage, time and Kč sits in tabular lining figures, in Czech number format (134,7 km; 2 489 m; 1 290 Kč). A build pass binds number and unit, one-letter prepositions, dates and ordinals with no-break spaces, and keeps a dash from starting a line; new copy relies on it rather than hand-placed spaces.",
+        "section": "typography"
+      },
+      {
+        "name": "The Same Scale Rule",
+        "body": "Every profile on a page spans the content column on one km scale. The hero ridge, the road book directly below it and the ride rail align, so a place keeps its x position from band to band. Only the subpage header's ridge runs edge to edge.",
+        "section": "layout"
+      },
+      {
+        "name": "The Place Stands At Its Kilometre Rule",
+        "body": "Anything about a place is positioned by its km in the route data, never by a free grid. Labels stand on stems at their km; climb percentages sit where no stem passes; home sections are rail stops at real waypoints (Trať at Trutnov, Fandit at Pomezní Boudy).",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat Ground Rule",
+        "body": "If it scrolls with the page, it has no shadow. Only menus, the docked rail and readouts float, and only they cast one.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** draw every ridge, profile and map from the route data (200 m samples) and say which year the route is from (\"trasa 2026\").",
+      "**Do** stand place names vertically on a 1px stem that ends on the drawn line, in Place type with the altitude in Fog Ink.",
+      "**Do** keep all profiles on one page on the content column's km scale (The Same Scale Rule).",
+      "**Do** set names, headings and labels in condensed caps (width 62–80) and reading text at normal width, prose at max 68ch.",
+      "**Do** put every number in tabular lining figures and Czech format (134,7 km; 1 290 Kč).",
+      "**Do** open data blocks with a ruled ink line (2px stage header, 1.5px lists and tables) and split rows with a 1px Hairline.",
+      "**Do** give every graphic a text twin: the climbs table, the places table, the timetable.",
+      "**Do** use the 3px red focus ring at 3px offset on every interactive element, and make sliders keyboard operable.",
+      "**Do** reveal a profile once, left to right with ease-out cubic-bezier(0.16, 1, 0.3, 1), landing its markers by km, and show it complete under reduced motion."
+    ],
+    "donts": [
+      "**Don't** use red as a band, a heading color or a step of the grade ramp (The Red Means Go Rule).",
+      "**Don't** draw a decorative mountain silhouette; every ridge is the real route.",
+      "**Don't** add a second typeface, a serif or italic display type.",
+      "**Don't** reach for the category kit: italic sport headlines, countdown clocks, rows of identical news cards.",
+      "**Don't** put content in floating cards with shadows; use ruled rows, plates and panels (The Flat Ground Rule).",
+      "**Don't** round rectangles beyond 2px or use pill shapes; circles are for markers on the road only.",
+      "**Don't** set multi-line caps tighter than their leading token (1.02, 1.04, 1.08) (The Accent Clearance Rule).",
+      "**Don't** put a label line above a section heading as a kicker. Labels name data (Start, Délka, Nejvýš) or are the heading themselves (partner tiers, footer columns).",
+      "**Don't** set text lighter than Fog Ink (`ink-3`) on light ground or Moonlit Text (`on-dark-2`) on ridge fields.",
+      "**Don't** mix icon families; new pictograms follow the 24 grid, 1.75 square-capped stroke."
+    ]
+  }
+}

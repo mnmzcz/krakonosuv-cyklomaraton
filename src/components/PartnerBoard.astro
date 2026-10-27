@@ -1,0 +1,418 @@
+---
+// The sponsor board, tier by tier, like the backdrop behind the podium.
+import { Image } from 'astro:assets';
+import { general, main, media, partners, patronage, support, titular, towns, townMarks, union } from '../data/partners';
+import type { Partner } from '../data/partners';
+
+interface Props {
+  headingLevel?: 'h2' | 'h3';
+  showTitle?: boolean;
+}
+const { headingLevel: H = 'h2', showTitle = true } = Astro.props;
+const Tier = H === 'h2' ? 'h3' : 'h4';
+
+const ext = (p: Partner) => (p.href && p.href !== '#' ? { href: p.href, target: '_blank', rel: 'noopener' } : {});
+
+// Town marks share one optical size. Each mark is cropped to its ink box and sized by its aspect
+// ratio a: width a^(1-K), height a^-K, in units of --u. K = 0.5 would give every mark the same area;
+// 0.35 lets the long, light wordmarks grow a little against the solid crests so they read as equals.
+const K = 0.35;
+const MAX_U = 44; // px, the largest --u below
+const marks = townMarks.map(({ logo, ink: [l, t, w, h] }) => {
+  const mw = (w / h) ** (1 - K);
+  return {
+    logo,
+    // enough pixels for the cropped box at 2x
+    px: Math.min(logo.width, Math.ceil(2 * MAX_U * mw * (logo.width / w))),
+    style: [
+      `--mw:${mw.toFixed(3)}`,
+      `--ar:${w}/${h}`,
+      `--iw:${((logo.width / w) * 100).toFixed(2)}%`,
+      `--il:${((-l / w) * 100).toFixed(2)}%`,
+      `--it:${((-t / h) * 100).toFixed(2)}%`,
+    ].join(';'),
+  };
+});
+---
+
+<div class="board">
+  {showTitle && <H class="t-title board-title">Partneři</H>}
+
+  <div class="top">
+    <section class="tier tier-titular" aria-labelledby="pt-titular">
+      <Tier class="t-label" id="pt-titular">Titulární partner</Tier>
+      <div class="cell cell-xl">
+        <Image src={titular.logo} alt={titular.name} width={420} />
+      </div>
+    </section>
+    <section class="tier tier-general" aria-labelledby="pt-general">
+      <Tier class="t-label" id="pt-general">Generální partner</Tier>
+      <a class="cell cell-xl" {...ext(general)}>
+        <Image src={general.logo} alt={general.name} width={480} />
+      </a>
+    </section>
+  </div>
+
+  <section class="tier" aria-labelledby="pt-main">
+    <Tier class="t-label" id="pt-main">Hlavní partneři</Tier>
+    <ul class="row row-3">
+      {
+        main.map((p) => (
+          <li>
+            <a class="cell cell-l" {...ext(p)}>
+              <Image src={p.logo} alt={p.name} width={360} />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+    <p class="patronage">{patronage.lead} <strong>{patronage.name}</strong>{patronage.rest}</p>
+  </section>
+
+  <section class="tier" aria-labelledby="pt-partners">
+    <Tier class="t-label" id="pt-partners">Partneři</Tier>
+    <ul class="row row-wall">
+      {
+        partners.map((p) => (
+          <li>
+            {p.href ? (
+              <a class="cell" {...ext(p)}>
+                <Image src={p.logo} alt={p.name} width={240} />
+              </a>
+            ) : (
+              <span class="cell">
+                <Image src={p.logo} alt={p.name} width={240} />
+              </span>
+            )}
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="tier" aria-labelledby="pt-media">
+    <Tier class="t-label" id="pt-media">Mediální partneři</Tier>
+    <ul class="row row-4">
+      {
+        media.map((p) => (
+          <li>
+            <a class="cell" {...ext(p)}>
+              <Image src={p.logo} alt={p.name} width={260} />
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="tier towns" aria-labelledby="pt-towns">
+    <Tier class="t-label" id="pt-towns">Partnerské obce</Tier>
+    <div class="towns-grid">
+      <a class="cell cell-l union" {...ext(union)}>
+        <Image src={union.logo} alt={union.name} width={360} />
+      </a>
+      <ul class="town-list">
+        {
+          towns.map((t) => (
+            <li>
+              <a href={t.href} target="_blank" rel="noopener">
+                {t.name}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+    <ul class="marks" aria-hidden="true">
+      {
+        marks.map((m) => (
+          <li>
+            <span class="mark" style={m.style}>
+              <Image src={m.logo} alt="" width={m.px} />
+            </span>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <div class="support">
+    <p>
+      <span>{support.region.text}</span>
+      <Image src={support.region.logo} alt="Královéhradecký kraj" width={220} />
+    </p>
+    <p>
+      <span>{support.cooperation.text}</span>
+      <Image src={support.cooperation.logo} alt="NOVUM, Evropské seskupení pro územní spolupráci" width={300} />
+    </p>
+  </div>
+</div>
+
+<style>
+  .board {
+    display: grid;
+    gap: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .board-title {
+    margin-bottom: -0.5rem;
+  }
+
+  .tier {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .tier > :global(.t-label) {
+    color: var(--ink-3);
+    padding-bottom: 0.6rem;
+    border-bottom: 1.5px solid var(--ink);
+  }
+
+  .top {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: clamp(1.5rem, 4vw, 3rem);
+  }
+
+  .row {
+    list-style: none;
+    display: grid;
+    border-top: 1px solid var(--line);
+    border-left: 1px solid var(--line);
+  }
+
+  .row > li {
+    border-right: 1px solid var(--line);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .row-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .row-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .row-wall {
+    grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  }
+
+  .cell {
+    display: grid;
+    place-items: center;
+    height: 100%;
+    min-height: 6.5rem;
+    padding: 1.1rem 1.4rem;
+    background: var(--paper);
+    transition: background-color 0.2s;
+  }
+
+  a.cell:hover {
+    background: var(--ridge-100);
+  }
+
+  /* lift the focused cell so its neighbours do not paint over the ring */
+  a.cell:focus-visible {
+    position: relative;
+    z-index: 1;
+  }
+
+  .cell :global(img) {
+    width: auto;
+    max-width: 100%;
+    max-height: 3.5rem;
+    object-fit: contain;
+  }
+
+  .cell-l {
+    min-height: 8rem;
+  }
+
+  .cell-l :global(img) {
+    max-height: 4.25rem;
+  }
+
+  .cell-xl {
+    min-height: 11rem;
+    border: 1px solid var(--line);
+  }
+
+  .cell-xl :global(img) {
+    max-height: 6.5rem;
+    max-width: 80%;
+  }
+
+  .patronage {
+    color: var(--ink-2);
+  }
+
+  .patronage strong {
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  .towns-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    gap: 1.5rem 3rem;
+    align-items: center;
+  }
+
+  .union {
+    border: 1px solid var(--line);
+  }
+
+  .town-list {
+    list-style: none;
+    columns: 3 9rem;
+    column-gap: 2rem;
+  }
+
+  .town-list a {
+    display: inline-block;
+    padding-block: 0.3rem;
+    font-weight: 560;
+    text-decoration-color: var(--line-strong);
+  }
+
+  /* town marks: equal cells, one optical size (see the frontmatter); rows of 11, 6 + 5, 4 + 4 + 3 or 3 */
+  .marks {
+    --u: 2.5rem;
+    --gap-x: 1rem;
+    --per-row: 6;
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 1.5rem var(--gap-x);
+    margin-top: 0.5rem;
+    padding-top: 1.75rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .marks > li {
+    /* a hair under the exact share, so rounding never pushes the last mark to a new row */
+    flex: 0 0 calc((100% - (var(--per-row) - 1) * var(--gap-x)) / var(--per-row) - 0.1px);
+    min-width: 0;
+    display: grid;
+    place-items: center;
+    height: calc(var(--u) * 1.25);
+  }
+
+  .mark {
+    position: relative;
+    overflow: hidden;
+    width: min(100%, calc(var(--u) * var(--mw)));
+    aspect-ratio: var(--ar);
+  }
+
+  .mark :global(img) {
+    position: absolute;
+    left: var(--il);
+    top: var(--it);
+    width: var(--iw);
+    max-width: none;
+    height: auto;
+    /* white file backgrounds disappear into the snow ground */
+    mix-blend-mode: multiply;
+  }
+
+  @media (min-width: 80rem) {
+    .marks {
+      --u: 2.75rem;
+      --per-row: 11;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .marks {
+      --per-row: 4;
+      --gap-x: 0.75rem;
+      row-gap: 1.25rem;
+    }
+  }
+
+  @media (max-width: 30rem) {
+    .marks {
+      --per-row: 3;
+    }
+  }
+
+  .support {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+  }
+
+  .support p {
+    display: grid;
+    gap: 1rem;
+    justify-items: start;
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+  }
+
+  .support :global(img) {
+    height: 3.25rem;
+    width: auto;
+  }
+
+  /* phones: three across and short cells, so the wall stays a wall and not a 2 000 px column */
+  @media (max-width: 48rem) {
+    .support,
+    .towns-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .top {
+      gap: 0.75rem;
+    }
+
+    .tier > :global(.t-label) {
+      padding-bottom: 0.5rem;
+    }
+
+    .cell {
+      min-height: 4.5rem;
+      padding: 0.6rem 0.5rem;
+    }
+
+    .cell :global(img) {
+      max-height: 2.25rem;
+    }
+
+    .cell-l {
+      min-height: 5.25rem;
+    }
+
+    .cell-l :global(img) {
+      max-height: 2.75rem;
+    }
+
+    .cell-xl {
+      min-height: 6.5rem;
+      padding: 0.9rem 0.75rem;
+    }
+
+    .cell-xl :global(img) {
+      max-height: 3.75rem;
+      max-width: 90%;
+    }
+
+    .row-wall {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .row-4 {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .union {
+      min-height: 5.5rem;
+    }
+  }
+</style>

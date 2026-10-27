@@ -1,0 +1,443 @@
+---
+import Icon from './Icon.astro';
+import MapyMark from './MapyMark.astro';
+import { nav, race, social } from '../data/race';
+
+const path = Astro.url.pathname;
+const isCurrent = (href?: string) => !!href && !href.startsWith('http') && path.startsWith(href);
+const groupCurrent = (children?: { href?: string }[]) => children?.some((c) => isCurrent(c.href));
+// news articles live under their date (/2026/03/05/…), so they mark Aktuality as the section you are in
+const inSection = (href?: string) => isCurrent(href) || (href === '/aktuality/' && /^\/\d{4}\/\d{2}\/\d{2}\//.test(path));
+---
+
+<header class="site-header" data-header>
+  <div class="bar wrap">
+    <a class="brand" href="/" aria-label={`${race.fullName}, úvodní stránka`}>
+      <img src="/brand/kcm-casia.png" width="1488" height="323" alt="" />
+    </a>
+
+    <nav class="nav-desktop" aria-label="Hlavní navigace">
+      <ul class="nav-list">
+        {
+          nav.map((item, i) =>
+            item.children ? (
+              <li class="nav-group" data-group>
+                <button
+                  class:list={['nav-link', { 'is-current': groupCurrent(item.children) }]}
+                  type="button"
+                  aria-expanded="false"
+                  aria-controls={`sub-${i}`}
+                >
+                  {item.label}
+                  <Icon name="chevron" class="chev" />
+                </button>
+                <ul class="submenu" id={`sub-${i}`}>
+                  {item.children.map((c) => (
+                    <li>
+                      <a
+                        href={c.href}
+                        aria-current={isCurrent(c.href) ? 'page' : undefined}
+                        target={c.external ? '_blank' : undefined}
+                        rel={c.external ? 'noopener' : undefined}
+                      >
+                        {c.label}
+                        {c.mapy ? <MapyMark /> : c.external && <Icon name="external" class="ext" label="(otevře se v novém okně)" />}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ) : (
+              <li>
+                <a class:list={['nav-link', { 'is-current': inSection(item.href) }]} href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+                  {item.label}
+                </a>
+              </li>
+            ),
+          )
+        }
+      </ul>
+    </nav>
+
+    <a class="btn btn--small cta" href="/registrace/">
+      Registrace <Icon name="arrow" />
+    </a>
+
+    <button class="menu-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav" data-menu-toggle>
+      <span class="visually-hidden" data-menu-label>Otevřít menu</span>
+      <Icon name="menu" class="i-open" />
+      <Icon name="close" class="i-close" />
+    </button>
+  </div>
+
+  <div class="mobile-nav" id="mobile-nav" data-mobile-nav hidden>
+    <nav class="wrap mobile-inner" aria-label="Hlavní navigace">
+      <a class="btn mobile-cta" href="/registrace/">Registrace <Icon name="arrow" /></a>
+      <ul class="m-list">
+        {
+          nav.map((item) =>
+            item.children ? (
+              <li class="m-group">
+                <span class="m-head t-label">{item.label}</span>
+                <ul>
+                  {item.children.map((c) => (
+                    <li>
+                      <a href={c.href} target={c.external ? '_blank' : undefined} rel={c.external ? 'noopener' : undefined}>
+                        {c.label}
+                        {c.mapy ? <MapyMark /> : c.external && <Icon name="external" class="ext" label="(otevře se v novém okně)" />}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ) : (
+              <li class="m-single">
+                <a href={item.href}>{item.label}</a>
+              </li>
+            ),
+          )
+        }
+      </ul>
+      <ul class="m-social">
+        {
+          social.map((s) => (
+            <li>
+              <a href={s.href} target="_blank" rel="noopener">
+                <Icon name={s.icon} label={s.name} />
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: clamp(1rem, 2.5vw, 2.5rem);
+    height: var(--header-h);
+  }
+
+  .brand {
+    flex: none;
+    display: block;
+    width: clamp(10.5rem, 15vw, 13.5rem);
+  }
+
+  .brand img {
+    width: 100%;
+  }
+
+  .nav-desktop {
+    margin-left: auto;
+  }
+
+  .nav-list {
+    display: flex;
+    align-items: center;
+    gap: clamp(0.25rem, 0.9vw, 1.25rem);
+    list-style: none;
+  }
+
+  /* items keep their width (and their chevrons); the breakpoint below folds the menu before they would collide */
+  .nav-list > li {
+    flex: none;
+  }
+
+  .nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    min-height: 2.75rem;
+    padding: 0 0.3rem;
+    white-space: nowrap;
+    border: 0;
+    background: none;
+    font-stretch: 75%;
+    font-weight: 720;
+    font-size: 1rem;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    text-decoration: none;
+    cursor: pointer;
+    position: relative;
+  }
+
+  .nav-link::after {
+    content: '';
+    position: absolute;
+    left: 0.4rem;
+    right: 0.4rem;
+    bottom: 0.45rem;
+    height: 2px;
+    background: var(--red);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.35s var(--ease-out);
+  }
+
+  .nav-link:hover::after,
+  .nav-link.is-current::after,
+  .nav-group:focus-within > .nav-link::after {
+    transform: scaleX(1);
+  }
+
+  .nav-link :global(.chev) {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    transition: transform 0.25s var(--ease-out);
+  }
+
+  .nav-group {
+    position: relative;
+  }
+
+  .submenu {
+    position: absolute;
+    top: calc(100% + 0.6rem);
+    left: -0.6rem;
+    min-width: 15rem;
+    padding: 0.5rem 0;
+    list-style: none;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--red);
+    box-shadow: 0 18px 40px -18px rgba(6, 18, 33, 0.35);
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-0.35rem);
+    transition:
+      opacity 0.2s var(--ease-out),
+      transform 0.25s var(--ease-out),
+      visibility 0s linear 0.25s;
+  }
+
+  .submenu::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -1rem;
+    height: 1rem;
+  }
+
+  .nav-group:hover .submenu,
+  .nav-group.is-open .submenu {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+    transition-delay: 0s;
+  }
+
+  .nav-group:hover :global(.chev),
+  .nav-group.is-open :global(.chev) {
+    transform: rotate(180deg);
+  }
+
+  .submenu a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.65rem 1.1rem;
+    text-decoration: none;
+    font-weight: 560;
+  }
+
+  .submenu a:hover,
+  .submenu a[aria-current='page'] {
+    background: var(--ridge-100);
+  }
+
+  .site-header :global(.ext) {
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--ink-3);
+  }
+
+  .cta {
+    flex: none;
+  }
+
+  .menu-toggle {
+    display: none;
+    width: 3rem;
+    height: 3rem;
+    margin-right: -0.6rem;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    place-items: center;
+  }
+
+  .menu-toggle :global(svg) {
+    width: 1.75rem;
+    height: 1.75rem;
+  }
+
+  .menu-toggle :global(.i-close),
+  .menu-toggle[aria-expanded='true'] :global(.i-open) {
+    display: none;
+  }
+
+  .menu-toggle[aria-expanded='true'] :global(.i-close) {
+    display: block;
+  }
+
+  .mobile-nav {
+    position: fixed;
+    inset: var(--header-h) 0 0;
+    overflow-y: auto;
+    background: var(--ridge-900);
+    color: #fff;
+    overscroll-behavior: contain;
+  }
+
+  .mobile-inner {
+    display: grid;
+    gap: 2rem;
+    padding-block: 1.5rem 3rem;
+  }
+
+  .mobile-cta {
+    width: 100%;
+  }
+
+  .m-list {
+    list-style: none;
+    display: grid;
+    gap: 1.5rem;
+  }
+
+  .m-head {
+    display: block;
+    margin-bottom: 0.4rem;
+    color: var(--on-dark-2);
+  }
+
+  .m-group ul {
+    list-style: none;
+  }
+
+  .m-list a {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    font-stretch: 66%;
+    font-weight: 780;
+    font-size: 1.875rem;
+    line-height: 1;
+    text-transform: uppercase;
+    text-decoration: none;
+  }
+
+  .m-list :global(.ext) {
+    color: var(--on-dark-2);
+  }
+
+  .m-social {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--on-dark-line);
+  }
+
+  .m-social a {
+    display: grid;
+    place-items: center;
+    width: 3rem;
+    height: 3rem;
+  }
+
+  /* eight items and the call to action need a 1 280px window; below that the menu folds into the panel */
+  @media (max-width: 79.99rem) {
+    .nav-desktop {
+      display: none;
+    }
+
+    .cta {
+      margin-left: auto;
+    }
+
+    .menu-toggle {
+      display: grid;
+    }
+  }
+
+  @media (max-width: 26rem) {
+    .cta {
+      display: none;
+    }
+
+    .menu-toggle {
+      margin-left: auto;
+    }
+  }
+</style>
+
+<script>
+  const header = document.querySelector<HTMLElement>('[data-header]');
+  if (header) {
+    // desktop disclosure menus: click/keyboard; hover handled in CSS
+    const groups = header.querySelectorAll<HTMLElement>('[data-group]');
+    const closeAll = (except?: HTMLElement) =>
+      groups.forEach((g) => {
+        if (g === except) return;
+        g.classList.remove('is-open');
+        g.querySelector('button')?.setAttribute('aria-expanded', 'false');
+      });
+    groups.forEach((g) => {
+      const btn = g.querySelector('button')!;
+      btn.addEventListener('click', () => {
+        const open = !g.classList.contains('is-open');
+        closeAll(g);
+        g.classList.toggle('is-open', open);
+        btn.setAttribute('aria-expanded', String(open));
+      });
+      g.addEventListener('focusout', (e) => {
+        if (!g.contains(e.relatedTarget as Node)) {
+          g.classList.remove('is-open');
+          btn.setAttribute('aria-expanded', 'false');
+        }
+      });
+    });
+    document.addEventListener('click', (e) => {
+      if (!header.contains(e.target as Node)) closeAll();
+    });
+
+    // mobile panel
+    const toggle = header.querySelector<HTMLButtonElement>('[data-menu-toggle]')!;
+    const panel = header.querySelector<HTMLElement>('[data-mobile-nav]')!;
+    const label = header.querySelector<HTMLElement>('[data-menu-label]')!;
+    const setOpen = (open: boolean) => {
+      toggle.setAttribute('aria-expanded', String(open));
+      label.textContent = open ? 'Zavřít menu' : 'Otevřít menu';
+      panel.hidden = !open;
+      document.documentElement.style.overflow = open ? 'hidden' : '';
+    };
+    toggle.addEventListener('click', () => setOpen(toggle.getAttribute('aria-expanded') !== 'true'));
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (toggle.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        toggle.focus();
+      }
+      closeAll();
+    });
+    window.matchMedia('(min-width: 75.01rem)').addEventListener('change', (e) => e.matches && setOpen(false));
+  }
+</script>

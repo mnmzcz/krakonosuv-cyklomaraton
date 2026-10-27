@@ -1,0 +1,19 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+---
+
+<Base title="Děkujeme">
+  <PageHead title="Děkujeme!" lede="Formulář dorazil. Ozveme se vám e-mailem, obvykle do dalšího pracovního dne.">
+    <div class="actions on-dark">
+      <a class="btn btn--ghost" href="/">Zpět na úvod <Icon name="arrow" /></a>
+    </div>
+  </PageHead>
+</Base>
+
+<style>
+  .actions {
+    margin-top: 2rem;
+  }
+</style>

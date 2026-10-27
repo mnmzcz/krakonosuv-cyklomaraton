@@ -1,0 +1,141 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import { contacts, race, tel } from '../data/race';
+---
+
+<Base title="Kontakty" description="Kontakty na pořadatele Krakonošova cyklomaratonu: přihlášky a úhrada startovného, trať, ředitel závodu.">
+  <PageHead title="Kontakty" mark={{ name: 'Start Trutnov', km: 0 }} />
+
+  <section class="section" aria-label="Kontakty">
+    <div class="wrap">
+      <table class="contacts">
+        <thead>
+          <tr>
+            <th scope="col">Co</th>
+            <th scope="col">Kdo</th>
+            <th scope="col">Mobil</th>
+            <th scope="col">E-mail</th>
+          </tr>
+        </thead>
+        <tbody>
+          {
+            contacts.map((c) => (
+              <tr>
+                <th scope="row">{c.role}</th>
+                <td class="who">{c.name}</td>
+                <td>
+                  <a class="num" href={tel(c.phone)}>
+                    <Icon name="phone" />
+                    {c.phone}
+                  </a>
+                </td>
+                <td>
+                  {c.email && (
+                    <a href={`mailto:${c.email}`}>
+                      <Icon name="mail" />
+                      {c.email}
+                    </a>
+                  )}
+                </td>
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+
+      <div class="venue">
+        <h2 class="t-sub">Start, cíl a kancelář závodu</h2>
+        <p>{race.venue}</p>
+        <a class="link-arrow" href={race.venueMap} target="_blank" rel="noopener">Ukázat na mapě <Icon name="external" /></a>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .contacts {
+    width: 100%;
+    border-top: 1.5px solid var(--ink);
+  }
+
+  .contacts thead th {
+    padding: 0.8rem 1rem 0.8rem 0;
+    text-align: left;
+    font-stretch: 75%;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8125rem;
+    color: var(--ink-3);
+    border-bottom: 1px solid var(--line);
+  }
+
+  .contacts tbody th,
+  .contacts td {
+    padding: 1.25rem 1.5rem 1.25rem 0;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .contacts tbody th {
+    font-stretch: 72%;
+    font-weight: 800;
+    text-transform: uppercase;
+    font-size: 1.25rem;
+    line-height: 1.1;
+    width: 30%;
+  }
+
+  .who {
+    font-weight: 650;
+  }
+
+  .contacts a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration-color: var(--red);
+  }
+
+  .contacts :global(svg) {
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--red);
+    flex: none;
+  }
+
+  .venue {
+    display: grid;
+    gap: 0.75rem;
+    justify-items: start;
+    margin-top: clamp(3rem, 6vw, 5rem);
+    max-width: 40rem;
+  }
+
+  .venue p {
+    color: var(--ink-2);
+  }
+
+  @media (max-width: 48rem) {
+    .contacts thead {
+      display: none;
+    }
+
+    .contacts tr {
+      display: grid;
+      gap: 0.35rem;
+      padding-block: 1.25rem;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .contacts tbody th,
+    .contacts td {
+      display: block;
+      width: auto;
+      padding: 0;
+      border: 0;
+    }
+  }
+</style>

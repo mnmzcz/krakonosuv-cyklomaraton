@@ -1,0 +1,204 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import hotelKrakonos from '../assets/photos/hotel-krakonos.jpg';
+
+const hotels = [
+  { name: 'PENZION POHODA', m: 200, href: 'http://www.penzionpohoda.com/' },
+  { name: "NELLY KELLY'S HOTEL", m: 400, href: 'http://www.nellykellys.com/' },
+  { name: 'HOTEL ADAM', m: 400, href: 'http://www.hotel-adam.cz/' },
+  { name: 'PENZION ATRIUM', m: 800, href: 'http://www.penziontrutnov.cz/' },
+  { name: 'HOTEL DAVÍDEK', m: 2000, href: 'http://www.hoteldavidek.cz/' },
+  { name: 'HOTEL PATRIA', m: 2000, href: 'http://www.hotelpatria.cz/' },
+];
+const fmt = (m: number) => `${m.toLocaleString('cs-CZ').replace(/\s/g, ' ')} m od startu závodu`;
+const ticks = [0, 500, 1000, 1500, 2000];
+---
+
+<Base title="Ubytování" description="Ubytování u startu Krakonošova cyklomaratonu v Trutnově: oficiální HOTEL*** KRAKONOŠ a další hotely a penziony.">
+  <PageHead
+    title="Ubytování"
+    lede="Hotely a penziony v Trutnově seřazené podle vzdálenosti od startu u UFFO."
+    mark={{ name: 'Start Trutnov', km: 0 }}
+  />
+
+  <section class="section" aria-labelledby="official">
+    <div class="wrap official">
+      <div class="official-img">
+        <Image src={hotelKrakonos} alt="HOTEL*** KRAKONOŠ" widths={[480, 900, 1200]} sizes="(max-width: 60rem) 100vw, 50vw" />
+      </div>
+      <div class="official-copy">
+        <h2 class="t-title" id="official">HOTEL*** KRAKONOŠ</h2>
+        <p class="t-lede">
+          Chcete bydlet takřka na startovní a cílové čáře? Pak využijte kapacity oficiálního hotelu závodu, kterým je HOTEL*** KRAKONOŠ.
+        </p>
+        <a class="btn" href="https://www.hotel-krakonos.cz/" target="_blank" rel="noopener">Webové stránky <Icon name="external" /></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section field-paper" aria-labelledby="others">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="t-title" id="others">Další ubytování</h2>
+      </div>
+      <div class="dist">
+        <div class="dist-axis" aria-hidden="true">
+          {ticks.map((t) => <span class="num" style={`left:${(t / 2000) * 100}%`}>{t === 0 ? 'Start' : `${t} m`}</span>)}
+        </div>
+        <ol class="dist-list">
+          {
+            hotels.map((h) => (
+              <li style={`--d:${(h.m / 2000) * 100}%`}>
+                <div class="h-name">
+                  <h3>{h.name}</h3>
+                  <p class="num">{fmt(h.m)}</p>
+                </div>
+                <div class="h-bar" aria-hidden="true">
+                  <span />
+                </div>
+                <a class="link-arrow" href={h.href} target="_blank" rel="noopener">
+                  Webové stránky <Icon name="external" />
+                </a>
+              </li>
+            ))
+          }
+        </ol>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .official {
+    display: grid;
+    grid-template-columns: minmax(0, 6fr) minmax(0, 5fr);
+    gap: clamp(2rem, 6vw, 5rem);
+    align-items: center;
+  }
+
+  .official-img {
+    background: var(--paper);
+    border: 1px solid var(--line);
+  }
+
+  .official-img :global(img) {
+    width: 100%;
+  }
+
+  .official-copy {
+    display: grid;
+    gap: 1.5rem;
+    justify-items: start;
+  }
+
+  .dist {
+    position: relative;
+  }
+
+  .dist-axis {
+    position: relative;
+    height: 1.5rem;
+    margin-left: 19rem;
+    margin-right: 12rem;
+    border-bottom: 1.5px solid var(--ink);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ink-3);
+  }
+
+  .dist-axis span {
+    position: absolute;
+    bottom: 0.4rem;
+    transform: translateX(-50%);
+  }
+
+  .dist-axis span:first-child {
+    transform: none;
+  }
+
+  .dist-axis span:last-child {
+    transform: translateX(-100%);
+  }
+
+  .dist-list {
+    list-style: none;
+  }
+
+  .dist-list li {
+    display: grid;
+    grid-template-columns: 17rem minmax(0, 1fr) 11rem;
+    gap: 1rem;
+    align-items: center;
+    padding-block: 1.1rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .h-name h3 {
+    font-stretch: 72%;
+    font-weight: 800;
+    font-size: 1.375rem;
+    line-height: 1;
+  }
+
+  .h-name p {
+    margin-top: 0.3rem;
+    color: var(--ink-3);
+    font-size: 0.9375rem;
+  }
+
+  .h-bar {
+    position: relative;
+    height: 0.5rem;
+    margin-left: 1rem;
+    background: repeating-linear-gradient(to right, var(--line) 0 1px, transparent 1px 25%);
+  }
+
+  .h-bar span {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: var(--d);
+    background: var(--ridge-700);
+  }
+
+  .h-bar span::after {
+    content: '';
+    position: absolute;
+    right: -6px;
+    top: 50%;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--red);
+    transform: translateY(-50%);
+  }
+
+  .dist-list .link-arrow {
+    justify-self: end;
+    font-size: 0.9375rem;
+  }
+
+  @media (max-width: 60rem) {
+    .official {
+      grid-template-columns: 1fr;
+    }
+
+    .dist-axis {
+      display: none;
+    }
+
+    .dist-list li {
+      grid-template-columns: 1fr auto;
+    }
+
+    .h-bar {
+      grid-column: 1 / -1;
+      grid-row: 2;
+      margin-left: 0;
+    }
+  }
+</style>

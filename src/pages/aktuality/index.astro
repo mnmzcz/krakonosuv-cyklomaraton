@@ -1,0 +1,14 @@
+---
+import Base from '../../layouts/Base.astro';
+import PageHead from '../../components/PageHead.astro';
+import NewsList from '../../components/NewsList.astro';
+---
+
+<Base title="Aktuality" description="Novinky Krakonošova cyklomaratonu.">
+  <PageHead title="Aktuality" />
+  <section class="section">
+    <div class="wrap">
+      <NewsList limit={100} headingLevel="h2" />
+    </div>
+  </section>
+</Base>

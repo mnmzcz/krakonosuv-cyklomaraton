@@ -1,0 +1,199 @@
+---
+import { Image } from 'astro:assets';
+import { testimonials } from '../data/race';
+import photo from '../assets/photos/peloton-les.jpg';
+import splits from '../data/splits-2026.json';
+
+const finishers = splits.stats.long.finishers + splits.stats.short.finishers;
+// Jana Kynčlová's long voice leads the register; the others follow in the order of the data.
+const voices = [testimonials[1], ...testimonials.filter((_, i) => i !== 1)];
+---
+
+<div class="ohlasy">
+  <div class="head">
+    <h2 class="t-title">13 let pozitivních ohlasů</h2>
+    <p class="t-lede">Třináct ročníků a tisíce spokojených cyklonadšenců, amatérů i profesionálů.</p>
+    <p class="stat num">
+      V roce 2026 dojelo do cíle <strong>{finishers} závodníků</strong>: {splits.stats.long.finishers} na dlouhé a {splits.stats.short.finishers} na krátké trati.
+    </p>
+  </div>
+
+  {/* the riders the voices speak for: a group on the road, no single face to mistake for an author */}
+  <figure class="photo">
+    <Image src={photo} alt="Skupina závodníků jede v tahu po rovné silnici lemované stromy" widths={[640, 960, 1280]} sizes="(max-width: 72rem) 100vw, 40vw" />
+  </figure>
+
+  {/* A ruled register, read top to bottom: the rider's name heads each row, like a place in the timetable. */}
+  <ul class="register" role="list">
+    {
+      voices.map((t, i) => (
+        <li class:list={['voice', { lead: i === 0 }]}>
+          <figure>
+            <figcaption>
+              <b class="name">{t.name}</b>
+              {t.note && <span class="note">{t.note}</span>}
+            </figcaption>
+            <blockquote>
+              <p>{t.quote}</p>
+            </blockquote>
+          </figure>
+        </li>
+      ))
+    }
+  </ul>
+</div>
+
+<style>
+  /* Phones and tablets: the heading with its lede and the finishers, the photo, then the register. */
+  .ohlasy {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: clamp(2rem, 5vw, 3rem);
+  }
+
+  .head {
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+  }
+
+  .photo :global(img) {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    object-position: 40% 35%;
+  }
+
+  /* ---------- the register ---------- */
+
+  .register {
+    list-style: none;
+    border-top: 1.5px solid var(--ink);
+    container-type: inline-size;
+  }
+
+  .voice {
+    border-bottom: 1px solid var(--line);
+  }
+
+  figure {
+    margin: 0;
+  }
+
+  .voice figure {
+    display: grid;
+    gap: 0.35rem;
+    padding-block: 0.95rem 1.05rem;
+  }
+
+  .voice figcaption {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    column-gap: 0.7rem;
+  }
+
+  .name {
+    font-stretch: 72%;
+    font-weight: 780;
+    font-size: 1.0625rem;
+    line-height: 1.25;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+  }
+
+  .note {
+    color: var(--ink-3);
+    font-size: 0.9375rem;
+    line-height: 1.3;
+  }
+
+  blockquote {
+    margin: 0;
+  }
+
+  blockquote p {
+    max-width: 60ch;
+    color: var(--ink-2);
+    font-size: 1.0625rem;
+    line-height: 1.55;
+  }
+
+  /* the leading voice: the same row, set large at reading width so it stays easy to read */
+  .lead figure {
+    gap: 0.6rem;
+    padding-block: 1.35rem 1.6rem;
+  }
+
+  /* A 20px floor against the 17px of the other quotes, so the lead keeps its weight on phones
+     and in the narrow register at 72rem, where 1.6vw alone would bring it down to 18px. */
+  .lead blockquote p {
+    max-width: 38em;
+    color: var(--ink);
+    font-weight: 450;
+    font-size: clamp(1.25rem, 1.6vw, 1.3125rem);
+    line-height: 1.48;
+  }
+
+  /* With room for it, the names stand in their own column and every quote starts on one line. */
+  @container (min-width: 34rem) {
+    .voice figure {
+      grid-template-columns: 9.5rem minmax(0, 1fr);
+      column-gap: clamp(1.5rem, 2.5vw, 2.25rem);
+      align-items: first baseline;
+      padding-block: 1.15rem 1.25rem;
+    }
+
+    .voice figcaption {
+      flex-direction: column;
+      align-items: start;
+    }
+
+    .lead figure {
+      padding-block: 1.6rem 1.9rem;
+    }
+  }
+
+  .stat {
+    max-width: 34rem;
+    color: var(--ink-2);
+    line-height: 1.5;
+    text-wrap: pretty;
+  }
+
+  .stat strong {
+    color: var(--ink);
+    font-weight: 700;
+  }
+
+  /* Wide screens: copy in 5fr, the register in 7fr. Below 72rem the 7fr column would be too
+     narrow to keep the names in their own column, so the section stays stacked. */
+  @media (min-width: 72rem) {
+    .ohlasy {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      grid-template-rows: auto 1fr;
+      align-items: start;
+      column-gap: clamp(2.5rem, 6vw, 6rem);
+      row-gap: 2.5rem;
+    }
+
+    .register {
+      grid-column: 2;
+      grid-row: 1 / span 2;
+    }
+
+    /* the photo takes whatever height the register leaves beside the heading, so both columns end together */
+    .photo {
+      position: relative;
+      align-self: stretch;
+      min-height: 13rem;
+    }
+
+    .photo :global(img) {
+      position: absolute;
+      inset: 0;
+      height: 100%;
+      aspect-ratio: auto;
+    }
+  }
+</style>

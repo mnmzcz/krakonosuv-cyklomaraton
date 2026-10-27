@@ -1,0 +1,724 @@
+---
+// The ride: a slim profile of the long route docked under the header. The sections of the page are
+// stops at real places on the road, and a red marker rides from the start in Trutnov to the finish
+// as the visitor scrolls. Under reduced motion it is a plain jump menu: the marker sits on the
+// current stop and never glides.
+import data from '../data/routes.json';
+import Icon from './Icon.astro';
+
+export type RailStop = {
+  /** id of the section on the page */
+  id: string;
+  /** the section's name, shown on the rail */
+  label: string;
+  /** a waypoint of the long route; its km places the stop */
+  place: string;
+  /** pick a later waypoint of the same name (Trutnov is both start and finish) */
+  last?: boolean;
+};
+
+interface Props {
+  stops: RailStop[];
+  label?: string;
+}
+
+const { stops, label = 'Na této stránce' } = Astro.props;
+
+const r = data.routes.long;
+const pts = r.points;
+const L = pts[pts.length - 1][0];
+const ALT_MIN = 300;
+const ALT_MAX = 1150;
+const yFrac = (alt: number) => 1 - (alt - ALT_MIN) / (ALT_MAX - ALT_MIN);
+const X = (km: number) => (km / L) * 1000;
+const Y = (alt: number) => yFrac(alt) * 100;
+
+// every other sample (400 m) is plenty for a profile a few dozen pixels tall
+const thin = pts.filter((_, i) => i % 2 === 0 || i === pts.length - 1);
+const area = `M${thin.map((p) => `${X(p[0]).toFixed(1)} ${Y(p[1]).toFixed(1)}`).join('L')}L1000 100L0 100Z`;
+
+const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+const fmtInt = (n: number) => n.toLocaleString('cs-CZ').replace(/\s/g, ' ');
+
+const nearest = (km: number) => pts.reduce((best, p) => (Math.abs(p[0] - km) < Math.abs(best[0] - km) ? p : best));
+const place = (name: string, last = false) => {
+  const all = r.waypoints.filter((w) => w.name === name);
+  const w = last ? all[all.length - 1] : all[0];
+  if (!w) throw new Error(`RideRail: no waypoint "${name}" on the long route`);
+  return w;
+};
+
+const finishWp = r.waypoints[r.waypoints.length - 1];
+const resolved = [
+  ...stops.map((s) => ({ ...s, w: place(s.place, s.last), finish: false })),
+  { id: '', label: 'Cíl', place: finishWp.name, w: finishWp, finish: true },
+].map((s) => {
+  const near = nearest(s.w.km);
+  return { ...s, km: s.w.km, alt: s.w.alt, x: Math.min(100, (near[0] / L) * 100), y: yFrac(near[1]) };
+});
+
+const profile = JSON.stringify({
+  L,
+  end: r.km,
+  min: ALT_MIN,
+  max: ALT_MAX,
+  p: thin.map((p) => [p[0], p[1]]),
+});
+const first = resolved[0];
+---
+
+<nav class="rail" data-rail aria-label={label} data-profile={profile} style={`--p:0;--y:${first.y}`}>
+  <div class="wrap rail-wrap">
+    <div class="rail-box">
+      <div class="rail-road" aria-hidden="true">
+        <svg class="road-ahead" viewBox="0 0 1000 100" preserveAspectRatio="none">
+          <path d={area} vector-effect="non-scaling-stroke" />
+        </svg>
+        <svg class="road-done" viewBox="0 0 1000 100" preserveAspectRatio="none">
+          <path d={area} vector-effect="non-scaling-stroke" />
+        </svg>
+        <span class="rail-dot"></span>
+      </div>
+
+      <button class="rail-toggle" type="button" aria-expanded="false" aria-controls="rail-stops" data-rail-toggle>
+        <span class="now">
+          <b data-rail-now-name>{first.label}</b>
+          <span class="num" data-rail-now-km>km {fmtKm(first.km)}</span>
+          <span class="now-place" data-rail-now-place>{first.place}</span>
+        </span>
+        <span class="visually-hidden">: další zastávky</span>
+        <Icon name="chevron" class="rail-chev" />
+      </button>
+
+      <ol class="rail-stops" id="rail-stops">
+        {
+          resolved.map((s, i) => (
+            <li class:list={['stop', { 'stop--end': s.finish }]} style={`--x:${s.x}%;--sy:${s.y}`}>
+              {s.finish ? (
+                <span class="stop-in" data-rail-finish data-km={r.km}>
+                  <Icon name="flag" class="stop-flag" />
+                  <span class="stop-name">{s.label}</span>
+                  <span class="stop-km num">km {fmtKm(r.km)}</span>
+                  <span class="stop-place">
+                    {s.place}<span class="stop-q">, trasa 2026</span>
+                  </span>
+                </span>
+              ) : (
+                <a class="stop-in" href={`#${s.id}`} data-stop={i} data-km={s.km}>
+                  <span class="stop-name">{s.label}</span>
+                  <span class="stop-km num">km {fmtKm(s.km)}</span>
+                  <span class="stop-place">{s.place}<span class="stop-alt num">, {fmtInt(s.alt)} m</span></span>
+                </a>
+              )}
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </div>
+</nav>
+
+<style>
+  /* wide: the stop labels on top, the road below them with room for the marker at the summits */
+  :global(html:has([data-rail])) {
+    --rail-h: 3.5rem;
+    scroll-padding-top: calc(var(--header-h) + var(--rail-h));
+  }
+
+  .rail {
+    --road-h: 1.5rem;
+    position: sticky;
+    top: var(--header-h);
+    z-index: 40;
+    height: var(--rail-h);
+    background: var(--paper);
+    border-bottom: 1px solid var(--line);
+    box-shadow: 0 10px 24px -18px rgba(6, 18, 33, 0.4);
+  }
+
+  /* with script the rail docks once the hero has gone under the header; until then it waits behind it */
+  :global(.js) .rail {
+    position: fixed;
+    left: 0;
+    right: 0;
+    transform: translateY(-100%);
+    opacity: 0;
+    pointer-events: none;
+    transition:
+      transform 0.45s var(--ease-out),
+      opacity 0.25s var(--ease-out);
+  }
+
+  :global(.js) .rail[data-docked],
+  :global(.js) .rail:focus-within {
+    transform: none;
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .rail-wrap,
+  .rail-box {
+    height: 100%;
+  }
+
+  .rail-box {
+    position: relative;
+  }
+
+  /* the road: the long route's profile on the content column's km scale */
+  .rail-road {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--road-h);
+    pointer-events: none;
+  }
+
+  .rail-road svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .road-ahead path {
+    fill: var(--ridge-100);
+    stroke: var(--ridge-300);
+    stroke-width: 1;
+    stroke-linejoin: round;
+  }
+
+  .road-done {
+    clip-path: inset(0 calc(100% - var(--p) * 100%) 0 0);
+  }
+
+  .road-done path {
+    fill: var(--ridge-300);
+    stroke: var(--ridge-700);
+    stroke-width: 1.5;
+    stroke-linejoin: round;
+  }
+
+  .rail-dot {
+    --d: 0.6rem;
+    position: absolute;
+    z-index: 2;
+    left: calc(var(--p) * 100%);
+    top: calc(var(--y) * 100%);
+    width: var(--d);
+    height: var(--d);
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 0 2px var(--paper);
+    transform: translate(-50%, -50%);
+  }
+
+  /* stops */
+  .rail-stops {
+    list-style: none;
+  }
+
+  .stop-name {
+    font-stretch: 66%;
+    font-weight: 760;
+    font-size: 0.875rem;
+    letter-spacing: 0.035em;
+    text-transform: uppercase;
+    line-height: 1;
+  }
+
+  .stop-km {
+    font-stretch: 85%;
+    font-weight: 600;
+    font-size: 0.75rem;
+    color: var(--ink-3);
+    line-height: 1;
+  }
+
+  .stop-in {
+    text-decoration: none;
+    color: var(--ink-2);
+  }
+
+  /* wide screens: every stop stands at its km, the label to the right of a stem down to the road */
+  @media (min-width: 72.01rem) {
+    .rail-toggle {
+      display: none;
+    }
+
+    .stop {
+      position: absolute;
+      left: var(--x);
+      top: 0;
+      bottom: 0;
+      width: 0;
+    }
+
+    .stop::before {
+      content: '';
+      position: absolute;
+      left: -0.5px;
+      top: 0.55rem;
+      bottom: calc(var(--road-h) * (1 - var(--sy)));
+      width: 1px;
+      background: var(--ink-3);
+      opacity: 0.6;
+    }
+
+    .stop::after {
+      content: '';
+      position: absolute;
+      left: -3px;
+      bottom: calc(var(--road-h) * (1 - var(--sy)) - 3px);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--paper);
+      border: 1.5px solid var(--ink-2);
+    }
+
+    /* the label starts a marker's width right of its stem, so the red marker never touches it */
+    .stop-in {
+      position: absolute;
+      left: 0;
+      top: 0;
+      display: flex;
+      align-items: baseline;
+      gap: 0.3rem;
+      height: 1.6rem;
+      padding: 0.45rem 0.4rem 0 0.7rem;
+      white-space: nowrap;
+    }
+
+    .stop-in :global(.stop-flag),
+    .stop-q {
+      display: none;
+    }
+
+    /* the finish stands over Trutnov's valley at the end of the line, high enough that the marker
+       (Vlčice and the run-in to Trutnov, under 550 m) passes beneath it */
+    .stop--end .stop-in {
+      left: auto;
+      right: 0;
+      top: auto;
+      bottom: 0.875rem;
+      height: auto;
+      padding: 0 0.7rem 0 0.4rem;
+      line-height: 1;
+    }
+
+    .stop--end [aria-current='location'] .stop-name {
+      color: var(--ink);
+    }
+
+    .stop--end::before,
+    .stop--end::after {
+      left: auto;
+      right: -0.5px;
+    }
+
+    .stop--end::after {
+      right: -3px;
+    }
+
+    a.stop-in::after {
+      content: '';
+      position: absolute;
+      inset: -0.25rem -0.25rem calc(-1 * (var(--rail-h) - 1.6rem)) 0;
+    }
+
+    .stop-place {
+      position: absolute;
+      top: calc(var(--rail-h) + 0.35rem);
+      left: 0.2rem;
+      padding: 0.35rem 0.55rem;
+      background: var(--ink);
+      color: #fff;
+      border-radius: 2px;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      line-height: 1.2;
+      box-shadow: 0 6px 18px -8px rgba(6, 18, 33, 0.45);
+      opacity: 0;
+      transform: translateY(-0.25rem);
+      pointer-events: none;
+      transition:
+        opacity 0.2s var(--ease-out),
+        transform 0.25s var(--ease-out);
+    }
+
+    .stop-place .stop-alt {
+      color: var(--ridge-200);
+      font-weight: 500;
+    }
+
+    .stop--end .stop-place {
+      left: auto;
+      right: 0;
+    }
+
+    a.stop-in:hover .stop-place,
+    a.stop-in:focus-visible .stop-place {
+      opacity: 1;
+      transform: none;
+    }
+
+    a.stop-in:hover .stop-name {
+      color: var(--ink);
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 0.25em;
+      text-decoration-color: var(--line-strong);
+    }
+
+    a.stop-in:focus-visible {
+      outline-offset: 0;
+    }
+
+    a.stop-in[aria-current='location'] .stop-name {
+      color: var(--ink);
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 0.25em;
+      text-decoration-color: var(--red);
+    }
+
+    a.stop-in[aria-current='location'] .stop-km {
+      color: var(--ink-2);
+    }
+
+    .stop:has([aria-current='location'])::after,
+    .stop.is-passed::after {
+      background: var(--ink-2);
+    }
+  }
+
+  /* phones and tablets: one line says where you are; the stops open as a list */
+  @media (max-width: 72rem) {
+    /* two bands: the line of text on top, the road below it. The marker (radius 0.3rem plus its
+       2px ring) at the highest summit still stays under the text line. */
+    :global(html:has([data-rail])) {
+      --rail-h: 3rem;
+    }
+
+    .rail {
+      --road-h: 1rem;
+    }
+
+    .rail-toggle {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      width: 100%;
+      height: 100%;
+      padding: 0.4rem 0 0;
+      border: 0;
+      background: none;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .now {
+      display: flex;
+      align-items: baseline;
+      gap: 0.45rem;
+      min-width: 0;
+      line-height: 1.15;
+      white-space: nowrap;
+    }
+
+    .now b {
+      font-stretch: 66%;
+      font-weight: 780;
+      font-size: 0.9375rem;
+      letter-spacing: 0.035em;
+      text-transform: uppercase;
+    }
+
+    .now .num {
+      font-stretch: 85%;
+      font-weight: 650;
+      font-size: 0.8125rem;
+      color: var(--ink-2);
+    }
+
+    .now-place {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      font-size: 0.8125rem;
+      color: var(--ink-3);
+    }
+
+    .rail-toggle :global(.rail-chev) {
+      flex: none;
+      width: 1.15rem;
+      height: 1.15rem;
+      margin-top: 0.05rem;
+      transition: transform 0.3s var(--ease-out);
+    }
+
+    .rail-toggle[aria-expanded='true'] :global(.rail-chev) {
+      transform: rotate(180deg);
+    }
+
+    .rail-toggle:focus-visible {
+      outline-offset: -3px;
+    }
+
+    .rail-stops {
+      display: none;
+      position: fixed;
+      left: 0;
+      right: 0;
+      top: calc(var(--header-h) + var(--rail-h));
+      max-height: calc(100svh - var(--header-h) - var(--rail-h));
+      overflow-y: auto;
+      padding: 0.25rem var(--gutter) 0.75rem;
+      background: var(--paper);
+      border-bottom: 1px solid var(--line);
+      box-shadow: 0 18px 32px -20px rgba(6, 18, 33, 0.45);
+      overscroll-behavior: contain;
+    }
+
+    .rail[data-open] .rail-stops {
+      display: block;
+    }
+
+    .stop + .stop {
+      border-top: 1px solid var(--line);
+    }
+
+    .stop-in {
+      display: grid;
+      grid-template-columns: 1.1rem minmax(0, 1fr) auto;
+      grid-template-areas: 'mark name km' 'mark place km';
+      align-items: center;
+      column-gap: 0.6rem;
+      min-height: 3.25rem;
+      padding-block: 0.5rem;
+    }
+
+    .stop-in::before {
+      content: '';
+      grid-area: mark;
+      justify-self: center;
+      width: 0.55rem;
+      height: 0.55rem;
+      border-radius: 50%;
+      border: 1.5px solid var(--ink-3);
+    }
+
+    .stop-name {
+      grid-area: name;
+      color: var(--ink);
+      font-size: 1rem;
+    }
+
+    .stop-km {
+      grid-area: km;
+      font-size: 0.875rem;
+    }
+
+    .stop-place {
+      grid-area: place;
+      font-size: 0.875rem;
+      color: var(--ink-3);
+    }
+
+    .stop-alt {
+      display: none;
+    }
+
+    /* the finish is where the list ends, not a link: a flag instead of a ring, quieter type */
+    .stop--end .stop-in::before {
+      content: none;
+    }
+
+    .stop--end .stop-in :global(.stop-flag) {
+      grid-area: mark;
+      justify-self: center;
+      width: 1.05rem;
+      height: 1.05rem;
+      color: var(--ink-3);
+    }
+
+    .stop--end {
+      border-top-style: dashed !important;
+    }
+
+    .stop--end .stop-in {
+      min-height: 2.75rem;
+    }
+
+    .stop--end .stop-name {
+      color: var(--ink-3);
+      font-size: 0.875rem;
+    }
+
+    .stop--end .stop-place {
+      font-size: 0.8125rem;
+    }
+
+    .stop--end [aria-current='location'] :global(.stop-flag) {
+      color: var(--red);
+    }
+
+    .stop--end [aria-current='location'] .stop-name {
+      color: var(--ink);
+    }
+
+    a.stop-in[aria-current='location']::before {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    a.stop-in[aria-current='location'] .stop-name {
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 0.3em;
+      text-decoration-color: var(--red);
+    }
+  }
+
+  /* without script: the rail sits in the flow after the hero on wide screens, phones do without it */
+  @media (max-width: 72rem) {
+    :global(html:not(.js)) .rail {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  type Profile = { L: number; end: number; min: number; max: number; p: [number, number][] };
+
+  const rail = document.querySelector<HTMLElement>('[data-rail]');
+  if (rail) {
+    const prof: Profile = JSON.parse(rail.dataset.profile!);
+    const links = Array.from(rail.querySelectorAll<HTMLAnchorElement>('a[data-stop]'));
+    const targets = links.map((a) => document.getElementById(decodeURIComponent(a.hash.slice(1))));
+    const kms = links.map((a) => Number(a.dataset.km));
+    const items = links.map((a) => a.closest('li')!);
+    const finish = rail.querySelector<HTMLElement>('[data-rail-finish]')!;
+    const toggle = rail.querySelector<HTMLButtonElement>('[data-rail-toggle]')!;
+    const nowName = rail.querySelector<HTMLElement>('[data-rail-now-name]')!;
+    const nowKm = rail.querySelector<HTMLElement>('[data-rail-now-km]')!;
+    const nowPlace = rail.querySelector<HTMLElement>('[data-rail-now-place]')!;
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const fmt = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+
+    if (targets.every(Boolean)) {
+      let anchors: number[] = [];
+      let maxY = 0;
+      let offset = 0;
+
+      // scroll position at which each section reaches the rail
+      const measure = () => {
+        offset = parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0;
+        maxY = Math.max(0, document.documentElement.scrollHeight - window.innerHeight);
+        let prev = -Infinity;
+        anchors = targets.map((t) => {
+          const y = Math.min(maxY, t!.getBoundingClientRect().top + window.scrollY - offset);
+          prev = Math.max(prev, y);
+          return prev;
+        });
+      };
+
+      const altAt = (km: number) => {
+        const p = prof.p;
+        if (km <= p[0][0]) return p[0][1];
+        for (let i = 1; i < p.length; i++) {
+          if (p[i][0] >= km) {
+            const [k0, a0] = p[i - 1];
+            const [k1, a1] = p[i];
+            return a0 + ((a1 - a0) * (km - k0)) / (k1 - k0 || 1);
+          }
+        }
+        return p[p.length - 1][1];
+      };
+
+      // between two sections the marker rides between their two places on the road
+      const kmAt = (y: number) => {
+        if (y <= anchors[0]) return kms[0];
+        for (let i = 0; i < anchors.length; i++) {
+          const a0 = anchors[i];
+          const a1 = i + 1 < anchors.length ? anchors[i + 1] : maxY;
+          const k0 = kms[i];
+          const k1 = i + 1 < kms.length ? kms[i + 1] : prof.end;
+          if (y < a1) return k0 + (k1 - k0) * (a1 > a0 ? (y - a0) / (a1 - a0) : 1);
+        }
+        return prof.end;
+      };
+
+      // i === links.length is the finish: the bottom of the page, the marker at the end of the road
+      let active = -1;
+      const setActive = (i: number) => {
+        if (i === active) return;
+        active = i;
+        const stops: HTMLElement[] = [...links, finish];
+        stops.forEach((el, j) => {
+          if (j === i) el.setAttribute('aria-current', 'location');
+          else el.removeAttribute('aria-current');
+          if (j < items.length) items[j].classList.toggle('is-passed', j < i);
+        });
+        const el = stops[i];
+        const place = el.querySelector('.stop-place')!;
+        nowName.textContent = el.querySelector('.stop-name')!.textContent;
+        nowKm.textContent = `km ${fmt(i < kms.length ? kms[i] : prof.end)}`;
+        nowPlace.textContent = (i < kms.length ? place.firstChild!.textContent! : place.textContent!).replace(/\s+/g, ' ').trim();
+      };
+
+      let frame = 0;
+      const update = () => {
+        frame = 0;
+        const y = window.scrollY;
+        let i = 0;
+        anchors.forEach((a, j) => {
+          if (y >= a - 2) i = j;
+        });
+        const atEnd = y >= maxY - 2 && maxY > anchors[anchors.length - 1];
+        setActive(atEnd ? links.length : i);
+        const km = reduce.matches ? (atEnd ? prof.end : kms[i]) : kmAt(y);
+        const alt = altAt(Math.min(km, prof.L));
+        rail.style.setProperty('--p', Math.min(1, km / prof.L).toFixed(4));
+        rail.style.setProperty('--y', (1 - (alt - prof.min) / (prof.max - prof.min)).toFixed(4));
+        rail.toggleAttribute('data-docked', targets[0]!.getBoundingClientRect().top <= offset + 1);
+      };
+      const schedule = () => {
+        if (!frame) frame = requestAnimationFrame(update);
+      };
+      const remeasure = () => {
+        measure();
+        schedule();
+      };
+
+      measure();
+      update();
+      window.addEventListener('scroll', schedule, { passive: true });
+      window.addEventListener('resize', remeasure);
+      window.addEventListener('load', remeasure);
+      if ('ResizeObserver' in window) new ResizeObserver(remeasure).observe(document.body);
+      reduce.addEventListener?.('change', schedule);
+    }
+
+    // the compact rail: a disclosure with the list of stops
+    const setOpen = (open: boolean) => {
+      rail.toggleAttribute('data-open', open);
+      toggle.setAttribute('aria-expanded', String(open));
+    };
+    toggle.addEventListener('click', () => setOpen(!rail.hasAttribute('data-open')));
+    links.forEach((a) => a.addEventListener('click', () => setOpen(false)));
+    rail.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && rail.hasAttribute('data-open')) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (rail.hasAttribute('data-open') && !rail.contains(e.target as Node)) setOpen(false);
+    });
+  }
+</script>

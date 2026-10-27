@@ -1,0 +1,269 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+import c2026 from '../assets/photos/lubawka-2026.jpg';
+import c2025 from '../assets/photos/hero-snezka.jpg';
+import c2024 from '../assets/news/predstartovni.jpg';
+import c2023 from '../assets/photos/sjezd-peloton.jpg';
+import c2022 from '../assets/photos/stoupani.jpg';
+import c2021 from '../assets/photos/dvojice-les.jpg';
+import c2020 from '../assets/photos/peloton-dest.jpg';
+import c2019 from '../assets/photos/peloton-mesto.jpg';
+import c2018 from '../assets/photos/turiste-u-trati.jpg';
+import c2017 from '../assets/photos/peloton-udoli.jpg';
+import c2016 from '../assets/photos/balik.jpg';
+import c2015 from '../assets/photos/peloton-les.jpg';
+import c2014 from '../assets/photos/zatacka.jpg';
+import routes from '../data/routes.json';
+
+type Album = { label: string; href: string };
+const years: { year: number; cover: ImageMetadata; albums: Album[] }[] = [
+  {
+    year: 2026,
+    cover: c2026,
+    albums: [
+      { label: '2026 (Miloš Šálek)', href: 'https://drive.google.com/drive/folders/1g-e6tDDGNU018oId5SecLEOlX4s_zkor?usp=sharing' },
+      { label: '2026 (Tomáš Šálek)', href: 'https://drive.google.com/drive/folders/1fiGqWXL8k8Qi-zjZ6wODovCvOsMCooHQ?usp=sharing' },
+      { label: 'Photopoint Pomezní sedlo', href: 'https://drive.google.com/drive/folders/1R77-KHqD8AVR9-5DeuKD6a4Z2-2YoDub?usp=sharing' },
+      { label: 'Žacléř - Střízlivák (Martin Korhel)', href: 'https://eu.zonerama.com/MartinKorhel/Album/15575951' },
+      { label: 'Strážné (Martin Korhel)', href: 'https://eu.zonerama.com/MartinKorhel/Album/15576553' },
+      { label: 'Krakonošův cyklomaraton (Sabina Tláskalová)', href: 'https://drive.google.com/drive/folders/1v21Eu4_dYHZAVBK9vzH1v0NekXSaVZzN?usp=drive_link' },
+      {
+        label: 'Lubawka (Relacje Regionalne)',
+        href: 'https://www.facebook.com/relacjeregionalne/posts/pfbid0pcwhJX3vg5FfdSiy72yUGFAcZCR1MuHvzNChrN1negDn1sXNab8kYirjYDwbTh7il',
+      },
+      { label: 'Dětský program (Vosa jede)', href: 'https://eu.zonerama.com/vosajede/Album/15584446' },
+    ],
+  },
+  {
+    year: 2025,
+    cover: c2025,
+    albums: [
+      { label: 'Krakonošův cyklomaraton 2025 (Miloš Šálek)', href: 'https://photos.app.goo.gl/WTs9pTmFF4VcQF3fA' },
+      { label: 'Krakonošův cyklomaraton 2025 (Tomáš Šálek)', href: 'https://photos.app.goo.gl/QfYrcmRw9uAWTgme8' },
+      { label: 'Krakonošův cyklomaraton 2025 (Martin Korhel)', href: 'https://photos.app.goo.gl/m2VDnqJZbgxsaSc7A' },
+      { label: 'Photopoint pomezní sedlo', href: 'https://photos.app.goo.gl/95Lhyt7wi7Trtwi68' },
+    ],
+  },
+  {
+    year: 2024,
+    cover: c2024,
+    albums: [
+      { label: 'Photopoint pomezní sedlo', href: 'https://photos.app.goo.gl/m9XBLE1AVW714YRt6' },
+      { label: 'Krakonošův cyklomaraton 2024 (Martin Korhel)', href: 'https://photos.app.goo.gl/Hp3iaLbLz1vg6s4P6' },
+      { label: 'Krakonošův cyklomaraton 2024 (Miloš Šálek)', href: 'https://photos.app.goo.gl/Q1tWcRFASAeQREiw7' },
+      { label: 'Krakonošův cyklomaraton 2024 (Tomáš Šálek)', href: 'https://photos.app.goo.gl/5Yvo817gnvRFxJ1K7' },
+      { label: 'Krakonošův cyklomaraton 2024 (Miloš Lubas)', href: 'https://photos.app.goo.gl/BAxMtu6VJ7u3tQ96A' },
+      { label: 'Vyjížďka (2.6.2024): Kateřina Svobodová', href: 'https://photos.app.goo.gl/t8Pz5xEi6o4QAhnM9' },
+    ],
+  },
+  {
+    year: 2023,
+    cover: c2023,
+    albums: [
+      { label: 'Foto: Miloš Šálek', href: 'https://eu.zonerama.com/krakonosuvcyklomaraton/Album/9946598' },
+      { label: 'Foto: Jan Brychta', href: 'https://eu.zonerama.com/krakonosuvcyklomaraton/Album/9939128' },
+      { label: 'Průjezd Polskem', href: 'https://eu.zonerama.com/krakonosuvcyklomaraton/Album/9942440' },
+      { label: 'Photopoint: Pomezní sedlo', href: 'https://eu.zonerama.com/krakonosuvcyklomaraton/Album/9941449' },
+    ],
+  },
+  {
+    year: 2022,
+    cover: c2022,
+    albums: [
+      { label: 'Foto: Miloš Šálek', href: 'https://eu.zonerama.com/krakonosuvcyklomaraton/Album/8551925' },
+      { label: 'Foto: Martin Korhel', href: 'https://eu.zonerama.com/krakonosuvcyklomaraton/Album/8554161' },
+    ],
+  },
+  { year: 2021, cover: c2021, albums: [{ label: 'Fotogalerie 2021', href: 'https://drive.google.com/drive/folders/1k9dM4Q_WGAloarLksmMgutz-6jVvxKbF?usp=sharing' }] },
+  { year: 2020, cover: c2020, albums: [{ label: 'Fotogalerie 2020', href: 'https://drive.google.com/drive/folders/1h_AFfvDQPI-YL6rs9yHJqMLjHoJd1cEv?usp=sharing' }] },
+  { year: 2019, cover: c2019, albums: [{ label: 'Fotogalerie 2019', href: 'https://drive.google.com/drive/folders/1NZAlXqkw8oeiXsjvngGF039MoHsBBara?usp=sharing' }] },
+  { year: 2018, cover: c2018, albums: [{ label: 'Fotogalerie 2018', href: 'https://drive.google.com/drive/folders/1GSxVDPzBUY1ydXxe0_6ufDT4Af5syXMm?usp=sharing' }] },
+  { year: 2017, cover: c2017, albums: [{ label: 'Fotogalerie 2017', href: 'https://drive.google.com/drive/folders/1IY_8lkKRu4i8zDL8OZ1xQ0ANQnqH9-vY?usp=sharing' }] },
+  { year: 2016, cover: c2016, albums: [{ label: 'Fotogalerie 2016', href: 'https://drive.google.com/drive/folders/19_7rk61EcWqSrKbEENyn2__61ySLGlsy?usp=sharing' }] },
+  { year: 2015, cover: c2015, albums: [{ label: 'Fotogalerie 2015', href: 'https://drive.google.com/drive/folders/1VgUDNgC_xgPPvsly1EmtRioRwQZav-3n?usp=sharing' }] },
+  { year: 2014, cover: c2014, albums: [{ label: 'Fotogalerie 2014', href: 'https://drive.google.com/drive/folders/1Q2OzsDIgqauY1_LmkzF7UziCvxydijF-?usp=sharing' }] },
+];
+const [recent, older] = [years.filter((y) => y.albums.length > 1), years.filter((y) => y.albums.length === 1)];
+---
+
+<Base title="Fotogalerie" description="Fotografie ze všech ročníků Krakonošova cyklomaratonu od roku 2014.">
+  <PageHead
+    title="Fotogalerie"
+    lede="Alba fotografů od roku 2014. Galerie se otevírají na Disku Google, Zoneramě a ve Fotkách Google."
+    mark={{ name: 'Pražská bouda', km: routes.routes.long.waypoints.find((w) => w.name === 'Pražská bouda')?.km ?? 71.6 }}
+  />
+
+  <section class="section" aria-label="Ročníky s alby">
+    <div class="wrap recent">
+      {
+        recent.map((y, i) => (
+          <article class:list={['year', { flip: i % 2 }]} id={`rocnik-${y.year}`}>
+            <div class="y-img">
+              <Image src={y.cover} alt={`Krakonošův cyklomaraton ${y.year}`} widths={[480, 800, 1200]} sizes="(max-width: 60rem) 100vw, 50vw" />
+            </div>
+            <div class="y-copy">
+              <h2 class="y-title num">Ročník {y.year}</h2>
+              <ul class="albums">
+                {y.albums.map((a) => (
+                  <li>
+                    <a href={a.href} target="_blank" rel="noopener">
+                      <span>{a.label}</span>
+                      <Icon name="external" />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </article>
+        ))
+      }
+    </div>
+  </section>
+
+  <section class="section field-paper" aria-labelledby="starsi">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 class="t-title" id="starsi">Starší ročníky</h2>
+      </div>
+      <ul class="older">
+        {
+          older.map((y) => (
+            <li id={`rocnik-${y.year}`}>
+              <a href={y.albums[0].href} target="_blank" rel="noopener">
+                <Image src={y.cover} alt="" widths={[320, 640]} sizes="(max-width: 40rem) 50vw, 25vw" />
+                <span class="o-year num">
+                  {y.year} <Icon name="external" />
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .recent {
+    display: grid;
+    gap: clamp(3.5rem, 7vw, 6rem);
+  }
+
+  .year {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    gap: clamp(1.5rem, 5vw, 4rem);
+    align-items: start;
+    scroll-margin-top: calc(var(--header-h) + 1.5rem);
+  }
+
+  .year.flip .y-img {
+    order: 2;
+  }
+
+  .y-img {
+    aspect-ratio: 3 / 2;
+    overflow: hidden;
+    background: var(--ridge-100);
+  }
+
+  .y-img :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .y-title {
+    padding-bottom: 0.75rem;
+    border-bottom: 1.5px solid var(--ink);
+    font-stretch: 62%;
+    font-weight: 820;
+    text-transform: uppercase;
+    font-size: clamp(2.5rem, 5vw, 4.25rem);
+    line-height: 0.95;
+  }
+
+  .albums {
+    list-style: none;
+  }
+
+  .albums a {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-block: 0.8rem;
+    border-bottom: 1px solid var(--line);
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .albums a:hover span {
+    text-decoration: underline;
+    text-decoration-color: var(--red);
+  }
+
+  .albums :global(svg) {
+    flex: none;
+    width: 1rem;
+    height: 1rem;
+    color: var(--ink-3);
+  }
+
+  .older {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+    gap: 1.5rem;
+  }
+
+  .older li {
+    scroll-margin-top: calc(var(--header-h) + 1.5rem);
+  }
+
+  .older a {
+    display: grid;
+    gap: 0.6rem;
+    text-decoration: none;
+  }
+
+  .older :global(img) {
+    width: 100%;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    transition: transform 0.6s var(--ease-out);
+  }
+
+  .older a:hover :global(img) {
+    transform: scale(1.03);
+  }
+
+  .o-year {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-stretch: 66%;
+    font-weight: 800;
+    font-size: 1.75rem;
+    line-height: 1;
+  }
+
+  .o-year :global(svg) {
+    width: 1rem;
+    height: 1rem;
+    color: var(--ink-3);
+  }
+
+  @media (max-width: 60rem) {
+    .year {
+      grid-template-columns: 1fr;
+    }
+
+    .year.flip .y-img {
+      order: 0;
+    }
+  }
+</style>

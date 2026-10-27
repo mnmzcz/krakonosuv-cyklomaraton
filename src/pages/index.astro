@@ -1,0 +1,154 @@
+---
+import { Image } from 'astro:assets';
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import RideRail from '../components/RideRail.astro';
+import RouteProfile from '../components/RouteProfile.astro';
+import PriceClimb from '../components/PriceClimb.astro';
+import NewsList from '../components/NewsList.astro';
+import Testimonials from '../components/Testimonials.astro';
+import PartnerBoard from '../components/PartnerBoard.astro';
+import Icon from '../components/Icon.astro';
+import fansPhoto from '../assets/photos/turiste-u-trati.jpg';
+import splits from '../data/splits-2026.json';
+
+const pomezni = splits.spots.find((s) => s.id === 'pomezni')!;
+const first = pomezni.window.long!.first;
+const last = pomezni.window.short!.last;
+
+// The page is ridden like the long route: each section is a stop at a real place on the road.
+const stops = [
+  // where the road begins
+  { id: 'trat', label: 'Trať', place: 'Trutnov' },
+  // the first climb of the day; the price climbs too, deadline by deadline
+  { id: 'startovne', label: 'Startovné', place: 'Prkenný Důl' },
+  // the spot both routes pass, the one the fans section quotes pass times for
+  { id: 'fandit', label: 'Fandit', place: 'Pomezní Boudy' },
+  // the roof of the race, where the news comes from the top
+  { id: 'aktuality', label: 'Aktuality', place: 'Pražská bouda' },
+  // the feed station, where riders stop and talk
+  { id: 'ohlasy', label: 'Ohlasy', place: 'Strážné' },
+  // the last climb, through one of the towns that back the race
+  { id: 'partneri', label: 'Partneři', place: 'Janské Lázně' },
+];
+---
+
+<Base>
+  <link slot="head" rel="preconnect" href="https://www.youtube-nocookie.com" />
+  <Hero />
+  <RideRail stops={stops} />
+
+  <section class="route" id="trat" aria-labelledby="trat-title">
+    <div class="wrap">
+      <RouteProfile id="profil-trate" layout="split">
+        <h2 class="t-title" id="trat-title">Trať</h2>
+        <p class="t-lede">
+          Silniční okruh z Trutnova přes Polsko na Pomezní Boudy, dlouhá trať navíc přes Pražskou boudu a Strážné. Profil ukazuje trasy ročníku 2026 a projedete
+          ho kurzorem, prstem nebo šipkami. Trasy pro rok 2027 upřesníme po schválení Policií ČR.
+        </p>
+      </RouteProfile>
+    </div>
+  </section>
+
+  <section class="section field-dark" id="startovne" aria-label="Startovné">
+    <div class="wrap">
+      <PriceClimb />
+    </div>
+  </section>
+
+  <section class="fans" id="fandit" aria-labelledby="fans-title">
+    <div class="fans-img">
+      <Image src={fansPhoto} alt="Závodníci stoupají horskou loukou, u silnice stojí turisté" widths={[640, 1024, 1500]} sizes="(max-width: 60rem) 100vw, 55vw" />
+    </div>
+    <div class="fans-copy">
+      <h2 class="t-title" id="fans-title">Přijďte fandit</h2>
+      <p class="t-lede">
+        Kde stát, kdy pojedou a jak se tam dostat. Podle mezičasů ročníku 2026 projelo čelo závodu Pomezní Boudy v {first}, poslední závodníci krátké trati v {last}.
+      </p>
+      <a class="link-arrow" href="/fanousci/">Průvodce pro fanoušky <Icon name="arrow" /></a>
+    </div>
+  </section>
+
+  <section class="section" id="aktuality" aria-labelledby="aktuality-title">
+    <div class="wrap">
+      <div class="section-head head-row">
+        <h2 class="t-title" id="aktuality-title">Aktuality</h2>
+        <a class="link-arrow" href="/aktuality/">Všechny aktuality <Icon name="arrow" /></a>
+      </div>
+      <NewsList />
+    </div>
+  </section>
+
+  <section class="section field-paper voices" id="ohlasy" aria-label="Ohlasy závodníků">
+    <div class="wrap">
+      <Testimonials />
+    </div>
+  </section>
+
+  <section class="section partners" id="partneri" aria-label="Partneři">
+    <div class="wrap">
+      <PartnerBoard />
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* the road book opens with its heading right under the hero ridge; its profile keeps the same km scale */
+  /* The road book opens on a fresh sheet: paper under a 3px ink rule, so the hero's ridge (which
+     shows the same road) ends with the hero instead of running on into the section. */
+  .route {
+    padding-top: clamp(3.5rem, 7vw, 6rem);
+    padding-bottom: var(--space-section);
+    background: var(--paper);
+    border-top: 3px solid var(--ink);
+  }
+
+  .fans {
+    display: grid;
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    background: var(--ridge-100);
+  }
+
+  .fans-img {
+    min-height: 28rem;
+  }
+
+  .fans-img :global(img) {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .fans-copy {
+    display: grid;
+    gap: 1.5rem;
+    align-content: center;
+    justify-items: start;
+    padding: clamp(3rem, 7vw, 6rem) var(--gutter);
+    max-width: 38rem;
+  }
+
+  .head-row {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+  }
+
+  .voices {
+    border-bottom: 1px solid var(--line);
+  }
+
+  .partners {
+    background: var(--paper);
+  }
+
+  @media (max-width: 60rem) {
+    .fans {
+      grid-template-columns: 1fr;
+    }
+
+    .fans-img {
+      min-height: 0;
+      aspect-ratio: 3 / 2;
+    }
+  }
+</style>

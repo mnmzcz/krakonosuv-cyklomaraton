@@ -1,0 +1,220 @@
+---
+import Icon from './Icon.astro';
+import { contacts, race, social, tel } from '../data/race';
+
+const menu = [
+  { label: 'Registrace', href: '/registrace/' },
+  { label: 'Propozice', href: '/propozice/' },
+  { label: 'Fanoušci', href: '/fanousci/' },
+  { label: 'Vouchery', href: '/vouchery/' },
+  { label: 'Ubytování', href: '/ubytovani/' },
+  { label: 'Partneři', href: '/partneri/' },
+];
+const archive = [
+  { label: 'Fotogalerie', href: '/fotogalerie/' },
+  { label: 'Výsledky', href: '/vysledky/' },
+  { label: 'Aktuality', href: '/aktuality/' },
+];
+---
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="ruler" aria-hidden="true"></div>
+    <div class="grid">
+      <div class="brandcol">
+        <a href="/" class="wordmark" aria-label="Krakonošův cyklomaraton, úvodní stránka">
+          <img src="/brand/krakonos-white.png" width="939" height="234" alt="" loading="lazy" />
+        </a>
+        <p class="when t-sub num">{race.edition}. ročník · 12. 6. 2027<br />Trutnov, UFFO</p>
+        <ul class="social">
+          {
+            social.map((s) => (
+              <li>
+                <a href={s.href} target="_blank" rel="noopener">
+                  <Icon name={s.icon} label={s.name} />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <nav aria-labelledby="f-menu">
+        <h2 class="t-label" id="f-menu">Menu</h2>
+        <ul class="links">{menu.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+      </nav>
+
+      <nav aria-labelledby="f-archiv">
+        <h2 class="t-label" id="f-archiv">Archiv</h2>
+        <ul class="links">{archive.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+      </nav>
+
+      <div class="contactcol">
+        <h2 class="t-label" id="f-kontakt"><a href="/kontakty/">Kontakt</a></h2>
+        <ul class="contacts">
+          {
+            contacts.map((c) => (
+              <li>
+                <span class="role">{c.role}</span>
+                <span class="who">{c.name}</span>
+                <a class="num" href={tel(c.phone)}>{c.phone}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+
+    <div class="base">
+      <span>{race.fullName}</span>
+      <span>Created by <a class="maker" href="http://www.mnmz.cz">minimize</a></span>
+    </div>
+  </div>
+</footer>
+
+<style>
+  .site-footer {
+    background: var(--ridge-950);
+    color: var(--on-dark);
+    padding-block: 3.5rem 2rem;
+  }
+
+  .ruler {
+    color: var(--on-dark-2);
+    margin-bottom: 3.5rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1.5fr;
+    gap: 3rem 2rem;
+  }
+
+  .wordmark {
+    display: block;
+    width: min(17rem, 100%);
+  }
+
+  .when {
+    margin-top: 1.5rem;
+    color: var(--on-dark-2);
+  }
+
+  .social {
+    display: flex;
+    gap: 0.25rem;
+    margin-top: 1.5rem;
+    margin-left: -0.6rem;
+    list-style: none;
+  }
+
+  .social a {
+    display: grid;
+    place-items: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    color: var(--on-dark-2);
+    transition: color 0.2s;
+  }
+
+  .social a:hover {
+    color: #fff;
+  }
+
+  h2 {
+    margin-bottom: 1.1rem;
+    color: var(--on-dark-2);
+  }
+
+  h2 a {
+    text-decoration: none;
+  }
+
+  .links {
+    list-style: none;
+    display: grid;
+    gap: 0.15rem;
+  }
+
+  .links a {
+    display: inline-block;
+    padding-block: 0.3rem;
+    text-decoration: none;
+    font-weight: 560;
+  }
+
+  .links a:hover {
+    text-decoration: underline;
+    text-decoration-color: var(--red);
+  }
+
+  .contacts {
+    list-style: none;
+    display: grid;
+    gap: 1.1rem;
+  }
+
+  .contacts li {
+    display: grid;
+    line-height: 1.35;
+  }
+
+  .role {
+    color: var(--on-dark-2);
+    font-size: 0.9375rem;
+  }
+
+  .who {
+    font-weight: 650;
+  }
+
+  .contacts a {
+    justify-self: start;
+    padding-block: 0.15rem;
+    text-decoration-color: var(--on-dark-line);
+  }
+
+  .base {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 0.75rem 2rem;
+    margin-top: 4rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--on-dark-line);
+    color: var(--on-dark-2);
+    font-size: 0.9375rem;
+  }
+
+  .base a {
+    color: #fff;
+  }
+
+  /* The studio's name in italics. The site turns font synthesis off; this one word lets the browser
+     slant the roman, so every page does not pull in the 100 kB italic font file for it. */
+  .maker {
+    font-style: italic;
+    font-synthesis: style;
+  }
+
+  @media (max-width: 60rem) {
+    .grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .brandcol {
+      grid-column: 1 / -1;
+    }
+  }
+
+  /* phones: the two short link lists side by side, contacts below at full width */
+  @media (max-width: 30rem) {
+    .grid {
+      gap: 2.5rem 1.5rem;
+    }
+
+    .contactcol {
+      grid-column: 1 / -1;
+    }
+  }
+</style>

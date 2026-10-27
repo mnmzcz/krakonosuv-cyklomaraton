@@ -1,0 +1,610 @@
+---
+import { Picture } from 'astro:assets';
+import poster from '../assets/photos/hero-snezka.jpg';
+import data from '../data/routes.json';
+import Icon from './Icon.astro';
+import { currentTierIndex, kc, priceTiers, race } from '../data/race';
+
+const r = data.routes.long;
+const pts = r.points;
+const L = pts[pts.length - 1][0];
+const MIN = 250;
+const MAX = 1150;
+// same horizontal scale as the road book below: x 0..1000 spans the content column (.wrap)
+const X = (km: number) => (km / L) * 1000;
+const Y = (alt: number) => (1 - (alt - MIN) / (MAX - MIN)) * 100;
+const xy = (p: number[]) => `${X(p[0]).toFixed(2)} ${Y(p[1]).toFixed(2)}`;
+// the valley floor of Trutnov runs on past start and finish to the edges of the screen
+const floorIn = Y(pts[0][1]).toFixed(2);
+const floorOut = Y(pts[pts.length - 1][1]).toFixed(2);
+const area = `M-40000 ${floorIn}L${pts.map(xy).join('L')}L41000 ${floorOut}L41000 100L-40000 100Z`;
+
+const peaks = ['Pomezní Boudy', 'Pražská bouda'].map((name) => {
+  const w = r.waypoints.find((w) => w.name === name)!;
+  const near = pts.reduce((b, p) => (Math.abs(p[0] - w.km) < Math.abs(b[0] - w.km) ? p : b));
+  return { ...w, x: (near[0] / L) * 100, y: Y(near[1]) / 100 };
+});
+
+// 120 would crowd the finish label, which carries the measured length and its qualifier
+const ticks = [20, 40, 60, 80, 100].map((k) => ({ k, x: (k / L) * 100 }));
+const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+const routes = data.routes;
+
+const tier = currentTierIndex();
+const t = priceTiers[tier];
+const priceNow = t.short ? `Startovné teď od ${kc(t.short)} · ${t.label.toLowerCase()}` : `Startovné na místě ${kc(t.cash!)}`;
+const tiersJson = JSON.stringify(priceTiers);
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="media" data-hero-media data-yt={race.youtubeId}>
+    <Picture
+      src={poster}
+      formats={['webp']}
+      widths={[640, 960, 1440, 1920, 2500]}
+      sizes="100vw"
+      alt=""
+      class="poster"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="scrim"></div>
+  </div>
+
+  <div class="content wrap">
+    <h1 id="hero-title" class="t-display title">
+      Krakonošův<br />cyklomaraton 2027
+    </h1>
+    <p class="tagline">{race.tagline}</p>
+    <ul class="facts t-label num">
+      <li>Dlouhá cca {routes.long.official_km} km</li>
+      <li>Krátká cca {routes.short.official_km} km</li>
+      <li>Start a cíl Trutnov</li>
+    </ul>
+    <div class="actions">
+      <a class="btn" href={race.registrationUrl}>Registrovat se <Icon name="arrow" /></a>
+      <p class="price num" data-price-now data-tiers={tiersJson}>{priceNow}</p>
+    </div>
+  </div>
+
+  <div class="video-ctrl">
+    <button class="vbtn" type="button" data-video-toggle aria-pressed="false">
+      <Icon name="pause" class="i-pause" />
+      <Icon name="play" class="i-play" />
+      <span data-video-label>Pozastavit video</span>
+    </button>
+    <a class="vlink" href={`https://www.youtube.com/watch?v=${race.youtubeId}`} target="_blank" rel="noopener">
+      Celé video se zvukem <Icon name="external" />
+    </a>
+  </div>
+
+  <div class="ridge" aria-hidden="true">
+    <div class="ridge-ground">
+      <div class="ridge-track">
+        <svg viewBox="0 0 1000 100" preserveAspectRatio="none" class="ridge-svg">
+          <path d={area} />
+        </svg>
+        {
+          peaks.map((p) => (
+            <span class="peak" style={`--x:${p.x}%;--y:${p.y};--t:${(0.4 + (p.x / 100) * 1.2).toFixed(2)}s`}>
+              <span class="peak-name t-label">{p.name}</span>
+            </span>
+          ))
+        }
+      </div>
+    </div>
+    <div class="ridge-axis">
+      <span class="ax-start">Start Trutnov</span>
+      {
+        ticks.map((t) => (
+          <span class:list={['num ax-tick', { 'ax-tick--late': t.k === 100 }]} style={`left:${t.x}%`}>
+            {t.k}
+          </span>
+        ))
+      }
+      <span class="num ax-end">
+        Cíl {fmtKm(r.km)} km <span class="ax-q">(trasa 2026)</span>
+      </span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .hero {
+    --ridge-h: clamp(7rem, 24vh, 13rem);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    min-height: max(36rem, min(calc(100svh - var(--header-h)), 62rem));
+    overflow: hidden;
+    color: #fff;
+    background: var(--ridge-900);
+    isolation: isolate;
+  }
+
+  .media {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    container-type: size;
+  }
+
+  .media :global(.poster),
+  .media :global(picture) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .media :global(.poster) {
+    object-fit: cover;
+    object-position: 50% 35%;
+  }
+
+  .media :global(iframe) {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    /* cover the hero like a background: a 16:9 frame at least as wide and as tall as the hero.
+       max-width: none lifts the global iframe cap, which kept the frame to the phone's width */
+    width: max(100cqw, 177.78cqh);
+    height: max(100cqh, 56.25cqw);
+    max-width: none;
+    transform: translate(-50%, -50%) scale(1.18);
+    border: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s var(--ease-out);
+  }
+
+  .media.is-playing :global(iframe) {
+    opacity: 1;
+  }
+
+  /* reading scrim for the copy, lower left */
+  .scrim {
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(to top, rgba(6, 18, 33, 0.78) 0%, rgba(6, 18, 33, 0.35) 45%, rgba(6, 18, 33, 0) 70%),
+      linear-gradient(to right, rgba(6, 18, 33, 0.55) 0%, rgba(6, 18, 33, 0) 60%);
+  }
+
+  .content {
+    position: relative;
+    /* the copy stands clear of the summits: the ridge never runs under the price line */
+    padding-bottom: calc(var(--ridge-h) + 0.75rem);
+  }
+
+  .title {
+    font-size: clamp(3.25rem, 9.2vw, 6rem);
+    max-width: 12ch;
+    text-shadow: 0 2px 24px rgba(6, 18, 33, 0.35);
+  }
+
+  .tagline {
+    margin-top: 1.25rem;
+    max-width: 34ch;
+    font-size: clamp(1.1875rem, 2vw, 1.5rem);
+    font-weight: 560;
+    line-height: 1.3;
+  }
+
+  /* every fact carries its own marker, so a wrapped line still starts with one */
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem 1.5rem;
+    margin-top: 1rem;
+    list-style: none;
+    color: var(--ridge-200);
+    font-size: 0.9375rem;
+  }
+
+  .facts li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    white-space: nowrap;
+  }
+
+  .facts li::before {
+    content: '';
+    flex: none;
+    width: 0.35rem;
+    height: 0.35rem;
+    background: var(--red);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 1rem 1.5rem;
+    margin-top: 2rem;
+  }
+
+  .price {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+  }
+
+  .video-ctrl {
+    position: absolute;
+    right: var(--gutter);
+    top: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem 1.25rem;
+    font-size: 0.9375rem;
+    transition: transform 0.45s var(--ease-out);
+  }
+
+  /* keyboard focus can bring the page's rail out over the top of the hero; the controls step under it */
+  :global(html.js:has([data-rail]:focus-within:not([data-docked]))) .video-ctrl {
+    transform: translateY(var(--rail-h, 3rem));
+  }
+
+  .vbtn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding: 0 0.9rem 0 0.75rem;
+    border: 1px solid rgba(255, 255, 255, 0.55);
+    border-radius: 2px;
+    background: rgba(6, 18, 33, 0.35);
+    color: #fff;
+    cursor: pointer;
+    font-weight: 600;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+
+  .vbtn:hover {
+    background: rgba(6, 18, 33, 0.6);
+  }
+
+  .vbtn :global(svg) {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .vbtn :global(.i-play),
+  .vbtn[aria-pressed='true'] :global(.i-pause) {
+    display: none;
+  }
+
+  .vbtn[aria-pressed='true'] :global(.i-play) {
+    display: block;
+  }
+
+  .vlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-weight: 600;
+    text-shadow: 0 1px 8px rgba(6, 18, 33, 0.6);
+  }
+
+  .vlink :global(svg) {
+    width: 0.95rem;
+    height: 0.95rem;
+  }
+
+  /* the embed refused to play: no pause control for a video that isn't there, only the link out */
+  .no-video .vbtn {
+    display: none;
+  }
+
+  /* the real long-route profile rising out of the video: it is the ground the page stands on.
+     The route spans the content column, on the same scale as the road book directly below it. */
+  .ridge {
+    --axis: 1.75rem;
+    --track-inset: max(var(--gutter), calc((100% - var(--max)) / 2));
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--ridge-h);
+    color: var(--ink);
+  }
+
+  .ridge-ground {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: var(--axis);
+  }
+
+  .ridge-track {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--track-inset);
+    right: var(--track-inset);
+  }
+
+  .ridge-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .ridge-svg path {
+    fill: var(--snow);
+  }
+
+  .ridge::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: calc(var(--axis) + 0.05rem);
+    background: var(--snow);
+  }
+
+  .peak {
+    position: absolute;
+    left: var(--x);
+    top: 0;
+    height: calc(100% * var(--y));
+    width: 0;
+  }
+
+  .peak::after {
+    content: '';
+    position: absolute;
+    left: -4px;
+    bottom: -4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+  }
+
+  .peak-name {
+    position: absolute;
+    left: 0;
+    top: calc(100% + 0.7rem);
+    transform: translateX(-50%) rotate(180deg);
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+    color: var(--ink);
+    font-size: 0.8125rem;
+  }
+
+  .ridge-axis {
+    position: absolute;
+    left: var(--track-inset);
+    right: var(--track-inset);
+    bottom: 0.35rem;
+    height: 1.2rem;
+    z-index: 1;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--ink-3);
+  }
+
+  .ridge-axis > span {
+    position: absolute;
+    white-space: nowrap;
+  }
+
+  .ax-tick {
+    transform: translateX(-50%);
+  }
+
+  .ax-start {
+    left: 0;
+  }
+
+  .ax-end {
+    right: 0;
+  }
+
+  .ax-q {
+    font-weight: 500;
+  }
+
+  /* on narrow tablets the last tick would run into the finish label */
+  @media (max-width: 56rem) {
+    .ax-tick--late {
+      display: none;
+    }
+  }
+
+  /* entrance: the ridge is ridden left to right once */
+  :global(.js) .ridge-ground {
+    animation: ride 1.8s var(--ease-out) 0.2s both;
+  }
+
+  :global(.js) .peak {
+    animation: land 0.6s var(--ease-out) both;
+    animation-delay: var(--t, 0.4s);
+  }
+
+  /* reduced motion: the ridge and its summits are simply there, without waiting for the ride */
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .ridge-ground,
+    :global(.js) .peak {
+      animation: none;
+    }
+  }
+
+  @keyframes ride {
+    from {
+      clip-path: inset(0 100% 0 0);
+    }
+    to {
+      clip-path: inset(0 0 0 0);
+    }
+  }
+
+  @keyframes land {
+    from {
+      opacity: 0;
+      transform: translateY(0.75rem);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .hero {
+      --ridge-h: 8rem;
+      min-height: max(34rem, calc(100svh - var(--header-h)));
+    }
+
+    .video-ctrl {
+      top: 0.75rem;
+    }
+
+    .vlink {
+      display: none;
+    }
+
+    .no-video .vlink {
+      display: inline-flex;
+    }
+
+    .vbtn span {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+    }
+
+    .vbtn {
+      padding: 0;
+      width: 2.75rem;
+      justify-content: center;
+    }
+
+    /* vertical names fit on a phone too; they start lower, where the snow under a peak is wider */
+    .peak-name {
+      top: calc(100% + 1.15rem);
+      font-size: 0.6875rem;
+    }
+
+    .ax-tick {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  // current price tier, recomputed in the visitor's browser so a cached page stays right
+  const priceEl = document.querySelector<HTMLElement>('[data-price-now]');
+  if (priceEl) {
+    const tiers: { until: string | null; label: string; short?: number; cash?: number }[] = JSON.parse(priceEl.dataset.tiers!);
+    const day = new Date().toISOString().slice(0, 10);
+    const t = tiers.find((x) => x.until && day <= x.until) ?? tiers[tiers.length - 1];
+    const kc = (n: number) => `${n.toLocaleString('cs-CZ')} Kč`;
+    priceEl.textContent = t.short ? `Startovné teď od ${kc(t.short)} · ${t.label.toLowerCase()}` : `Startovné na místě ${kc(t.cash!)}`;
+  }
+
+  // background video: YouTube (privacy-enhanced), never under reduced motion or data saver
+  const media = document.querySelector<HTMLElement>('[data-hero-media]');
+  const toggle = document.querySelector<HTMLButtonElement>('[data-video-toggle]');
+  const label = document.querySelector<HTMLElement>('[data-video-label]');
+  if (media && toggle && label) {
+    const id = media.dataset.yt!;
+    let frame: HTMLIFrameElement | null = null;
+    let paused = false;
+
+    const YT = 'https://www.youtube-nocookie.com';
+    const command = (func: string, args: unknown[] = []) => frame?.contentWindow?.postMessage(JSON.stringify({ event: 'command', func, args }), YT);
+
+    // the poster stays until the player reports PLAYING; an embed error (e.g. YouTube's sign-in check) drops the frame for good
+    const fail = () => {
+      frame?.remove();
+      media.classList.remove('is-playing');
+      toggle.closest('.video-ctrl')?.classList.add('no-video');
+    };
+    window.addEventListener('message', (e) => {
+      if (e.origin !== YT || e.source !== frame?.contentWindow) return;
+      let msg: { event?: string; info?: any };
+      try {
+        msg = JSON.parse(e.data);
+      } catch {
+        return;
+      }
+      const state = msg.event === 'onStateChange' ? msg.info : msg.info?.playerState;
+      if (msg.event === 'onError' || msg.info?.videoData?.errorCode) fail();
+      else if (state === 1 && !media.classList.contains('is-playing')) {
+        // the player has been running unseen while it booted: rewind so the film is seen from its first frame
+        command('seekTo', [0, true]);
+        media.classList.add('is-playing');
+      }
+    });
+
+    const setPaused = (p: boolean) => {
+      paused = p;
+      toggle.setAttribute('aria-pressed', String(p));
+      label.textContent = p ? 'Přehrát video' : 'Pozastavit video';
+    };
+
+    const load = () => {
+      if (frame) return;
+      frame = document.createElement('iframe');
+      const params = new URLSearchParams({
+        autoplay: '1',
+        mute: '1',
+        loop: '1',
+        playlist: id,
+        controls: '0',
+        disablekb: '1',
+        modestbranding: '1',
+        playsinline: '1',
+        rel: '0',
+        iv_load_policy: '3',
+        enablejsapi: '1',
+        origin: location.origin,
+      });
+      frame.src = `${YT}/embed/${id}?${params}`;
+      frame.title = 'Úvodní video Krakonošova cyklomaratonu';
+      frame.allow = 'autoplay; encrypted-media; picture-in-picture';
+      frame.tabIndex = -1;
+      frame.setAttribute('aria-hidden', 'true');
+      // subscribe to player events; repeat until the player answers, since it may boot after the frame's load event
+      frame.addEventListener('load', () => {
+        let tries = 0;
+        const listen = () => {
+          if (!frame?.isConnected || media.classList.contains('is-playing') || ++tries > 20) return;
+          frame.contentWindow?.postMessage(JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }), YT);
+          setTimeout(listen, 500);
+        };
+        listen();
+      });
+      media.insertBefore(frame, media.querySelector('.scrim'));
+    };
+
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+
+    // start right away: the poster holds the frame until the film is actually running
+    if (reduce || saveData) setPaused(true);
+    else load();
+
+    toggle.addEventListener('click', () => {
+      if (!frame) {
+        load();
+        setPaused(false);
+        return;
+      }
+      command(paused ? 'playVideo' : 'pauseVideo');
+      setPaused(!paused);
+    });
+  }
+</script>

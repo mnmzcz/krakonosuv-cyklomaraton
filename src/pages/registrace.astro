@@ -1,0 +1,279 @@
+---
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import PriceClimb from '../components/PriceClimb.astro';
+import Icon from '../components/Icon.astro';
+import { race } from '../data/race';
+---
+
+<Base title="Registrace" description="Online registrace na Krakonošův cyklomaraton 2027: závod jednotlivců, soutěž týmů a závodní pojištění SportHelp.">
+  <PageHead title="Online registrace" lede={race.tagline} mark={{ name: 'Start Trutnov', km: 0 }}>
+    <div class="head-actions on-dark">
+      <a class="btn" href={race.registrationUrl}>Registrace <Icon name="arrow" /></a>
+      <a class="btn btn--ghost" href={race.startlistUrl}>Startovní listina</a>
+    </div>
+  </PageHead>
+
+  <section class="section" aria-labelledby="jednotlivci">
+    <div class="wrap two-col">
+      <h2 class="t-title" id="jednotlivci">Závod jednotlivců</h2>
+      <div class="prose">
+        <p>
+          Úhrada startovného je možná pouze převodem. Doporučujeme platbu startovného provést v den, kdy založíte registraci k závodu. Pořadatel si vyhrazuje
+          právo registrace neuhrazené do 7 dní od jejich založení zrušit.
+        </p>
+        <p class="warn">
+          <strong>Upozornění!</strong> Při platbě ze zahraničí používejte výhradě SEPA platbu v Euro, která je bez poplatku. Při úhradě SHA Vám budou doúčtovány
+          bankovní poplatky 200 Kč splatné v hotovosti při vyzvedávní startovního čísla. Děkujeme za pochopení.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <section class="section field-dark" aria-label="Startovné">
+    <div class="wrap">
+      <PriceClimb title="Startovné" lede="Výše startovného je odvislá od termínu jeho připsání na účet pořadatele:" cta={false} />
+      <div class="after-price">
+        <p>Vaše jméno bude ve startovní listině uvedeno až po spárování platby startovného s registrací.</p>
+        <div class="row-actions">
+          <a class="btn" href={race.registrationUrl}>Registrace <Icon name="arrow" /></a>
+          <a class="btn btn--ghost" href={race.startlistUrl}>Startovní listina</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="tymy">
+    <div class="wrap two-col">
+      <div class="col-head">
+        <h2 class="t-title" id="tymy">Soutěž týmů</h2>
+        <p class="t-lede">Registrace týmu je zdarma.</p>
+      </div>
+      <div class="col-body">
+        <div class="prose">
+          <p class="warn"><strong>POZOR!</strong> Registraci týmu proveďte teprve po registraci všech jeho členů do závodu jednotlivců.</p>
+          <ul>
+            <li>Soutěž týmů je vypsána na krátké i dlouhé trati.</li>
+            <li>
+              Každý tým tvoří minimálně tři a maximálně šest závodníků, kteří jedou stejnou trať a startují za stejný tým i v kategorii jednotlivců.
+            </li>
+            <li>Výsledným časem týmu se rozumí součet časů jeho tří nejrychlejších členů.</li>
+            <li>Vyhlášen a věcnými cenami odměněn bude vždy nejrychlejší tým na každé trati.</li>
+          </ul>
+        </div>
+
+        <form class="form team-form" id="form" name="soutez-tymu" method="POST" action="/dekujeme/" data-netlify="true" netlify-honeypot="bot-field">
+          <h3 class="t-sub">Registrace do soutěže týmů</h3>
+          <input type="hidden" name="form-name" value="soutez-tymu" />
+          <p class="visually-hidden"><label>Nevyplňujte: <input name="bot-field" tabindex="-1" autocomplete="off" /></label></p>
+          <div class="field">
+            <label for="t-name">Název týmu</label>
+            <input id="t-name" name="nazev-tymu" required autocomplete="organization" />
+            <p class="field-error">Vyplňte název týmu.</p>
+          </div>
+          <fieldset class="field route-pick">
+            <legend>Závod</legend>
+            <label class="choice"><input type="radio" name="zavod" value="Dlouhá trasa" required /> Dlouhá trasa</label>
+            <label class="choice"><input type="radio" name="zavod" value="Krátká trasa" /> Krátká trasa</label>
+          </fieldset>
+          <div class="riders">
+            {
+              [1, 2, 3, 4, 5, 6].map((n) => (
+                <div class="field">
+                  <label for={`t-r${n}`}>Jméno: {n}. závodník</label>
+                  <input id={`t-r${n}`} name={`zavodnik-${n}`} required={n <= 3} autocomplete="off" />
+                  {n <= 3 && <p class="field-error">Tým potřebuje alespoň tři závodníky.</p>}
+                </div>
+              ))
+            }
+          </div>
+          <div class="field">
+            <label for="t-mail">Kontaktní e-mail</label>
+            <input id="t-mail" name="email" type="email" required autocomplete="email" />
+            <p class="field-error">Zadejte platný e-mail, např. jmeno@domena.cz.</p>
+          </div>
+          <p class="form-note">Odesláním přihlášky souhlasíme s podmínkami soutěže uvedenými na www.krakonosuvcyklomaraton.cz</p>
+          <button class="btn" type="submit">Odeslat přihlášku <Icon name="arrow" /></button>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="section field-paper" aria-labelledby="safe">
+    <div class="wrap two-col">
+      <div class="col-head">
+        <h2 class="t-title" id="safe">Závodní pojištění SportHelp – balíček SAFE</h2>
+      </div>
+      <div class="col-body safe">
+        <p class="t-lede">
+          Bezpečí na prvním místě. Ve spolupráci se SportHelp nabízíme krátkodobé úrazové pojištění SAFE pro všechny účastníky cyklomaratonu.
+        </p>
+        <h3 class="t-sub">Co obsahuje:</h3>
+        <ul class="checks">
+          <li>Pojištění platné celý závodní víkend</li>
+          <li>30denní organizace zdravotní péče</li>
+          <li>Rychlý přístup ke specialistům</li>
+          <li>Asistence při rehabilitaci a návratu do formy</li>
+          <li>Kompletní správu pojistné události</li>
+        </ul>
+        <dl class="safe-facts">
+          <div>
+            <dt class="t-label">Cena</dt>
+            <dd class="num">290 Kč</dd>
+          </div>
+          <div>
+            <dt class="t-label">Objednávky</dt>
+            <dd>přímo u registrace na SportSoft</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .head-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .two-col {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 6vw, 6rem);
+    align-items: start;
+  }
+
+  .col-head {
+    display: grid;
+    gap: 1.25rem;
+    align-content: start;
+  }
+
+  .warn {
+    padding: 1rem 1.25rem;
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--red);
+  }
+
+  .after-price {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem 3rem;
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--on-dark-line);
+    color: var(--on-dark-2);
+  }
+
+  .row-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .col-body {
+    display: grid;
+    gap: 2.5rem;
+  }
+
+  .team-form {
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--ink);
+  }
+
+  .route-pick {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 2rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+
+  .route-pick legend {
+    width: 100%;
+    margin-bottom: 0.25rem;
+  }
+
+  .riders {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.25rem 1.5rem;
+  }
+
+  .team-form .btn {
+    justify-self: start;
+  }
+
+  .safe {
+    gap: 1.5rem;
+  }
+
+  .checks {
+    list-style: none;
+    display: grid;
+    gap: 0.6rem;
+  }
+
+  .checks li {
+    position: relative;
+    padding-left: 1.75rem;
+  }
+
+  .checks li::before {
+    content: '';
+    position: absolute;
+    left: 0.15rem;
+    top: 0.45em;
+    width: 0.9rem;
+    height: 0.5rem;
+    border-left: 2.5px solid var(--red);
+    border-bottom: 2.5px solid var(--red);
+    transform: rotate(-45deg);
+  }
+
+  .safe-facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem 4rem;
+    margin: 0.5rem 0 0;
+    padding-top: 1.5rem;
+    border-top: 1.5px solid var(--ink);
+  }
+
+  .safe-facts dt {
+    color: var(--ink-3);
+  }
+
+  .safe-facts dd {
+    margin: 0.35rem 0 0;
+    font-weight: 600;
+  }
+
+  .safe-facts dd.num {
+    font-stretch: 66%;
+    font-weight: 800;
+    font-size: 2.5rem;
+    line-height: 1;
+  }
+
+  @media (max-width: 60rem) {
+    .two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 34rem) {
+    .riders {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

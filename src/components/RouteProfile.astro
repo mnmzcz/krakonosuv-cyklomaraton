@@ -1,0 +1,1593 @@
+---
+// The road book: the real elevation profile of a route, places standing at their kilometre.
+import data from '../data/routes.json';
+import Icon from './Icon.astro';
+import { race } from '../data/race';
+
+type RouteId = 'long' | 'short';
+export type Marker = {
+  km: number;
+  name: string;
+  alt?: number;
+  note?: string | null;
+  tier?: 1 | 2;
+  kind?: 'spot';
+};
+
+interface Props {
+  id: string;
+  routes?: RouteId[];
+  /** replaces the route's own waypoints (used for spectator spots) */
+  markers?: Marker[];
+  /** the ruled stage header (route, start, finish, length, climbing, top) */
+  stats?: boolean;
+  /** the "Místa na trati" table */
+  table?: boolean;
+  /** climb brackets on the chart and the climb list; follows `stats` unless set */
+  climbs?: boolean;
+  /** default: heading (default slot), stage header and profile stacked like a stage page.
+      split: the heading beside the stage header and its footnote, the profile full width under
+      both, and the legend beside the climbs. The heading row stacks below 75rem, the rest below
+      60rem. Both keep source order equal to visual order. */
+  layout?: 'default' | 'split';
+}
+
+const { id, routes = ['long', 'short'], markers, stats = true, table = true, climbs: showClimbs = stats, layout = 'default' } = Astro.props;
+const hasIntro = Astro.slots.has('default');
+
+const ALT_MIN = 300;
+const ALT_MAX = 1150;
+const yFrac = (alt: number) => 1 - (alt - ALT_MIN) / (ALT_MAX - ALT_MIN);
+
+// level-1 labels survive on phones; the rest appear from 48rem
+const TIER1: Record<RouteId, string[]> = {
+  long: ['Trutnov', 'Lubawka', 'Pomezní Boudy', 'Pražská bouda', 'Strážné', 'Janské Lázně'],
+  short: ['Trutnov', 'Lubawka', 'Pomezní Boudy', 'Pec pod Sněžkou', 'Svoboda nad Úpou'],
+};
+
+// timing points of 2026 and feed stations from the organisers' pre-race information
+const SERVICES: Record<RouteId, { km: number; kind: 'clock' | 'bottle'; label: string }[]> = {
+  long: [
+    { km: 51.4, kind: 'clock', label: 'Kontrola Pomezní Boudy' },
+    { km: 51.4, kind: 'bottle', label: 'Bufet Pomezní Boudy' },
+    { km: 71.6, kind: 'clock', label: 'Kontrola Pražská bouda' },
+    { km: 71.6, kind: 'bottle', label: 'Bufet Pražská bouda (pití)' },
+    { km: 90, kind: 'bottle', label: 'Bufet Strážné' },
+  ],
+  short: [
+    { km: 51.4, kind: 'clock', label: 'Kontrola Pomezní Boudy' },
+    { km: 51.4, kind: 'bottle', label: 'Bufet Pomezní Boudy' },
+  ],
+};
+
+const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
+const fmtInt = (n: number) => n.toLocaleString('cs-CZ').replace(/\s/g, ' ');
+const fmtPct = (n: number) => n.toLocaleString('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+
+type Point = [number, number, number, number, number];
+
+const charts = routes.map((rid) => {
+  const r = data.routes[rid];
+  const pts = r.points as Point[];
+  const L = pts[pts.length - 1][0];
+  const X = (km: number) => (km / L) * 1000;
+  const Y = (alt: number) => yFrac(alt) * 100;
+  const xy = (p: Point) => `${X(p[0]).toFixed(2)} ${Y(p[1]).toFixed(2)}`;
+
+  // the gradient class comes with every 200 m sample; consecutive equal classes merge into one shape
+  const runs: { g: number; from: number; to: number }[] = [];
+  for (let i = 0; i < pts.length - 1; i++) {
+    const g = pts[i][4] ?? 0;
+    const last = runs[runs.length - 1];
+    if (last && last.g === g) last.to = i + 1;
+    else runs.push({ g, from: i, to: i + 1 });
+  }
+  const line = 'M' + pts.map(xy).join('L');
+  const base = `${line}L1000 100L0 100Z`;
+  const fills = runs
+    .filter((run) => run.g > 0)
+    .map(({ g, from, to }) => {
+      const seg = pts.slice(from, to + 1);
+      const x0 = X(seg[0][0]).toFixed(2);
+      const end = seg[seg.length - 1];
+      // a hair of overlap so neighbouring shapes never show a seam
+      const x1 = Math.min(1000, X(end[0]) + 0.35).toFixed(2);
+      return { g, d: `M${seg.map(xy).join('L')}L${x1} ${Y(end[1]).toFixed(2)}L${x1} 100L${x0} 100Z` };
+    });
+
+  const nearest = (km: number) => pts.reduce((best, p) => (Math.abs(p[0] - km) < Math.abs(best[0] - km) ? p : best));
+
+  const source: Marker[] = markers ?? r.waypoints.map((w) => ({ ...w, tier: TIER1[rid].includes(w.name) ? 1 : 2 }));
+  const marks = source
+    .filter((m) => m.km <= L + 0.5)
+    .map((m) => {
+      // the stem lands on the drawn line: the nearest sample by km is a vertex of that line
+      const near = nearest(m.km);
+      const alt = m.alt ?? near[1];
+      const x = (near[0] / L) * 100;
+      return { ...m, alt, at: near[0], x, y: yFrac(near[1]), edge: x < 3 ? 'start' : x > 97 ? 'end' : '' };
+    });
+
+  const ticks = [];
+  for (let k = 0; k <= L; k += 5) ticks.push({ k, x: (k / L) * 100, major: k % 10 === 0 });
+
+  const topPoint = r.waypoints.reduce((a, b) => (b.alt > a.alt ? b : a));
+  // each climb's % label stands over its bracket where it is farthest from any place's stem,
+  // so no leader line runs through it (kept to the middle 60 % of the bracket)
+  const stems = marks.map((m) => m.at).sort((a, b) => a - b);
+  const climbs = (r.climbs ?? []).map((c) => {
+    const len = c.to_km - c.from_km;
+    const lo = c.from_km + len * 0.2;
+    const hi = c.to_km - len * 0.2;
+    const bounds = [-Infinity, ...stems, Infinity];
+    let best = { at: (c.from_km + c.to_km) / 2, room: -Infinity };
+    for (let i = 0; i < bounds.length - 1; i++) {
+      const [a, b] = [bounds[i], bounds[i + 1]];
+      if (b < lo || a > hi) continue;
+      const mid = Number.isFinite(a) && Number.isFinite(b) ? (a + b) / 2 : Number.isFinite(a) ? hi : lo;
+      const at = Math.max(lo, Math.min(hi, mid));
+      const room = Math.min(at - a, b - at);
+      if (room > best.room) best = { at, room };
+    }
+    return {
+      ...c,
+      x0: (c.from_km / L) * 100,
+      x1: Math.min(100, (c.to_km / L) * 100),
+      lx: ((best.at - c.from_km) / len) * 100,
+      // under ~3,5 km of free road the label only clears the stems on wide screens
+      tight: best.room < 3.5,
+    };
+  });
+
+  return {
+    rid,
+    r,
+    L,
+    base,
+    fills,
+    line,
+    marks,
+    ticks,
+    top: { alt: r.top ?? topPoint.alt, name: topPoint.name },
+    climbs,
+    services: SERVICES[rid].map((s) => ({ ...s, x: (s.km / L) * 100 })),
+    json: JSON.stringify({ L, p: pts.map((p) => [p[0], p[1]]), w: marks.map((m) => [m.at, m.alt, m.name]) }),
+  };
+});
+
+const grid = [600, 800, 1000].map((a) => ({ a, y: yFrac(a) * 100 }));
+const multi = charts.length > 1;
+const showStage = stats || multi;
+---
+
+<div class:list={['rb', `rb--${layout}`, { 'rb--intro': hasIntro, 'rb--stage': showStage, 'rb--climbs': showClimbs }]} data-rb id={id}>
+  {hasIntro && (
+    <div class="rb-intro">
+      <slot />
+    </div>
+  )}
+
+  {showStage && (
+    <div class:list={['rb-stage', { 'has-tabs': multi }]}>
+      {multi && (
+        <fieldset class="rb-tabs">
+          <legend class="visually-hidden">Vyberte trať</legend>
+          {charts.map((c, i) => (
+            <>
+              <input type="radio" name={`${id}-route`} id={`${id}-${c.rid}`} value={c.rid} checked={i === 0} class="visually-hidden" />
+              <label for={`${id}-${c.rid}`}>
+                <span class="rb-letter" aria-hidden="true">
+                  {c.r.letter}
+                </span>
+                <span class="tab-name">{c.r.name}</span>
+                <span class="tab-km num">
+                  {c.r.official_km} km<span aria-hidden="true">*</span>
+                  <span class="visually-hidden"> podle propozic 2027</span>
+                </span>
+              </label>
+            </>
+          ))}
+        </fieldset>
+      )}
+      {stats &&
+        charts.map((c) => (
+          <dl class="rb-facts rb-r" data-route={c.rid}>
+            {!multi && (
+              <div class="rb-fact rb-fact--title">
+                <dt class="visually-hidden">Trať</dt>
+                <dd>
+                  <span class="rb-letter" aria-hidden="true">
+                    {c.r.letter}
+                  </span>
+                  <span class="v">{c.r.name}</span>
+                </dd>
+              </div>
+            )}
+            <div class="rb-fact">
+              <dt class="t-label">Start</dt>
+              <dd>
+                <span class="v num">{c.r.start}</span> <span class="q">Trutnov</span>
+              </dd>
+            </div>
+            <div class="rb-fact">
+              <dt class="t-label">Cíl</dt>
+              <dd>
+                <span class="v">Trutnov</span>
+              </dd>
+            </div>
+            <div class="rb-fact">
+              <dt class="t-label">Délka</dt>
+              <dd>
+                <span class="v num">{fmtKm(c.r.km)} km</span> <span class="q">trasa 2026</span>
+              </dd>
+            </div>
+            <div class="rb-fact">
+              <dt class="t-label">Převýšení</dt>
+              <dd>
+                <span class="v num">{fmtInt(c.r.gain)} m</span> <span class="q">{c.r.gainSource}</span>
+              </dd>
+            </div>
+            <div class="rb-fact">
+              <dt class="t-label">Nejvýš</dt>
+              <dd>
+                <span class="v num">{fmtInt(c.top.alt)} m</span> <span class="q">{c.top.name}</span>
+              </dd>
+            </div>
+          </dl>
+        ))}
+    </div>
+  )}
+  {multi && (
+    <p class="rb-note">
+      <span aria-hidden="true">* </span>Délky podle propozic 2027. {race.routesNote}
+    </p>
+  )}
+
+  {charts.map((c) => (
+    <section class="rb-route rb-r" data-route={c.rid} aria-label={`${c.r.name}, profil trasy 2026`}>
+      <div class:list={['rb-chart', { 'has-climbs': showClimbs && c.climbs.length }]} data-chart={c.json}>
+        <div class="rb-plot">
+          {grid.map((g) => (
+            <div class="rb-grid" style={`top:${g.y}%`}>
+              <span class="num">{g.a}</span>
+            </div>
+          ))}
+          <svg class="rb-svg" viewBox="0 0 1000 100" preserveAspectRatio="none" aria-hidden="true">
+            <path d={c.base} class="g0" />
+            {c.fills.map((s) => (
+              <path d={s.d} class={`g${s.g}`} />
+            ))}
+            <path d={c.line} class="rb-line" vector-effect="non-scaling-stroke" />
+          </svg>
+        </div>
+
+        {showClimbs && c.climbs.length > 0 && (
+          <div class="rb-brackets" aria-hidden="true">
+            {c.climbs.map((cl) => (
+              <span class:list={['rb-bracket', { 'is-tight': cl.tight }]} style={`left:${cl.x0}%;width:${cl.x1 - cl.x0}%;--lx:${cl.lx.toFixed(1)}%;--t:${((cl.x0 / 100) * 1.1).toFixed(2)}s`}>
+                <span class="num">{fmtPct(cl.avg)} %</span>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {c.marks.map((m) => (
+          <div
+            class:list={['rb-mark', `tier-${m.tier ?? 1}`, m.edge && `edge-${m.edge}`, m.kind === 'spot' && 'is-spot']}
+            style={`--x:${m.x}%;--y:${m.y};--t:${((m.x / 100) * 1.1).toFixed(2)}s`}
+            aria-hidden="true"
+          >
+            <span class="rb-name">
+              <b>{m.name}</b> <span class="num">{fmtInt(m.alt)}</span>
+            </span>
+          </div>
+        ))}
+
+        <div class="rb-axis" aria-hidden="true">
+          {c.ticks.map((t) => (
+            <span class:list={['tick', { major: t.major }]} style={`left:${t.x}%`}>
+              {t.major && <span class="num">{t.k}</span>}
+            </span>
+          ))}
+          <span class="unit t-label">km</span>
+        </div>
+
+        <div class="rb-services" aria-hidden="true">
+          {c.services.map((s) => (
+            <span class:list={['svc', s.kind]} style={`left:${s.x}%;--t:${((s.x / 100) * 1.1).toFixed(2)}s`} title={s.label}>
+              <Icon name={s.kind} />
+            </span>
+          ))}
+        </div>
+
+        <div
+          class="rb-scrub"
+          tabindex="0"
+          role="slider"
+          aria-label={`Projet ${c.r.name.toLowerCase()} po kilometrech`}
+          aria-valuemin="0"
+          aria-valuemax={Math.round(c.L)}
+          aria-valuenow="0"
+          aria-valuetext="km 0, Trutnov"
+        >
+          <span class="rb-cursor" hidden>
+            <span class="rb-dot" />
+          </span>
+          <span class="rb-read" hidden>
+            <span class="rd-top num" />
+            <span class="rd-name" />
+          </span>
+        </div>
+      </div>
+    </section>
+  ))}
+
+  <div class="rb-foot">
+    <ul class="rb-legend" aria-label="Legenda">
+      <li>
+        <i class="sw g1" />
+        2–4 %
+      </li>
+      <li>
+        <i class="sw g2" />
+        4–6 %
+      </li>
+      <li>
+        <i class="sw g3" />
+        přes 6 %
+      </li>
+      {showClimbs && (
+        <li>
+          <i class="sw-bracket" />
+          <span>stoupání<span class="lg-avg">, průměrný sklon</span></span>
+        </li>
+      )}
+      <li>
+        <Icon name="clock" />
+        kontrola
+      </li>
+      <li>
+        <Icon name="bottle" />
+        bufet
+      </li>
+    </ul>
+    {charts.map((c) => (
+      <a class="link-arrow rb-r" data-route={c.rid} href={c.r.mapUrl} target="_blank" rel="noopener">
+        {c.r.name} 2026 v Mapy.com <Icon name="external" />
+      </a>
+    ))}
+  </div>
+
+  {showClimbs && (
+    <div class="rb-lead">
+      {charts.map(
+        (c) =>
+          c.climbs.length > 0 && (
+            <div class="rb-climbs rb-r" data-route={c.rid}>
+              <h3 class="rb-h3" id={`${id}-${c.rid}-climbs`}>
+                Stoupání <span class="rb-h3-sub">{c.r.name.toLowerCase()}</span>
+              </h3>
+              <table aria-labelledby={`${id}-${c.rid}-climbs`}>
+                <thead>
+                  <tr>
+                    <th scope="col">Úsek</th>
+                    <th scope="col" class="n">
+                      Délka
+                    </th>
+                    <th scope="col" class="n">
+                      Převýšení
+                    </th>
+                    <th scope="col" class="n">
+                      Průměr
+                    </th>
+                    <th scope="col" class="n">
+                      Nejprudší km
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {c.climbs.map((cl) => (
+                    <tr>
+                      <th scope="row">
+                        <b>{cl.name}</b>
+                        <span class="span num">
+                          km {fmtKm(cl.from_km)}–{fmtKm(cl.to_km)}
+                        </span>
+                      </th>
+                      <td class="n num">{fmtKm(cl.length)} km</td>
+                      <td class="n num">{fmtInt(cl.gain)} m</td>
+                      <td class="n num">{fmtPct(cl.avg)} %</td>
+                      <td class="n num">{fmtPct(cl.max)} %</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ),
+      )}
+    </div>
+  )}
+
+  {table &&
+    charts.map((c) => (
+      <details class="rb-table rb-r" data-route={c.rid}>
+        <summary>
+          <span>Místa na trati ({c.r.name.toLowerCase()})</span>
+          <Icon name="chevron" class="rb-chev" />
+        </summary>
+        <table>
+          <thead>
+            <tr>
+              <th scope="col">km</th>
+              <th scope="col">Místo</th>
+              <th scope="col">m n. m.</th>
+            </tr>
+          </thead>
+          <tbody>
+            {c.r.waypoints.map((w) => (
+              <tr>
+                <td class="num">{fmtKm(w.km)}</td>
+                <td>
+                  {w.name}
+                  {w.note && <span class="note"> · {w.note}</span>}
+                </td>
+                <td class="num">{fmtInt(w.alt)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </details>
+    ))}
+</div>
+
+<style>
+  .rb {
+    /* tall enough for the longest name with its height (Svoboda nad Úpou 534) at every width */
+    --label-band: clamp(9.25rem, 12vw, 10rem);
+    --plot-h: clamp(10rem, 22vw, 17rem);
+    --axis-h: 2.25rem;
+    position: relative;
+  }
+
+  .rb:has(input[value='long']:checked) .rb-r[data-route='short'],
+  .rb:has(input[value='short']:checked) .rb-r[data-route='long'] {
+    display: none;
+  }
+
+  .rb-intro {
+    display: grid;
+    gap: 1.25rem;
+    margin-bottom: clamp(2rem, 4vw, 3rem);
+  }
+
+  /* split: one road-book page. The heading and lede open it, the stage header (whose tabs switch
+     everything below) and the footnote to its asterisks sit beside them on wide screens, the profile
+     runs full width under both, and the legend stands beside the climbs. Source order is visual order. */
+  .rb--split {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-items: start;
+  }
+
+  .rb--split > .rb-route {
+    margin-top: clamp(1.25rem, 2.5vw, 2rem);
+  }
+
+  .rb--split .rb-foot {
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 1rem;
+  }
+
+  @media (width > 60rem) {
+    .rb--split {
+      grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+      column-gap: clamp(2.5rem, 6vw, 6rem);
+      grid-template-areas:
+        'intro intro'
+        'stage stage'
+        'note note'
+        'chart chart'
+        'foot climbs'
+        'table table';
+    }
+
+    .rb--split > .rb-intro {
+      grid-area: intro;
+    }
+
+    .rb--split > .rb-stage {
+      grid-area: stage;
+    }
+
+    .rb--split > .rb-note {
+      grid-area: note;
+    }
+
+    .rb--split > .rb-route {
+      grid-area: chart;
+    }
+
+    /* the key and the climbs open one row, a step below the km axis */
+    .rb--split > .rb-foot {
+      grid-area: foot;
+      gap: 1.25rem;
+      margin-top: 1rem;
+    }
+
+    .rb--split > .rb-lead {
+      grid-area: climbs;
+      margin-top: 1rem;
+    }
+
+    .rb--split > .rb-table {
+      grid-area: table;
+    }
+
+    .rb--split:not(.rb--climbs) > .rb-foot {
+      grid-column: 1 / -1;
+    }
+
+    /* the key as two short columns: the grade swatches, then the drawn symbols */
+    .rb--split .rb-legend {
+      display: grid;
+      grid-template-columns: repeat(2, max-content);
+      grid-template-rows: repeat(3, auto);
+      grid-auto-flow: column;
+      gap: 0.55rem 2rem;
+    }
+  }
+
+  @media (width > 75rem) {
+    /* the stage header starts level with the heading, its footnote right under it; whatever height
+       the heading and lede have left over goes below the footnote (the 1fr row), never between them */
+    .rb--split {
+      grid-template-rows: auto 1fr auto auto auto;
+      grid-template-areas:
+        'intro stage'
+        'intro note'
+        'chart chart'
+        'foot climbs'
+        'table table';
+    }
+
+    .rb--split > .rb-intro {
+      margin-bottom: 0;
+    }
+
+    .rb--split:not(.rb--stage) > .rb-intro,
+    .rb--split:not(.rb--intro) > .rb-stage,
+    .rb--split:not(.rb--intro) > .rb-note {
+      grid-column: 1 / -1;
+    }
+
+    /* in the 7fr column the tabs keep their own row, as they do below 75rem */
+    .rb--split .rb-stage.has-tabs {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rb--split .rb-stage.has-tabs .rb-tabs {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .rb--split .rb-stage.has-tabs .rb-tabs label:last-of-type {
+      border-right: 0;
+    }
+  }
+
+  /* wherever the five facts share one row, they take equal tracks and stack value over qualifier,
+     so the hairlines stay put when the route changes (phones keep their two-column grid) */
+  @media (width > 48rem) {
+    .rb--split .rb-facts {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: 1fr;
+    }
+
+    .rb--split .rb-fact:first-child {
+      padding-left: 0;
+    }
+
+    .rb--split .rb-fact:last-child {
+      padding-right: 0;
+    }
+
+    .rb--split .rb-fact dd {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.2rem;
+    }
+  }
+
+  /* ---------- stage header: one ruled line, like the head of a stage profile ---------- */
+  .rb-stage {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--line-strong);
+  }
+
+  .rb-stage:not(.has-tabs) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .rb--default .rb-stage {
+    margin-bottom: 0.75rem;
+  }
+
+  .rb-letter {
+    display: inline-grid;
+    place-items: center;
+    flex: none;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 1.5px solid currentColor;
+    border-radius: 2px;
+    font-stretch: 70%;
+    font-weight: 820;
+    font-size: 1.0625rem;
+    line-height: 1;
+  }
+
+  .rb-tabs {
+    display: flex;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    min-width: 0;
+  }
+
+  .rb-tabs label {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem 0.65rem;
+    padding: 0.85rem 1.15rem;
+    cursor: pointer;
+    font-stretch: 72%;
+    font-weight: 760;
+    text-transform: uppercase;
+    font-size: 1.0625rem;
+    line-height: 1;
+    border-right: 1px solid var(--line-strong);
+    transition:
+      background-color 0.2s var(--ease-out),
+      color 0.2s var(--ease-out);
+  }
+
+  .rb-tabs label:hover {
+    background: var(--ridge-100);
+  }
+
+  .tab-km {
+    font-weight: 500;
+    text-transform: none;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  .rb-tabs input:checked + label {
+    background: var(--ink);
+    color: #fff;
+  }
+
+  .rb-tabs input:checked + label .rb-letter {
+    background: #fff;
+    border-color: #fff;
+    color: var(--ink);
+  }
+
+  .rb-tabs input:checked + label .tab-km {
+    color: var(--ridge-200);
+  }
+
+  .rb-tabs input:focus-visible + label {
+    outline: 3px solid var(--red);
+    outline-offset: -3px;
+  }
+
+  .rb-facts {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 0;
+  }
+
+  .rb-fact {
+    padding: 0.7rem clamp(0.9rem, 1.6vw, 1.5rem) 0.75rem;
+  }
+
+  .rb-fact + .rb-fact {
+    border-left: 1px solid var(--line);
+  }
+
+  .rb-fact dt {
+    color: var(--ink-3);
+    font-size: 0.75rem;
+  }
+
+  .rb-fact dd {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0 0.4rem;
+    margin: 0.3rem 0 0;
+  }
+
+  .rb-fact .v {
+    font-stretch: 70%;
+    font-weight: 780;
+    font-size: 1.375rem;
+    line-height: 1.05;
+    white-space: nowrap;
+  }
+
+  .rb-fact .q {
+    font-size: 0.875rem;
+    color: var(--ink-3);
+    white-space: nowrap;
+  }
+
+  .rb-fact--title dd {
+    align-items: center;
+    gap: 0.65rem;
+    margin: 0;
+    height: 100%;
+  }
+
+  .rb-fact--title .v {
+    text-transform: uppercase;
+  }
+
+  .rb-note {
+    margin: 0.65rem 0 0;
+    max-width: 80ch;
+    font-size: 0.875rem;
+    line-height: 1.45;
+    color: var(--ink-3);
+  }
+
+  .rb--default .rb-note {
+    margin-bottom: 1.5rem;
+  }
+
+  /* ---------- chart ---------- */
+  .rb-chart {
+    --climb-band: 0rem;
+    position: relative;
+    padding-top: calc(var(--label-band) + var(--climb-band));
+    padding-bottom: calc(var(--axis-h) + 1.75rem);
+  }
+
+  .rb-chart.has-climbs {
+    --climb-band: 1.6rem;
+  }
+
+  .rb-plot {
+    position: relative;
+    height: var(--plot-h);
+  }
+
+  .rb-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .g0 {
+    fill: var(--grade-0);
+  }
+  .g1 {
+    fill: var(--grade-1);
+  }
+  .g2 {
+    fill: var(--grade-2);
+  }
+  .g3 {
+    fill: var(--grade-3);
+  }
+
+  .rb-line {
+    fill: none;
+    stroke: var(--ink);
+    stroke-width: 2;
+    stroke-linejoin: round;
+  }
+
+  .rb-grid {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed var(--line-strong);
+  }
+
+  .rb-grid span {
+    position: absolute;
+    left: 0.5rem;
+    top: -1.2rem;
+    font-size: 0.75rem;
+    color: var(--ink-3);
+  }
+
+  /* climbs: a thin bracket under the label band, from the foot to the top of each climb */
+  .rb-brackets {
+    position: absolute;
+    z-index: 1;
+    left: 0;
+    right: 0;
+    top: var(--label-band);
+    height: var(--climb-band);
+    pointer-events: none;
+  }
+
+  .rb-bracket {
+    position: absolute;
+    bottom: 0.2rem;
+    height: 0.45rem;
+    border: 1.5px solid var(--ink-2);
+    border-bottom: 0;
+  }
+
+  /* the label stands where no stem passes (--lx, set from the data); a snow halo keeps it legible */
+  .rb-bracket .num {
+    position: absolute;
+    left: var(--lx, 50%);
+    bottom: calc(100% + 0.1rem);
+    transform: translateX(-50%);
+    text-shadow:
+      0 0 2px var(--snow),
+      0 0 2px var(--snow),
+      0 0 3px var(--snow);
+    font-size: 0.75rem;
+    font-weight: 650;
+    line-height: 1.1;
+    color: var(--ink-2);
+    white-space: nowrap;
+  }
+
+  /* place markers: vertical names on stems, the road book's signature */
+  .rb-mark {
+    position: absolute;
+    left: var(--x);
+    top: 0;
+    height: calc(var(--label-band) + var(--climb-band) + var(--plot-h) * var(--y));
+    width: 0;
+  }
+
+  .rb-mark::before {
+    content: '';
+    position: absolute;
+    left: -0.5px;
+    top: calc(var(--label-band) - 0.5rem);
+    bottom: 0;
+    width: 1px;
+    background: var(--ink);
+    opacity: 0.55;
+  }
+
+  .rb-mark::after {
+    content: '';
+    position: absolute;
+    left: -3.5px;
+    bottom: -3.5px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--paper);
+    border: 2px solid var(--ink);
+  }
+
+  .rb-name {
+    position: absolute;
+    bottom: calc(100% - var(--label-band) + 0.75rem);
+    left: 0;
+    transform: translateX(-50%) rotate(180deg);
+    writing-mode: vertical-rl;
+    white-space: nowrap;
+    font-stretch: 62%;
+    font-size: 0.875rem;
+    line-height: 1.05;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  .rb-name b {
+    font-weight: 780;
+  }
+
+  .rb-name .num {
+    color: var(--ink-3);
+    font-weight: 500;
+  }
+
+  .edge-start .rb-name {
+    transform: translateX(-15%) rotate(180deg);
+  }
+
+  .edge-end .rb-name {
+    transform: translateX(-85%) rotate(180deg);
+  }
+
+  .is-spot::after {
+    width: 11px;
+    height: 11px;
+    left: -5.5px;
+    bottom: -5.5px;
+    background: var(--red);
+    border-color: var(--paper);
+  }
+
+  .is-spot::before {
+    background: var(--red);
+    opacity: 1;
+  }
+
+  /* km axis */
+  .rb-axis {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 1.75rem;
+    height: var(--axis-h);
+    border-top: 1.5px solid var(--ink);
+  }
+
+  .tick {
+    position: absolute;
+    top: 0;
+    width: 1px;
+    height: 0.4rem;
+    background: var(--ink);
+  }
+
+  .tick.major {
+    height: 0.7rem;
+  }
+
+  .tick span {
+    position: absolute;
+    top: 0.85rem;
+    left: 0;
+    transform: translateX(-50%);
+    font-size: 0.8125rem;
+    font-weight: 600;
+  }
+
+  .unit {
+    position: absolute;
+    right: 0;
+    top: 0.85rem;
+    transform: translateY(1.35rem);
+    color: var(--ink-3);
+  }
+
+  .rb-services {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--label-band) + var(--climb-band) + var(--plot-h) - 2.4rem);
+    height: 2rem;
+    pointer-events: none;
+  }
+
+  .svc {
+    position: absolute;
+    top: 0;
+    display: grid;
+    place-items: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    transform: translateX(-50%);
+    background: var(--paper);
+    border: 1.5px solid var(--ink);
+    border-radius: 50%;
+  }
+
+  .svc.bottle {
+    transform: translateX(-50%) translateY(-2.1rem);
+  }
+
+  .svc :global(svg) {
+    width: 1.05rem;
+    height: 1.05rem;
+  }
+
+  /* scrub */
+  .rb-scrub {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--label-band) + var(--climb-band));
+    height: var(--plot-h);
+    cursor: crosshair;
+    touch-action: pan-y;
+  }
+
+  .rb-scrub:focus-visible {
+    outline-offset: 6px;
+  }
+
+  .rb-cursor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    border-left: 1.5px solid var(--red);
+    pointer-events: none;
+  }
+
+  .rb-dot {
+    position: absolute;
+    left: -6.5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--red);
+    box-shadow: 0 0 0 3px var(--paper);
+    transform: translateY(-50%);
+  }
+
+  /* the readout lives inside the plot, beside the cursor; it never touches the label band */
+  .rb-read {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    gap: 0.1rem;
+    padding: 0.4rem 0.6rem 0.4rem;
+    background: var(--ink);
+    color: #fff;
+    border-radius: 2px;
+    box-shadow: 0 6px 18px -8px rgba(6, 18, 33, 0.45);
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .rb-read[hidden] {
+    display: none;
+  }
+
+  .rd-top {
+    font-stretch: 75%;
+    font-weight: 650;
+    font-size: 0.9375rem;
+    line-height: 1.2;
+  }
+
+  .rd-name {
+    font-stretch: 66%;
+    font-weight: 760;
+    font-size: 0.8125rem;
+    line-height: 1.1;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--ridge-200);
+  }
+
+  .rd-name:empty {
+    display: none;
+  }
+
+  /* foot */
+  .rb-foot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+  }
+
+  .rb-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    list-style: none;
+    font-size: 0.9375rem;
+    color: var(--ink-2);
+  }
+
+  .rb-legend li {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .rb-legend :global(svg) {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .sw {
+    width: 1.1rem;
+    height: 0.75rem;
+    border-radius: 1px;
+  }
+
+  .sw.g1 {
+    background: var(--grade-1);
+  }
+  .sw.g2 {
+    background: var(--grade-2);
+  }
+  .sw.g3 {
+    background: var(--grade-3);
+  }
+
+  .sw-bracket {
+    width: 1.35rem;
+    height: 0.45rem;
+    border: 1.5px solid var(--ink-2);
+    border-bottom: 0;
+    transform: translateY(0.1rem);
+  }
+
+  /* the climbs: under the legend, or beside it (split) */
+  .rb-lead {
+    display: grid;
+    margin-top: clamp(2.5rem, 5vw, 4rem);
+  }
+
+  .rb-h3 {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 0.6rem;
+    margin-bottom: 0.9rem;
+    font-stretch: 72%;
+    font-weight: 780;
+    text-transform: uppercase;
+    font-size: clamp(1.375rem, 2.2vw, 1.75rem);
+    line-height: 1;
+  }
+
+  .rb-h3-sub {
+    font-weight: 560;
+    font-size: 0.65em;
+    color: var(--ink-3);
+  }
+
+  .rb-climbs table {
+    width: 100%;
+  }
+
+  .rb-climbs th,
+  .rb-climbs td {
+    padding: 0.6rem 0.75rem 0.6rem 0;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+    vertical-align: baseline;
+  }
+
+  .rb-climbs th:last-child,
+  .rb-climbs td:last-child {
+    padding-right: 0;
+  }
+
+  .rb-climbs thead th {
+    padding-block: 0 0.5rem;
+    border-bottom: 1.5px solid var(--ink);
+    font-stretch: 66%;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.75rem;
+    line-height: 1.15;
+    color: var(--ink-3);
+    vertical-align: bottom;
+  }
+
+  .rb-climbs .n {
+    text-align: right;
+  }
+
+  .rb-climbs tbody th {
+    font-weight: 400;
+  }
+
+  .rb-climbs tbody th b {
+    display: block;
+    font-stretch: 72%;
+    font-weight: 760;
+    text-transform: uppercase;
+    font-size: 1.0625rem;
+    line-height: 1.1;
+  }
+
+  .rb-climbs .span {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.8125rem;
+    color: var(--ink-3);
+  }
+
+  .rb-climbs td {
+    font-stretch: 80%;
+    font-weight: 650;
+    font-size: 1.0625rem;
+    white-space: nowrap;
+  }
+
+  /* places table */
+  .rb-table {
+    margin-top: clamp(2rem, 4vw, 3rem);
+    border-top: 1px solid var(--line);
+  }
+
+  .rb--default .rb-table {
+    margin-top: 1.75rem;
+  }
+
+  .rb-table summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 2.75rem;
+    padding-block: 0.6rem;
+    cursor: pointer;
+    list-style: none;
+    font-stretch: 75%;
+    font-weight: 720;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  .rb-table summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .rb-table summary:hover span {
+    text-decoration: underline;
+    text-decoration-color: var(--red);
+    text-underline-offset: 0.2em;
+  }
+
+  .rb-table summary :global(.rb-chev) {
+    flex: none;
+    width: 1.15rem;
+    height: 1.15rem;
+    transition: transform 0.3s var(--ease-out);
+  }
+
+  .rb-table[open] summary :global(.rb-chev) {
+    transform: rotate(180deg);
+  }
+
+  .rb-table table {
+    width: 100%;
+    max-width: 40rem;
+    margin-bottom: 1rem;
+  }
+
+  .rb-table th,
+  .rb-table td {
+    padding: 0.45rem 1rem 0.45rem 0;
+    border-bottom: 1px solid var(--line);
+    text-align: left;
+  }
+
+  .rb-table th {
+    font-stretch: 75%;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.875rem;
+    color: var(--ink-3);
+  }
+
+  .rb-table td:first-child,
+  .rb-table td:last-child {
+    width: 5rem;
+  }
+
+  .note {
+    color: var(--ink-3);
+  }
+
+  /* the ride: the profile is drawn left to right once, stems and climbs land as it passes */
+  :global(.js) .rb-route .rb-svg {
+    clip-path: inset(0 100% 0 0);
+  }
+
+  :global(.js) .rb-route .rb-mark,
+  :global(.js) .rb-route .svc,
+  :global(.js) .rb-route .rb-bracket {
+    opacity: 0;
+  }
+
+  :global(.js) .rb-chart.is-in .rb-svg {
+    clip-path: inset(0 0 0 0);
+    transition: clip-path 1.9s var(--ease-out);
+  }
+
+  :global(.js) .rb-chart.is-in .rb-mark,
+  :global(.js) .rb-chart.is-in .svc,
+  :global(.js) .rb-chart.is-in .rb-bracket {
+    opacity: 1;
+    transition: opacity 0.5s var(--ease-out);
+    transition-delay: var(--t, 0s);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .rb-route .rb-svg {
+      clip-path: none;
+    }
+    :global(.js) .rb-route .rb-mark,
+    :global(.js) .rb-route .svc,
+    :global(.js) .rb-route .rb-bracket {
+      opacity: 1;
+    }
+  }
+
+  @media (max-width: 75rem) {
+    .rb-stage.has-tabs {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    .rb-stage.has-tabs .rb-tabs {
+      border-bottom: 1px solid var(--line);
+    }
+
+    .rb-stage.has-tabs .rb-tabs label:last-of-type {
+      border-right: 0;
+    }
+
+    .rb-stage.has-tabs .rb-fact:first-child {
+      padding-left: 0;
+    }
+  }
+
+  @media (max-width: 60rem) {
+    .rb-bracket.is-tight .num {
+      display: none;
+    }
+  }
+
+  @media (max-width: 48rem) {
+    .rb {
+      --label-band: 7.5rem;
+    }
+
+    .rb-chart.has-climbs {
+      --climb-band: 0.9rem;
+    }
+
+    .rb-bracket {
+      bottom: 0.15rem;
+      height: 0.35rem;
+    }
+
+    .rb-bracket .num {
+      display: none;
+    }
+
+    /* phones show the bracket without its figure; the climbs table carries the average */
+    .lg-avg {
+      display: none;
+    }
+
+    .tier-2 {
+      display: none;
+    }
+
+    .rb-name .num {
+      display: none;
+    }
+
+    .rb-tabs label {
+      flex: 1;
+      flex-wrap: wrap;
+      padding: 0.75rem 0.85rem;
+    }
+
+    .rb-tabs label:last-of-type {
+      border-right: 0;
+    }
+
+    .tab-km {
+      flex-basis: 100%;
+      padding-left: 2.4rem;
+    }
+
+    .rb-facts {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .rb-fact {
+      padding: 0.6rem 0 0.65rem;
+    }
+
+    .rb-fact + .rb-fact {
+      border-left: 0;
+    }
+
+    .rb-fact:nth-child(n + 3) {
+      border-top: 1px solid var(--line);
+    }
+
+    .rb-fact:nth-child(even) {
+      padding-left: 1rem;
+      border-left: 1px solid var(--line);
+    }
+
+    .rb-fact:last-child:nth-child(odd) {
+      grid-column: 1 / -1;
+    }
+
+    .rb-fact .v {
+      font-size: 1.25rem;
+    }
+
+    .tick:not(.major) {
+      display: none;
+    }
+
+    .svc {
+      width: 1.4rem;
+      height: 1.4rem;
+    }
+
+    .svc.bottle {
+      transform: translateX(-50%) translateY(-1.65rem);
+    }
+
+    .svc :global(svg) {
+      width: 0.85rem;
+      height: 0.85rem;
+    }
+
+    .tick.major:nth-of-type(4n + 3) span {
+      display: none;
+    }
+
+    .rb-climbs th,
+    .rb-climbs td {
+      padding-right: 0.5rem;
+    }
+
+    .rb-climbs tbody th b {
+      font-size: 0.9375rem;
+    }
+
+    .rb-climbs td {
+      font-size: 0.9375rem;
+    }
+
+    .rb-climbs .span {
+      font-size: 0.75rem;
+    }
+  }
+</style>
+
+<script>
+  type ChartData = { L: number; p: [number, number][]; w: [number, number, string][] };
+
+  const fmt = (n: number, d = 0) => n.toLocaleString('cs-CZ', { minimumFractionDigits: d, maximumFractionDigits: d });
+
+  document.querySelectorAll<HTMLElement>('[data-chart]').forEach((chart) => {
+    const data: ChartData = JSON.parse(chart.dataset.chart!);
+    const scrub = chart.querySelector<HTMLElement>('.rb-scrub')!;
+    const cursor = chart.querySelector<HTMLElement>('.rb-cursor')!;
+    const dot = chart.querySelector<HTMLElement>('.rb-dot')!;
+    const read = chart.querySelector<HTMLElement>('.rb-read')!;
+    const readTop = read.querySelector<HTMLElement>('.rd-top')!;
+    const readName = read.querySelector<HTMLElement>('.rd-name')!;
+    const ALT_MIN = 300;
+    const ALT_MAX = 1150;
+    const pts = data.p;
+
+    // binary search: 675 samples, called on every pointer move
+    const altAt = (km: number) => {
+      let lo = 0;
+      let hi = pts.length - 1;
+      if (km <= pts[0][0]) return pts[0][1];
+      if (km >= pts[hi][0]) return pts[hi][1];
+      while (hi - lo > 1) {
+        const mid = (lo + hi) >> 1;
+        if (pts[mid][0] <= km) lo = mid;
+        else hi = mid;
+      }
+      const [k0, a0] = pts[lo];
+      const [k1, a1] = pts[hi];
+      return a0 + ((a1 - a0) * (km - k0)) / (k1 - k0 || 1);
+    };
+
+    let km = 0;
+    const show = (value: number) => {
+      km = Math.max(0, Math.min(data.L, value));
+      const line = altAt(km);
+      const near = data.w.find((w) => Math.abs(w[0] - km) <= Math.max(0.9, data.L / 150));
+      const alt = near ? near[1] : line;
+      const x = (km / data.L) * 100;
+      const yf = 1 - (line - ALT_MIN) / (ALT_MAX - ALT_MIN);
+      cursor.hidden = false;
+      read.hidden = false;
+      cursor.style.left = `${x}%`;
+      dot.style.top = `${yf * 100}%`;
+      readTop.textContent = `km ${fmt(km, 1)} · ${fmt(alt)} m`;
+      readName.textContent = near ? near[2] : '';
+
+      // beside the cursor, flipping sides near the edges; above or below the dot, inside the plot
+      const W = scrub.clientWidth;
+      const H = scrub.clientHeight;
+      const rw = read.offsetWidth;
+      const rh = read.offsetHeight;
+      const cx = (x / 100) * W;
+      const cy = yf * H;
+      const gap = 12;
+      let left = cx + gap;
+      if (left + rw > W) left = cx - gap - rw;
+      if (left < 0) left = Math.max(0, Math.min(W - rw, cx - rw / 2));
+      let top = cy < H * 0.45 ? cy + gap + 4 : cy - gap - 4 - rh;
+      top = Math.max(4, Math.min(H - rh - 4, top));
+      read.style.transform = `translate(${Math.round(left)}px, ${Math.round(top)}px)`;
+
+      scrub.setAttribute('aria-valuenow', String(Math.round(km)));
+      scrub.setAttribute('aria-valuetext', `km ${fmt(km, 1)}, ${fmt(alt)} metrů${near ? `, ${near[2]}` : ''}`);
+    };
+
+    const hide = () => {
+      cursor.hidden = true;
+      read.hidden = true;
+    };
+
+    const fromPointer = (e: PointerEvent) => {
+      const r = scrub.getBoundingClientRect();
+      show(((e.clientX - r.left) / r.width) * data.L);
+    };
+
+    scrub.addEventListener('pointermove', fromPointer);
+    scrub.addEventListener('pointerdown', fromPointer);
+    scrub.addEventListener('pointerleave', (e) => {
+      if (e.pointerType === 'mouse' && document.activeElement !== scrub) hide();
+    });
+    scrub.addEventListener('focus', () => show(km));
+    scrub.addEventListener('blur', hide);
+    scrub.addEventListener('keydown', (e) => {
+      const step = e.shiftKey ? 10 : 1;
+      const keys: Record<string, number> = {
+        ArrowRight: km + step,
+        ArrowUp: km + step,
+        ArrowLeft: km - step,
+        ArrowDown: km - step,
+        PageUp: km + 10,
+        PageDown: km - 10,
+        Home: 0,
+        End: data.L,
+      };
+      if (e.key in keys) {
+        e.preventDefault();
+        show(keys[e.key]);
+      }
+    });
+  });
+
+  // the ride: reveal once when the chart comes into view
+  const charts = document.querySelectorAll<HTMLElement>('.rb-chart');
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(
+      (entries) =>
+        entries.forEach((en) => {
+          if (en.isIntersecting) {
+            en.target.classList.add('is-in');
+            io.unobserve(en.target);
+          }
+        }),
+      { threshold: 0.35 },
+    );
+    charts.forEach((c) => io.observe(c));
+    // a route revealed by the switch is already in view
+    document.querySelectorAll<HTMLInputElement>('.rb-tabs input').forEach((input) =>
+      input.addEventListener('change', () => {
+        const rb = input.closest('[data-rb]')!;
+        rb.querySelectorAll('.rb-chart').forEach((c) => {
+          c.classList.remove('is-in');
+          requestAnimationFrame(() => requestAnimationFrame(() => c.classList.add('is-in')));
+        });
+      }),
+    );
+  } else {
+    charts.forEach((c) => c.classList.add('is-in'));
+  }
+</script>
