@@ -58,7 +58,7 @@ const m = mark
   {
     image && (
       <div class="ph-media">
-        <Picture src={image} formats={['webp']} widths={[640, 1024, 1600, 2200]} sizes="100vw" alt="" loading="eager" style={`object-position:${imagePosition}`} />
+        <Picture src={image} formats={['webp']} widths={[640, 1024, 1600, 2200]} sizes="(min-width: 60rem) 60vw, 100vw" alt="" loading="eager" style={`object-position:${imagePosition}`} />
       </div>
     )
   }
@@ -105,6 +105,23 @@ const m = mark
     position: absolute;
     inset: 0;
     background: linear-gradient(to top, rgba(6, 18, 33, 0.82), rgba(6, 18, 33, 0.25) 75%);
+  }
+
+  /* Wide screens: the photo takes the right half and the copy keeps the dark ground on the left, so
+     the subject never sits under the text. The fade hides the seam. Narrower, the copy covers the
+     whole head anyway and the photo runs full bleed behind it. */
+  @media (min-width: 60rem) {
+    .ph-media {
+      left: 50%;
+    }
+
+    .ph-media::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(to right, var(--ridge-900), rgba(12, 35, 64, 0) 25%);
+    }
   }
 
   .ph-media :global(img),
