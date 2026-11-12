@@ -34,7 +34,7 @@ Stránky drží adresy z WordPressu (`/registrace/`, `/propozice/`, `/ubytovani/
 
 ## Formuláře
 
-Formuláře (soutěž týmů, vouchery, poptávka e-shopu) posílají data na `/api/formular/` (`src/pages/api/formular.ts`). Funkce na Vercelu je ověří a pošle e-mailem pořadatelům; odpověď na e-mail jde rovnou odesílateli. Po odeslání následuje stránka `/dekujeme/`. Když se odeslání nepovede, zobrazí se chyba pod formulářem a vyplněné údaje zůstanou. Bez JavaScriptu se místo toho otevře stránka `/odeslani-selhalo/`.
+Formuláře (soutěž týmů, vouchery, poptávka e-shopu) posílají data na `/api/formular/` (`src/pages/api/formular.ts`). Funkce na Vercelu je ověří a pošle e-mailem pořadatelům přes Resend; odpověď na e-mail jde rovnou odesílateli. Po odeslání následuje stránka `/dekujeme/`. Když se odeslání nepovede, zobrazí se chyba pod formulářem a vyplněné údaje zůstanou. Bez JavaScriptu se místo toho otevře stránka `/odeslani-selhalo/`.
 
 Nová položka ve formuláři se musí doplnit i do seznamu polí v `src/pages/api/formular.ts`, jinak se do e-mailu nedostane.
 
@@ -50,11 +50,9 @@ Proměnné prostředí (Vercel → Settings → Environment Variables):
 
 | Proměnná | Význam |
 |---|---|
-| `SMTP_HOST` | SMTP server schránky, která formuláře odesílá (u Websupportu `smtp.m1.websupport.sk`) |
-| `SMTP_PORT` | `465` (SSL, výchozí) nebo `587` (STARTTLS) |
-| `SMTP_USER`, `SMTP_PASS` | přihlášení do té schránky |
+| `RESEND_API_KEY` | API klíč z [Resendu](https://resend.com), přes který formuláře odcházejí; doména odesílatele v něm musí být ověřená |
 | `FORM_TO` | volitelně jiný příjemce formulářů než `formsTo` v `src/data/race.ts` (teď Michaela Musilová) |
-| `FORM_FROM` | volitelně jiná adresa odesílatele (jinak `SMTP_USER`) |
+| `FORM_FROM` | volitelně jiný odesílatel než `formsFrom` v `src/data/race.ts` (teď `krakonos@mnmz.cz`) |
 
 Doména: v projektu na Vercelu (Settings → Domains) přidejte `krakonosuvcyklomaraton.cz` i `www.krakonosuvcyklomaraton.cz` a u Websupportu nastavte DNS záznamy, které Vercel ukáže. Záznamy MX a TXT (pošta, SPF) nechte beze změny.
 

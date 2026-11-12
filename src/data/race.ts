@@ -74,6 +74,8 @@ export const contacts = [
 
 /** kam chodí formuláře z webu (soutěž týmů, vouchery, e-shop); víc adres oddělte čárkou */
 export const formsTo = 'musilova.m@centrum.cz';
+/** odesílatel formulářů; doména musí být ověřená v Resendu (resend.com) */
+export const formsFrom = 'krakonos@mnmz.cz';
 
 /** Google Analytics 4: měří se jen po souhlasu v cookie liště (src/components/CookieConsent.astro) */
 export const gaId = 'G-NMWT06CXJ5';

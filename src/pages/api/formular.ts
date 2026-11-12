@@ -1,16 +1,15 @@
 // Receives the site's three forms (team competition, voucher interest, e-shop enquiry) and sends
 // each one as an e-mail to the organisers. Runs as a Vercel Function; every other page stays static.
 //
-// Configuration (Vercel → Project → Settings → Environment Variables):
-//   SMTP_HOST, SMTP_PORT (465 = SSL, 587 = STARTTLS), SMTP_USER, SMTP_PASS – the mailbox that sends
-//   FORM_TO   – optional: overrides who receives the forms (formsTo in src/data/race.ts)
-//   FORM_FROM – optional sender address, defaults to SMTP_USER
+// Mail goes out through Resend (resend.com). Configuration (Vercel → Project → Settings → Environment Variables):
+//   RESEND_API_KEY – required; the sender's domain must be verified in that Resend account
+//   FORM_TO        – optional: overrides who receives the forms (formsTo in src/data/race.ts)
+//   FORM_FROM      – optional: overrides the sender (formsFrom in src/data/race.ts)
 //
 // A plain HTML post is answered with a redirect to /dekujeme/ or /odeslani-selhalo/. The page script
 // sends `Accept: application/json` and gets { ok } back, so a failed send keeps what the visitor typed.
 import type { APIRoute } from 'astro';
-import nodemailer from 'nodemailer';
-import { formsTo } from '../../data/race';
+import { formsFrom, formsTo } from '../../data/race';
 
 export const prerender = false;
 
@@ -95,15 +94,12 @@ export const POST: APIRoute = async ({ request, redirect }) => {
     data[field.name] = value;
   }
 
-  const host = env('SMTP_HOST');
-  const user = env('SMTP_USER');
-  const pass = env('SMTP_PASS');
-  const to = env('FORM_TO') ?? formsTo;
-  if (!host || !user || !pass || !to) {
-    console.error('formular: SMTP_HOST, SMTP_USER and SMTP_PASS must be set');
+  const apiKey = env('RESEND_API_KEY');
+  if (!apiKey) {
+    console.error('formular: RESEND_API_KEY is not set');
     return reply(false, 500);
   }
-  const port = Number(env('SMTP_PORT') ?? 465);
+  const to = (env('FORM_TO') ?? formsTo).split(',').map((a) => a.trim()).filter(Boolean);
 
   const lines = form.fields
     .filter((f) => data[f.name])
@@ -117,22 +113,22 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   ].join('\n');
 
   try {
-    const transport = nodemailer.createTransport({
-      host,
-      port,
-      secure: port === 465,
-      auth: { user, pass },
-      connectionTimeout: 10_000,
-      greetingTimeout: 10_000,
-      socketTimeout: 15_000,
+    const res = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        from: `Krakonošův cyklomaraton <${env('FORM_FROM') ?? formsFrom}>`,
+        to,
+        reply_to: data.email,
+        subject: form.subject(data).replace(/\s+/g, ' '),
+        text,
+      }),
+      signal: AbortSignal.timeout(15_000),
     });
-    await transport.sendMail({
-      from: { name: 'Web Krakonošův cyklomaraton', address: env('FORM_FROM') ?? user },
-      to,
-      replyTo: data.email,
-      subject: form.subject(data).replace(/\s+/g, ' '),
-      text,
-    });
+    if (!res.ok) {
+      console.error(`formular: Resend refused "${formName}" (${res.status})`, await res.text());
+      return reply(false, 502);
+    }
   } catch (error) {
     console.error(`formular: sending "${formName}" failed`, error);
     return reply(false, 502);

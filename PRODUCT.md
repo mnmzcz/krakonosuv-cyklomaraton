@@ -34,7 +34,7 @@ A long-running regional race (14th edition on 12 June 2027) on real mountain roa
 ## Capabilities and Constraints
 
 - Price tiers depend on the payment date (see `src/data/race.ts`); the site highlights the tier that applies today.
-- Forms (team registration, voucher interest, e-shop enquiry) are plain HTML forms that post to one Vercel Function (`/api/formular/`), which e-mails them to the organisers over SMTP. Everything else is static.
+- Forms (team registration, voucher interest, e-shop enquiry) are plain HTML forms that post to one Vercel Function (`/api/formular/`), which e-mails them to the organisers through Resend. Everything else is static.
 - The intro video is the YouTube video `ZuI7GtwW8YM`; the hero keeps it.
 - Language: Czech only for now. The old site machine-translated via GTranslate; translations are an open decision.
 - Open: 2027 route lengths and elevation are "upřesněno po schválení PČR". The site shows the 2026 routes and says so.
