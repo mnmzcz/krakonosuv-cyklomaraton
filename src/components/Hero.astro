@@ -260,8 +260,9 @@ const tiersJson = JSON.stringify(priceTiers);
     color: #fff;
     cursor: pointer;
     font-weight: 600;
-    backdrop-filter: blur(6px);
+    /* prefixed first: the CSS minifier keeps only the last of the pair, and only Safari reads the prefix */
     -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
   }
 
   .vbtn:hover {

@@ -11,7 +11,7 @@ npm run build    # statický web do dist/
 npm run preview  # náhled sestaveného webu
 ```
 
-Vyžaduje Node.js 22.12 nebo novější.
+Vyžaduje Node.js 22.23.4 nebo novější (Astro 7 se na starším nespustí).
 
 ## Kde se co upravuje
 
