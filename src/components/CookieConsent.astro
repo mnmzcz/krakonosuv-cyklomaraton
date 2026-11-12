@@ -1,0 +1,187 @@
+---
+// Cookie consent and Google Analytics 4.
+//
+// Nothing from Google loads until the visitor allows it: the bar offers "Povolit" and "Odmítnout" as
+// equal buttons, and only "Povolit" injects gtag.js (Consent Mode v2, analytics granted, ads always
+// denied). The choice is kept in localStorage for 12 months, then the bar asks again. Any element with
+// data-consent-open (the footer button, the /cookies/ page) reopens the bar; withdrawing consent stops
+// measuring at once and deletes the _ga cookies. The measurement ID is gaId in src/data/race.ts.
+import { gaId } from '../data/race';
+---
+
+<section class="consent" aria-labelledby="consent-title" data-consent hidden>
+  <div class="consent-copy">
+    <h2 class="consent-title t-label" id="consent-title">Cookies a měření návštěvnosti</h2>
+    <p>
+      Se souhlasem měříme návštěvnost přes Google Analytics. Bez souhlasu se nic neměří a volbu můžete kdykoli změnit v patičce webu.
+      <a href="/cookies/">Více o cookies</a>
+    </p>
+  </div>
+  <div class="consent-actions">
+    <button class="btn btn--small" type="button" data-consent-choice="granted">Povolit</button>
+    <button class="btn btn--small" type="button" data-consent-choice="denied">Odmítnout</button>
+  </div>
+</section>
+
+<script is:inline define:vars={{ GA_ID: gaId }}>
+  (() => {
+    const KEY = 'kcm-consent';
+    const MAX_AGE = 365 * 24 * 60 * 60 * 1000;
+    const bar = document.querySelector('[data-consent]');
+    let loaded = false;
+    let returnFocus = null;
+
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = function () {
+      window.dataLayer.push(arguments);
+    };
+    gtag('consent', 'default', {
+      analytics_storage: 'denied',
+      ad_storage: 'denied',
+      ad_user_data: 'denied',
+      ad_personalization: 'denied',
+    });
+
+    const read = () => {
+      try {
+        const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+        if (saved && (saved.v === 'granted' || saved.v === 'denied') && Date.now() - saved.t < MAX_AGE) return saved.v;
+      } catch {}
+      return null;
+    };
+
+    const save = (v) => {
+      try {
+        localStorage.setItem(KEY, JSON.stringify({ v, t: Date.now() }));
+      } catch {}
+    };
+
+    const startAnalytics = () => {
+      window['ga-disable-' + GA_ID] = false;
+      gtag('consent', 'update', { analytics_storage: 'granted' });
+      if (loaded) return;
+      loaded = true;
+      gtag('js', new Date());
+      gtag('config', GA_ID);
+      const s = document.createElement('script');
+      s.async = true;
+      s.src = 'https://www.googletagmanager.com/gtag/js?id=' + GA_ID;
+      document.head.appendChild(s);
+    };
+
+    const stopAnalytics = () => {
+      window['ga-disable-' + GA_ID] = true;
+      gtag('consent', 'update', { analytics_storage: 'denied' });
+      // GA sets its cookies on the widest domain it can, so clear every level of the host name
+      const parts = location.hostname.split('.');
+      const domains = [''];
+      for (let i = 0; i < parts.length - 1; i++) domains.push('; domain=.' + parts.slice(i).join('.'));
+      for (const c of document.cookie.split(';')) {
+        const name = c.split('=')[0].trim();
+        if (!/^_ga(_|$)/.test(name)) continue;
+        for (const d of domains) document.cookie = name + '=; Max-Age=0; path=/' + d;
+      }
+    };
+
+    const show = (focus) => {
+      bar.hidden = false;
+      if (focus) bar.querySelector('[data-consent-choice]').focus();
+    };
+
+    const hide = () => {
+      bar.hidden = true;
+      if (returnFocus) returnFocus.focus();
+      returnFocus = null;
+    };
+
+    for (const button of bar.querySelectorAll('[data-consent-choice]')) {
+      button.addEventListener('click', () => {
+        const v = button.dataset.consentChoice;
+        save(v);
+        if (v === 'granted') startAnalytics();
+        else stopAnalytics();
+        hide();
+      });
+    }
+
+    document.addEventListener('click', (event) => {
+      const opener = event.target.closest && event.target.closest('[data-consent-open]');
+      if (!opener) return;
+      event.preventDefault();
+      returnFocus = opener;
+      show(true);
+    });
+
+    const choice = read();
+    if (choice === 'granted') startAnalytics();
+    if (!choice) show(false);
+  })();
+</script>
+
+<style>
+  .consent {
+    position: fixed;
+    z-index: 60;
+    left: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    display: grid;
+    gap: 1rem;
+    max-width: 34rem;
+    padding: 1.25rem 1.5rem 1.5rem;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--ink);
+    border-radius: 2px;
+    box-shadow: 0 12px 32px rgba(6, 18, 33, 0.22);
+  }
+
+  .consent[hidden] {
+    display: none;
+  }
+
+  .consent-copy {
+    display: grid;
+    gap: 0.5rem;
+  }
+
+  .consent-title {
+    font-size: 0.9375rem;
+  }
+
+  .consent p {
+    color: var(--ink-2);
+    font-size: 0.9375rem;
+    line-height: 1.45;
+  }
+
+  .consent a {
+    color: var(--ink);
+    text-decoration-color: var(--red);
+  }
+
+  /* refusing has to be as easy and as visible as allowing, so both buttons are the same */
+  .consent-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+  }
+
+  .consent-actions .btn {
+    --btn-bg: var(--ink);
+  }
+
+  .consent-actions .btn:hover {
+    --btn-bg: var(--ridge-700);
+  }
+
+  @media (max-width: 30rem) {
+    .consent {
+      left: 0.5rem;
+      right: 0.5rem;
+      bottom: 0.5rem;
+      padding: 1rem 1rem 1.125rem;
+    }
+  }
+</style>

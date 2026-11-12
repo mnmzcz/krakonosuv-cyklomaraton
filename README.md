@@ -38,6 +38,10 @@ Formuláře (soutěž týmů, vouchery, poptávka e-shopu) posílají data na `/
 
 Nová položka ve formuláři se musí doplnit i do seznamu polí v `src/pages/api/formular.ts`, jinak se do e-mailu nedostane.
 
+## Měření a cookies
+
+Google Analytics 4 (`gaId` v `src/data/race.ts`) se načte až po souhlasu v cookie liště (`src/components/CookieConsent.astro`). Lišta nabízí „Povolit“ a „Odmítnout“ jako rovnocenná tlačítka, volbu si pamatuje 12 měsíců a v patičce ji jde kdykoli změnit („Nastavení cookies“). Po odvolání souhlasu se měření zastaví a cookies `_ga` se smažou. Co web ukládá, popisuje stránka `/cookies/`. Při přidání dalšího měřicího nebo reklamního nástroje je potřeba upravit lištu i tuto stránku.
+
 ## Nasazení (Vercel)
 
 Web běží na Vercelu přes `@astrojs/vercel`. Všechny stránky jsou předem vygenerované, jako funkce běží jen odesílání formulářů. Každý push do hlavní větve se nasadí sám.

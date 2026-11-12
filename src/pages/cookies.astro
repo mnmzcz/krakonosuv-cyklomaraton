@@ -1,0 +1,49 @@
+---
+// What the site stores in the visitor's browser and why. Keep it in step with CookieConsent.astro.
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import { gaId, race } from '../data/race';
+
+const gaCookie = `_ga_${gaId.replace(/^G-/, '')}`;
+---
+
+<Base title="Cookies" description="Jaké cookies web Krakonošova cyklomaratonu používá, k čemu slouží a jak změnit souhlas s měřením návštěvnosti.">
+  <PageHead title="Cookies" />
+
+  <section class="section" aria-label="Cookies">
+    <div class="wrap prose">
+      <p>
+        Web provozuje {race.organiser}, pořadatel závodu. Bez vašeho souhlasu web neukládá žádné cookies, které by vás sledovaly. Měření návštěvnosti se spustí, až
+        když ho v cookie liště povolíte.
+      </p>
+
+      <h2>Nezbytné</h2>
+      <p>
+        Vaši volbu v cookie liště si pamatujeme v úložišti prohlížeče (položka <code>kcm-consent</code>) po dobu 12 měsíců. Potom se vás lišta zeptá znovu. Bez
+        tohoto záznamu by se lišta ukazovala na každé stránce.
+      </p>
+
+      <h2>Analytické, jen se souhlasem</h2>
+      <p>
+        Google Analytics 4 (Google Ireland Limited) nám říká, kolik lidí web navštěvuje, odkud přicházejí a které stránky čtou. Data vidíme jen souhrnně, ne po
+        jednotlivých lidech.
+      </p>
+      <ul>
+        <li><code>_ga</code> rozlišuje jednotlivé návštěvníky, platnost 2 roky</li>
+        <li><code>{gaCookie}</code> uchovává stav návštěvy, platnost 2 roky</li>
+      </ul>
+      <p>Když souhlas odvoláte, měření se hned zastaví a tyto cookies z prohlížeče smažeme.</p>
+
+      <h2>Úvodní video</h2>
+      <p>
+        Video na úvodní stránce přehráváme z YouTube v režimu rozšířené ochrany soukromí (youtube-nocookie.com). V tomto režimu YouTube podle svých pravidel
+        nepoužívá zhlédnutí vloženého videa k personalizaci obsahu. Při přehrávání ale prohlížeč stahuje video ze serverů Googlu, a ty tak vidí vaši IP adresu.
+      </p>
+
+      <h2>Změna souhlasu</h2>
+      <p>Souhlas můžete kdykoli udělit nebo odvolat:</p>
+      <p><button class="btn" type="button" data-consent-open>Nastavení cookies</button></p>
+      <p>Cookies můžete také smazat nebo zablokovat v nastavení svého prohlížeče.</p>
+    </div>
+  </section>
+</Base>

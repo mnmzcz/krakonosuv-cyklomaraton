@@ -67,6 +67,7 @@ const archive = [
 
     <div class="base">
       <span>{race.fullName}</span>
+      <span class="legal"><a href="/cookies/">Cookies</a> · <button type="button" class="consent-open" data-consent-open>Nastavení cookies</button></span>
       <span>Created by <a class="maker" href="http://www.mnmz.cz">minimize</a></span>
     </div>
   </div>
@@ -188,6 +189,16 @@ const archive = [
 
   .base a {
     color: #fff;
+  }
+
+  .consent-open {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: #fff;
+    font: inherit;
+    text-decoration: underline;
+    cursor: pointer;
   }
 
   /* The studio's name in italics. The site turns font synthesis off; this one word lets the browser
