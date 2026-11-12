@@ -72,6 +72,9 @@ export const contacts = [
   { role: 'Ředitel závodu', name: 'Jan Slavíček', phone: '+420 777 722 710', email: 'slavicek@cyclingagency.cz' },
 ];
 
+/** kam chodí formuláře z webu (soutěž týmů, vouchery, e-shop); víc adres oddělte čárkou */
+export const formsTo = 'musilova.m@centrum.cz';
+
 export const tel = (phone: string) => `tel:${phone.replace(/\s/g, '')}`;
 
 export const social = [

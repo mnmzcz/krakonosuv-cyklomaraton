@@ -3,13 +3,14 @@
 //
 // Configuration (Vercel → Project → Settings → Environment Variables):
 //   SMTP_HOST, SMTP_PORT (465 = SSL, 587 = STARTTLS), SMTP_USER, SMTP_PASS – the mailbox that sends
-//   FORM_TO   – who receives the forms; several addresses separated by commas
+//   FORM_TO   – optional: overrides who receives the forms (formsTo in src/data/race.ts)
 //   FORM_FROM – optional sender address, defaults to SMTP_USER
 //
 // A plain HTML post is answered with a redirect to /dekujeme/ or /odeslani-selhalo/. The page script
 // sends `Accept: application/json` and gets { ok } back, so a failed send keeps what the visitor typed.
 import type { APIRoute } from 'astro';
 import nodemailer from 'nodemailer';
+import { formsTo } from '../../data/race';
 
 export const prerender = false;
 
@@ -97,9 +98,9 @@ export const POST: APIRoute = async ({ request, redirect }) => {
   const host = env('SMTP_HOST');
   const user = env('SMTP_USER');
   const pass = env('SMTP_PASS');
-  const to = env('FORM_TO');
+  const to = env('FORM_TO') ?? formsTo;
   if (!host || !user || !pass || !to) {
-    console.error('formular: SMTP_HOST, SMTP_USER, SMTP_PASS and FORM_TO must be set');
+    console.error('formular: SMTP_HOST, SMTP_USER and SMTP_PASS must be set');
     return reply(false, 500);
   }
   const port = Number(env('SMTP_PORT') ?? 465);

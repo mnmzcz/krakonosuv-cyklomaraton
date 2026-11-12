@@ -17,7 +17,7 @@ Vyžaduje Node.js 22.12 nebo novější.
 
 | Co | Soubor |
 |---|---|
-| Datum, ročník, odkazy na registraci a startovní listinu, ceny startovného, program, kontakty, menu, ohlasy | `src/data/race.ts` |
+| Datum, ročník, odkazy na registraci a startovní listinu, ceny startovného, program, kontakty, kam chodí formuláře, menu, ohlasy | `src/data/race.ts` |
 | Partneři (loga v `src/assets/partners/`) | `src/data/partners.ts` |
 | Aktuality (Markdown, obrázek do `src/assets/news/`) | `src/content/aktuality/*.md` |
 | Profil tratí (body, výšky, místa) | `src/data/routes.json` |
@@ -49,7 +49,7 @@ Proměnné prostředí (Vercel → Settings → Environment Variables):
 | `SMTP_HOST` | SMTP server schránky, která formuláře odesílá (u Websupportu `smtp.m1.websupport.sk`) |
 | `SMTP_PORT` | `465` (SSL, výchozí) nebo `587` (STARTTLS) |
 | `SMTP_USER`, `SMTP_PASS` | přihlášení do té schránky |
-| `FORM_TO` | kam formuláře chodí, víc adres oddělte čárkou |
+| `FORM_TO` | volitelně jiný příjemce formulářů než `formsTo` v `src/data/race.ts` (teď Michaela Musilová) |
 | `FORM_FROM` | volitelně jiná adresa odesílatele (jinak `SMTP_USER`) |
 
 Doména: v projektu na Vercelu (Settings → Domains) přidejte `krakonosuvcyklomaraton.cz` i `www.krakonosuvcyklomaraton.cz` a u Websupportu nastavte DNS záznamy, které Vercel ukáže. Záznamy MX a TXT (pošta, SPF) nechte beze změny.
