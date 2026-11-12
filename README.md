@@ -30,11 +30,29 @@ Nová aktualita: zkopírujte některý soubor v `src/content/aktuality/`, upravt
 
 ## Adresy a přesměrování
 
-Stránky drží adresy z WordPressu (`/registrace/`, `/propozice/`, `/ubytovani/`, `/vouchery/`, `/e-shop/`, `/vysledky/`, `/fotogalerie/`, `/partneri/`, `/kontakty/`, články `/RRRR/MM/DD/slug/`). Staré podstránky galerie (`/fotogalerie/2026-2/` atd.) přesměrovávají na kotvy na stránce Fotogalerie. Nová stránka: `/fanousci/`. Dokumenty (PDF s výsledky, souhlas zákonného zástupce) jsou v `public/docs/`.
+Stránky drží adresy z WordPressu (`/registrace/`, `/propozice/`, `/ubytovani/`, `/vouchery/`, `/e-shop/`, `/vysledky/`, `/fotogalerie/`, `/partneri/`, `/kontakty/`, články `/RRRR/MM/DD/slug/`). Staré podstránky galerie (`/fotogalerie/2026-2/` atd.) trvale přesměrovávají na kotvy na stránce Fotogalerie (pravidlo ve `vercel.json`). Nová stránka: `/fanousci/`. Dokumenty (PDF s výsledky, souhlas zákonného zástupce) jsou v `public/docs/`.
 
 ## Formuláře
 
-Formuláře (soutěž týmů, vouchery, poptávka e-shopu) jsou připravené pro Netlify Forms (`data-netlify="true"`, po odeslání stránka `/dekujeme/`). Při nasazení jinam je potřeba je napojit na jiný backend.
+Formuláře (soutěž týmů, vouchery, poptávka e-shopu) posílají data na `/api/formular/` (`src/pages/api/formular.ts`). Funkce na Vercelu je ověří a pošle e-mailem pořadatelům; odpověď na e-mail jde rovnou odesílateli. Po odeslání následuje stránka `/dekujeme/`. Když se odeslání nepovede, zobrazí se chyba pod formulářem a vyplněné údaje zůstanou. Bez JavaScriptu se místo toho otevře stránka `/odeslani-selhalo/`.
+
+Nová položka ve formuláři se musí doplnit i do seznamu polí v `src/pages/api/formular.ts`, jinak se do e-mailu nedostane.
+
+## Nasazení (Vercel)
+
+Web běží na Vercelu přes `@astrojs/vercel`. Všechny stránky jsou předem vygenerované, jako funkce běží jen odesílání formulářů. Každý push do hlavní větve se nasadí sám.
+
+Proměnné prostředí (Vercel → Settings → Environment Variables):
+
+| Proměnná | Význam |
+|---|---|
+| `SMTP_HOST` | SMTP server schránky, která formuláře odesílá (u Websupportu `smtp.m1.websupport.sk`) |
+| `SMTP_PORT` | `465` (SSL, výchozí) nebo `587` (STARTTLS) |
+| `SMTP_USER`, `SMTP_PASS` | přihlášení do té schránky |
+| `FORM_TO` | kam formuláře chodí, víc adres oddělte čárkou |
+| `FORM_FROM` | volitelně jiná adresa odesílatele (jinak `SMTP_USER`) |
+
+Doména: v projektu na Vercelu (Settings → Domains) přidejte `krakonosuvcyklomaraton.cz` i `www.krakonosuvcyklomaraton.cz` a u Websupportu nastavte DNS záznamy, které Vercel ukáže. Záznamy MX a TXT (pošta, SPF) nechte beze změny.
 
 ## Úvodní video
 

@@ -381,6 +381,11 @@ summary:focus-visible {
   transform: translateY(1px);
 }
 
+.btn:disabled {
+  cursor: progress;
+  opacity: 0.6;
+}
+
 .btn--ghost {
   --btn-bg: transparent;
   --btn-fg: var(--ink);

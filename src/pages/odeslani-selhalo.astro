@@ -1,0 +1,29 @@
+---
+// Where a form lands when it was posted without JavaScript and the e-mail could not be sent.
+// With JavaScript the error shows right under the form instead, and nothing typed is lost.
+import Base from '../layouts/Base.astro';
+import PageHead from '../components/PageHead.astro';
+import Icon from '../components/Icon.astro';
+---
+
+<Base title="Odeslání se nepovedlo">
+  <meta slot="head" name="robots" content="noindex" />
+  <PageHead
+    title="Odeslání se nepovedlo"
+    lede="Formulář k nám nedorazil. Vraťte se prosím zpět a zkuste ho odeslat znovu, nebo nám napište či zavolejte přímo."
+  >
+    <div class="actions on-dark">
+      <a class="btn" href="/kontakty/">Kontakty <Icon name="arrow" /></a>
+      <a class="btn btn--ghost" href="/">Zpět na úvod</a>
+    </div>
+  </PageHead>
+</Base>
+
+<style>
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+</style>
