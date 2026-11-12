@@ -6,10 +6,17 @@ import Icon from '../components/Icon.astro';
 import { race } from '../data/race';
 ---
 
-<Base title="Registrace" description="Online registrace na Krakonošův cyklomaraton 2027: závod jednotlivců, soutěž týmů a závodní pojištění SportHelp.">
-  <PageHead title="Online registrace" lede={race.tagline} mark={{ name: 'Start Trutnov', km: 0 }}>
+<Base
+  title={`Registrace ${race.year}`}
+  description={`Přihlaste se na Krakonošův cyklomaraton ${race.year} a splňte výzvu: závod jednotlivců na dlouhé nebo krátké trati, soutěž týmů a závodní pojištění SportHelp.`}
+>
+  <PageHead
+    title="Online registrace"
+    lede={`Přihlaste se a splňte výzvu: cca 135, nebo 86 km přes hřebeny Krkonoš. ${race.dateLong} v Trutnově.`}
+    mark={{ name: 'Start Trutnov', km: 0 }}
+  >
     <div class="head-actions on-dark">
-      <a class="btn" href={race.registrationUrl}>Registrace <Icon name="arrow" /></a>
+      <a class="btn" href={race.registrationUrl}>Splnit výzvu <Icon name="arrow" /></a>
       <a class="btn btn--ghost" href={race.startlistUrl}>Startovní listina</a>
     </div>
   </PageHead>
@@ -36,7 +43,7 @@ import { race } from '../data/race';
       <div class="after-price">
         <p>Vaše jméno bude ve startovní listině uvedeno až po spárování platby startovného s registrací.</p>
         <div class="row-actions">
-          <a class="btn" href={race.registrationUrl}>Registrace <Icon name="arrow" /></a>
+          <a class="btn" href={race.registrationUrl}>Splnit výzvu <Icon name="arrow" /></a>
           <a class="btn btn--ghost" href={race.startlistUrl}>Startovní listina</a>
         </div>
       </div>

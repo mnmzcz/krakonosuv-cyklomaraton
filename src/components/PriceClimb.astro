@@ -11,8 +11,8 @@ interface Props {
 }
 
 const {
-  title = 'Využijte zvýhodněné startovné!',
-  lede = 'Kdo se dřív registruje, ten platí méně! Využijte možnosti brzké registrace a získejte tu nejvýhodnější možnou cenu.',
+  title = 'Přijměte výzvu včas',
+  lede = 'Kdo se odhodlá dřív, zaplatí míň. Startovné stoupá s každým termínem, stejně jako trať.',
   cta = true,
   headingLevel: H = 'h2',
 } = Astro.props;
@@ -32,7 +32,7 @@ const steps = priceTiers.map((t, i) => {
     {
       cta && (
         <a class="btn" href="/registrace/">
-          Registrace <Icon name="arrow" />
+          Splnit výzvu <Icon name="arrow" />
         </a>
       )
     }

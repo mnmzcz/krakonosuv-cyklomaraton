@@ -4,19 +4,26 @@ import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
 import Icon from '../components/Icon.astro';
 import voucher from '../assets/news/voucher.png';
+import { race } from '../data/race';
+
+// orders for under the tree close on 21 December of the year before the race
+const christmas = `21. 12. ${race.year - 1}`;
 ---
 
-<Base title="Vouchery" description="Startovné na Krakonošův cyklomaraton jako dárek: dárkový poukaz v elektronické podobě.">
-  <PageHead title="Startovné jako dárek!" />
+<Base
+  title="Dárek pro cyklistu: voucher na startovné"
+  description={`Hledáte dárek pro cyklistu? Darujte mu opravdovou výzvu: startovné na Krakonošův cyklomaraton ${race.year} jako dárkový voucher v elektronické podobě.`}
+>
+  <PageHead title="Dárek pro cyklistu" />
 
   <section class="section" aria-labelledby="voucher-title">
     <div class="wrap gift">
       <div class="gift-copy">
-        <h2 class="t-title" id="voucher-title">Nevíš, čím obdarovat cyklistu? Daruj mu zážitek!</h2>
+        <h2 class="t-title" id="voucher-title">Darujte mu opravdovou výzvu</h2>
         <p class="t-lede">
-          Stačí vyplnit e-mail a další pracovní den obdržíte veškeré informace o tom, jak získat originální dárek v podobě startovného na Krakonošově cyklomaratonu
-          2026. Chcete-li mít jistotu dárku pod stromečkem, zašlete objednávku nejpozději do 21. 12. 2025. Dárkový poukaz vám po zaplacení zašleme v elektronické
-          podobě.
+          Startovné na Krakonošův cyklomaraton {race.year}: cca 135, nebo 86 km přes hřebeny Krkonoš a zážitek, na který se nezapomíná. Stačí vyplnit e-mail a další
+          pracovní den obdržíte veškeré informace o tom, jak dárek získat. Chcete-li mít jistotu dárku pod stromečkem, zašlete objednávku nejpozději do {christmas}.
+          Dárkový poukaz vám po zaplacení zašleme v elektronické podobě.
         </p>
         <p>Nechcete darovat jen voucher? Podívejte se i na <a href="/e-shop/">náš e-shop</a>!</p>
 

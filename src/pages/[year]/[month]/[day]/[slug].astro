@@ -1,8 +1,10 @@
 ---
-import { Image } from 'astro:assets';
+import { getImage, Image } from 'astro:assets';
 import { render } from 'astro:content';
 import Base from '../../../../layouts/Base.astro';
 import Icon from '../../../../components/Icon.astro';
+import JsonLd from '../../../../components/JsonLd.astro';
+import { articleSchema } from '../../../../lib/schema';
 import { getPosts, postDate, postUrl, type Post } from '../../../../lib/news';
 
 export async function getStaticPaths() {
@@ -18,9 +20,12 @@ const { Content } = await render(post);
 const i = posts.findIndex((p) => p.id === post.id);
 const newer = posts[i - 1];
 const older = posts[i + 1];
+const cover = await getImage({ src: post.data.image, width: 1200, format: 'jpg' });
+const schema = articleSchema(Astro.site!, new URL(Astro.url.pathname, Astro.site), post.data, new URL(cover.src, Astro.site).href);
 ---
 
 <Base title={post.data.title} description={post.data.excerpt} ogImage={post.data.image} type="article">
+  <JsonLd slot="head" data={schema} />
   <article>
     <header class="a-head">
       <div class="wrap">

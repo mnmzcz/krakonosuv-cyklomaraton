@@ -79,7 +79,10 @@ const winners = [
 ];
 ---
 
-<Base title="Výsledky" description="Výsledky všech ročníků Krakonošova cyklomaratonu od roku 2014.">
+<Base
+  title={`Výsledky 2014–${editions[0].date.slice(-4)}`}
+  description="Výsledky všech ročníků Krakonošova cyklomaratonu od roku 2014: kdo výzvu splnil a za jak dlouho. Hlavní závod na SportSoftu, dětské závody v PDF."
+>
   <PageHead
     title="Výsledky"
     lede="Třináct ročníků od roku 2014. Hlavní závod online na SportSoftu, dětské závody v PDF."

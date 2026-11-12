@@ -1,5 +1,5 @@
 ---
-import { Image } from 'astro:assets';
+import { getImage, Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
 import RideRail from '../components/RideRail.astro';
@@ -9,12 +9,25 @@ import NewsList from '../components/NewsList.astro';
 import Testimonials from '../components/Testimonials.astro';
 import PartnerBoard from '../components/PartnerBoard.astro';
 import Icon from '../components/Icon.astro';
+import JsonLd from '../components/JsonLd.astro';
+import { homeSchema } from '../lib/schema';
+import ogPhoto from '../assets/photos/horska-silnice.jpg';
 import fansPhoto from '../assets/photos/turiste-u-trati.jpg';
 import splits from '../data/splits-2026.json';
+import data from '../data/routes.json';
+import { race } from '../data/race';
 
 const pomezni = splits.spots.find((s) => s.id === 'pomezni')!;
 const first = pomezni.window.long!.first;
 const last = pomezni.window.short!.last;
+const long = data.routes.long;
+const short = data.routes.short;
+const prazska = long.climbs.find((c) => c.name === 'Pražská bouda')!;
+const m = (n: number) => n.toLocaleString('cs-CZ');
+// the same 1200 px photo the page shares on social networks
+const og = await getImage({ src: ogPhoto, width: 1200, format: 'jpg' });
+const schema = homeSchema(Astro.site!, new URL(og.src, Astro.site).href);
+const pct = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
 
 // The page is ridden like the long route: each section is a stop at a real place on the road.
 const stops = [
@@ -33,18 +46,22 @@ const stops = [
 ];
 ---
 
-<Base>
+<Base description={race.pitch}>
   <link slot="head" rel="preconnect" href="https://www.youtube-nocookie.com" />
+  <JsonLd slot="head" data={schema} />
   <Hero />
   <RideRail stops={stops} />
 
   <section class="route" id="trat" aria-labelledby="trat-title">
     <div class="wrap">
       <RouteProfile id="profil-trate" layout="split">
-        <h2 class="t-title" id="trat-title">Trať</h2>
+        <h2 class="t-title" id="trat-title">Trať, která prověří každého</h2>
         <p class="t-lede">
-          Silniční okruh z Trutnova přes Polsko na Pomezní Boudy, dlouhá trať navíc přes Pražskou boudu a Strážné. Profil ukazuje trasy ročníku 2026 a projedete
-          ho kurzorem, prstem nebo šipkami. Trasy pro rok 2027 upřesníme po schválení Policií ČR.
+          Dlouhá trať má {long.climbs.length} stoupání a {m(long.gain)} m převýšení: z Trutnova přes Polsko na Pomezní Boudy, pak na Pražskou boudu, kde má
+          nejprudší kilometr {pct(prazska.max)} %, a přes Strážné a Janské Lázně zpátky. Krátká trať vyjede na Pomezní Boudy a nastoupá {m(short.gain)} m.
+        </p>
+        <p class="route-note">
+          Čísla i profil jsou z tras ročníku 2026; projedete ho kurzorem, prstem nebo šipkami. Trasy pro rok 2027 upřesníme po schválení Policií ČR.
         </p>
       </RouteProfile>
     </div>
@@ -63,7 +80,7 @@ const stops = [
     <div class="fans-copy">
       <h2 class="t-title" id="fans-title">Přijďte fandit</h2>
       <p class="t-lede">
-        Kde stát, kdy pojedou a jak se tam dostat. Podle mezičasů ročníku 2026 projelo čelo závodu Pomezní Boudy v {first}, poslední závodníci krátké trati v {last}.
+        Nahoře na Pomezních Boudách a pod Pražskou boudou potřebují závodníci povzbudit nejvíc. Kde stát, kdy pojedou a jak se tam dostat: podle mezičasů ročníku 2026 projelo čelo závodu Pomezní Boudy v {first}, poslední závodníci krátké trati v {last}.
       </p>
       <a class="link-arrow" href="/fanousci/">Průvodce pro fanoušky <Icon name="arrow" /></a>
     </div>
@@ -101,6 +118,13 @@ const stops = [
     padding-bottom: var(--space-section);
     background: var(--paper);
     border-top: 3px solid var(--ink);
+  }
+
+  /* which year the numbers come from: said once, quietly, under the lede */
+  .route-note {
+    max-width: 60ch;
+    color: var(--ink-3);
+    font-size: 0.9375rem;
   }
 
   .fans {

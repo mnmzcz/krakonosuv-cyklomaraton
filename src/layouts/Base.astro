@@ -16,7 +16,10 @@ interface Props {
 }
 
 const { title, description = race.tagline, ogImage = ogDefault, type = 'website' } = Astro.props;
-const fullTitle = title ? `${title} – ${race.name}` : `${race.fullName} – ${race.name}`;
+// Subpages read "Page – Krakonošův cyklomaraton". An article whose headline is already long drops the
+// suffix, so the headline is what fits in a search result. The homepage says the edition and what it is.
+const suffixed = `${title} – ${race.name}`;
+const fullTitle = !title ? `${race.fullName} ${race.year} – silniční závod přes Krkonoše` : type === 'article' && suffixed.length > 65 ? title : suffixed;
 const canonical = new URL(Astro.url.pathname, Astro.site);
 const og = await getImage({ src: ogImage, width: 1200, format: 'jpg' });
 const ogUrl = new URL(og.src, Astro.site);

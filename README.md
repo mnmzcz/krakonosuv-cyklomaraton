@@ -38,6 +38,10 @@ Formuláře (soutěž týmů, vouchery, poptávka e-shopu) posílají data na `/
 
 Nová položka ve formuláři se musí doplnit i do seznamu polí v `src/pages/api/formular.ts`, jinak se do e-mailu nedostane.
 
+## SEO
+
+Sitemapu (`/sitemap-index.xml`) generuje při buildu `@astrojs/sitemap`; stránky po odeslání formuláře v ní nejsou a mají `noindex`. `robots.txt` je v `public/`. Strukturovaná data pro Google (závod jako SportsEvent se startovným, organizace, články) skládá `src/lib/schema.ts` z `src/data/`, takže se s novým ročníkem, cenami nebo termínem aktualizují samy. Popis závodu pro vyhledávače je `pitch` v `src/data/race.ts`. Po změnách stojí za kontrolu [Rich Results Test](https://search.google.com/test/rich-results).
+
 ## Měření a cookies
 
 Google Analytics 4 (`gaId` v `src/data/race.ts`) se načte až po souhlasu v cookie liště (`src/components/CookieConsent.astro`). Lišta nabízí „Povolit“ a „Odmítnout“ jako rovnocenná tlačítka, volbu si pamatuje 12 měsíců a v patičce ji jde kdykoli změnit („Nastavení cookies“). Po odvolání souhlasu se měření zastaví a cookies `_ga` se smažou. Co web ukládá, popisuje stránka `/cookies/`. Při přidání dalšího měřicího nebo reklamního nástroje je potřeba upravit lištu i tuto stránku.

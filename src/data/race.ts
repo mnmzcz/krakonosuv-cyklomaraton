@@ -9,7 +9,10 @@ export const race = {
   dateLong: '12. června 2027',
   dateDay: 'sobota, 12. června 2027',
   title: 'Krakonošův cyklomaraton 2027',
-  tagline: 'Těšíme se na vás na 14. ročníku 12. června 2027!',
+  tagline: 'Fakt těžký závod přes hřebeny Krkonoš. 14. ročník se jede 12. června 2027.',
+  /** the pitch: homepage description in search results and the event's description in structured data */
+  pitch:
+    'Opravdová výzva pro silniční cyklisty: cca 135 km a 2 500 m převýšení přes hřebeny Krkonoš a Polsko, nebo krátká trať 86 km. Start a cíl Trutnov, 12. 6. 2027.',
   organiser: 'SK Cyklistika Trutnov, z.s.',
   coOrganiser: 'Svazkem obcí Východní Krkonoše',
   venue: 'Trutnov, Společenské centrum Trutnovska pro kulturu a volný čas (UFFO) – Náměstí Republiky 999',

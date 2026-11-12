@@ -29,6 +29,8 @@ const peaks = ['Pomezní Boudy', 'Pražská bouda'].map((name) => {
 const ticks = [20, 40, 60, 80, 100].map((k) => ({ k, x: (k / L) * 100 }));
 const fmtKm = (n: number) => n.toLocaleString('cs-CZ', { maximumFractionDigits: 1 });
 const routes = data.routes;
+// the 2027 routes wait for police approval, so the hero rounds the 2026 climbing like it rounds the km
+const climb = (m: number) => (Math.round(m / 100) * 100).toLocaleString('cs-CZ');
 
 const tier = currentTierIndex();
 const t = priceTiers[tier];
@@ -52,17 +54,18 @@ const tiersJson = JSON.stringify(priceTiers);
   </div>
 
   <div class="content wrap">
+    <p class="kicker t-label">Opravdová výzva</p>
     <h1 id="hero-title" class="t-display title">
       Krakonošův<br />cyklomaraton 2027
     </h1>
     <p class="tagline">{race.tagline}</p>
     <ul class="facts t-label num">
-      <li>Dlouhá cca {routes.long.official_km} km</li>
-      <li>Krátká cca {routes.short.official_km} km</li>
+      <li>Dlouhá cca {routes.long.official_km} km, +{climb(routes.long.gain)} m</li>
+      <li>Krátká cca {routes.short.official_km} km, +{climb(routes.short.gain)} m</li>
       <li>Start a cíl Trutnov</li>
     </ul>
     <div class="actions">
-      <a class="btn" href={race.registrationUrl}>Registrovat se <Icon name="arrow" /></a>
+      <a class="btn" href={race.registrationUrl}>Splnit výzvu <Icon name="arrow" /></a>
       <p class="price num" data-price-now data-tiers={tiersJson}>{priceNow}</p>
     </div>
   </div>
@@ -176,12 +179,23 @@ const tiersJson = JSON.stringify(priceTiers);
     position: relative;
     /* the copy stands clear of the summits: the ridge never runs under the price line */
     padding-bottom: calc(var(--ridge-h) + 0.75rem);
+    /* on a phone the copy fills the hero, so it needs air under the header too */
+    padding-top: clamp(1.5rem, 5vw, 2.5rem);
   }
 
   .title {
     font-size: clamp(3.25rem, 9.2vw, 6rem);
     max-width: 12ch;
     text-shadow: 0 2px 24px rgba(6, 18, 33, 0.35);
+  }
+
+  .kicker {
+    display: inline-block;
+    margin-bottom: 1rem;
+    padding: 0.4em 0.65em 0.35em;
+    background: var(--red);
+    color: #fff;
+    font-size: 0.9375rem;
   }
 
   .tagline {
