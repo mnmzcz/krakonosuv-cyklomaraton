@@ -3,12 +3,15 @@
 // With JavaScript the error shows right under the form instead, and nothing typed is lost.
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import headPhoto from '../assets/news/soustredeni.jpg';
 import Icon from '../components/Icon.astro';
 ---
 
 <Base title="Odeslání se nepovedlo">
   <meta slot="head" name="robots" content="noindex" />
   <PageHead
+    image={headPhoto}
+    imagePosition="56% 50%"
     title="Odeslání se nepovedlo"
     lede="Formulář k nám nedorazil. Vraťte se prosím zpět a zkuste ho odeslat znovu, nebo nám napište či zavolejte přímo."
   >

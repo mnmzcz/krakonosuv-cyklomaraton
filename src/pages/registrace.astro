@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import headPhoto from '../assets/photos/lubawka-2026.jpg';
 import PriceClimb from '../components/PriceClimb.astro';
 import Icon from '../components/Icon.astro';
 import { race } from '../data/race';
@@ -11,6 +12,8 @@ import { race } from '../data/race';
   description={`Přihlaste se na Krakonošův cyklomaraton ${race.year} a splňte výzvu: závod jednotlivců na dlouhé nebo krátké trati, soutěž týmů a závodní pojištění SportHelp.`}
 >
   <PageHead
+    image={headPhoto}
+    imagePosition="51% 35%"
     title="Online registrace"
     lede={`Přihlaste se a splňte výzvu: cca 135, nebo 86 km přes hřebeny Krkonoš. ${race.dateLong} v Trutnově.`}
     mark={{ name: 'Start Trutnov', km: 0 }}

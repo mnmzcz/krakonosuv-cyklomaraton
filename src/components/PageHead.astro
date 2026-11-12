@@ -107,6 +107,13 @@ const m = mark
     background: linear-gradient(to top, rgba(6, 18, 33, 0.82), rgba(6, 18, 33, 0.25) 75%);
   }
 
+  /* Narrow screens: the copy sits right on the photo, so the whole photo goes darker for legibility */
+  @media (max-width: 59.99rem) {
+    .ph-media::after {
+      background: linear-gradient(to top, rgba(6, 18, 33, 0.85), rgba(6, 18, 33, 0.6));
+    }
+  }
+
   /* Wide screens: the photo takes the right half and the copy keeps the dark ground on the left, so
      the subject never sits under the text. The fade hides the seam. Narrower, the copy covers the
      whole head anyway and the photo runs full bleed behind it. */

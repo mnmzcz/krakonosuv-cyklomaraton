@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import headPhoto from '../assets/photos/zatacka.jpg';
 import Icon from '../components/Icon.astro';
 import c2026 from '../assets/photos/lubawka-2026.jpg';
 import c2025 from '../assets/photos/hero-snezka.jpg';
@@ -91,6 +92,8 @@ const [recent, older] = [years.filter((y) => y.albums.length > 1), years.filter(
 
 <Base title="Fotogalerie" description="Fotografie ze všech ročníků Krakonošova cyklomaratonu od roku 2014.">
   <PageHead
+    image={headPhoto}
+    imagePosition="0% 40%"
     title="Fotogalerie"
     lede="Alba fotografů od roku 2014. Galerie se otevírají na Disku Google, Zoneramě a ve Fotkách Google."
     mark={{ name: 'Pražská bouda', km: routes.routes.long.waypoints.find((w) => w.name === 'Pražská bouda')?.km ?? 71.6 }}

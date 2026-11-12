@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import headPhoto from '../assets/photos/balik.jpg';
 import Icon from '../components/Icon.astro';
 import dres1 from '../assets/shop/dres1.png';
 import dres2 from '../assets/shop/dres2.png';
@@ -42,6 +43,8 @@ const products = [
 
 <Base title="E-shop" description="Dárkové předměty Krakonošova cyklomaratonu: dres, trička, ponožky, lahve, kšiltovky a další.">
   <PageHead
+    image={headPhoto}
+    imagePosition="32% 30%"
     title="E-shop"
     lede="Vybíráte vánoční dárek a nechcete dávat jen voucher? Nebo jste výzvu splnili a chcete mít památku na Krakonošův cyklomaraton? Pak se podívejte na naši nabídku a vyplňte formulář na konci stránky."
   />

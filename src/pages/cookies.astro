@@ -2,13 +2,14 @@
 // What the site stores in the visitor's browser and why. Keep it in step with CookieConsent.astro.
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import headPhoto from '../assets/photos/peloton-mesto.jpg';
 import { gaId, race } from '../data/race';
 
 const gaCookie = `_ga_${gaId.replace(/^G-/, '')}`;
 ---
 
 <Base title="Cookies" description="Jaké cookies web Krakonošova cyklomaratonu používá, k čemu slouží a jak změnit souhlas s měřením návštěvnosti.">
-  <PageHead title="Cookies" />
+  <PageHead image={headPhoto} imagePosition="7% 60%" title="Cookies" />
 
   <section class="section" aria-label="Cookies">
     <div class="wrap prose">

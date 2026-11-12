@@ -1,11 +1,12 @@
 ---
 import Base from '../../layouts/Base.astro';
 import PageHead from '../../components/PageHead.astro';
+import headPhoto from '../../assets/news/predstartovni.jpg';
 import NewsList from '../../components/NewsList.astro';
 ---
 
 <Base title="Aktuality" description="Novinky Krakonošova cyklomaratonu: termíny a startovné, partneři, předstartovní informace a pozvánky na akce kolem závodu.">
-  <PageHead title="Aktuality" />
+  <PageHead image={headPhoto} imagePosition="32% 40%" title="Aktuality" />
   <section class="section">
     <div class="wrap">
       <NewsList limit={100} headingLevel="h2" />

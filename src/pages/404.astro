@@ -1,11 +1,17 @@
 ---
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import headPhoto from '../assets/photos/turiste-u-trati.jpg';
 import Icon from '../components/Icon.astro';
 ---
 
 <Base title="Stránka nenalezena">
-  <PageHead title="Tudy trať nevede" lede="Tahle stránka neexistuje nebo se přestěhovala. Zkuste úvodní stránku nebo registraci.">
+  <PageHead
+    image={headPhoto}
+    imagePosition="44% 50%"
+    title="Tudy trať nevede"
+    lede="Tahle stránka neexistuje nebo se přestěhovala. Zkuste úvodní stránku nebo registraci."
+  >
     <div class="actions on-dark">
       <a class="btn" href="/registrace/">Registrace <Icon name="arrow" /></a>
       <a class="btn btn--ghost" href="/">Úvodní stránka</a>

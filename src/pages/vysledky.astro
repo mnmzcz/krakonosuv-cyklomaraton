@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import headPhoto from '../assets/photos/peloton-dest.jpg';
 import Icon from '../components/Icon.astro';
 import splits from '../data/splits-2026.json';
 import routes from '../data/routes.json';
@@ -84,6 +85,8 @@ const winners = [
   description="Výsledky všech ročníků Krakonošova cyklomaratonu od roku 2014: kdo výzvu splnil a za jak dlouho. Hlavní závod na SportSoftu, dětské závody v PDF."
 >
   <PageHead
+    image={headPhoto}
+    imagePosition="0% 40%"
     title="Výsledky"
     lede="Třináct ročníků od roku 2014. Hlavní závod online na SportSoftu, dětské závody v PDF."
     mark={{ name: 'Cíl Trutnov', km: routes.routes.long.km }}

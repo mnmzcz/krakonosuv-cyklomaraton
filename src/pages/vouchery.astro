@@ -2,6 +2,7 @@
 import { Image } from 'astro:assets';
 import Base from '../layouts/Base.astro';
 import PageHead from '../components/PageHead.astro';
+import headPhoto from '../assets/photos/dvojice-les.jpg';
 import Icon from '../components/Icon.astro';
 import voucher from '../assets/news/voucher.png';
 import { race } from '../data/race';
@@ -14,7 +15,7 @@ const christmas = `21. 12. ${race.year - 1}`;
   title="Dárek pro cyklistu: voucher na startovné"
   description={`Hledáte dárek pro cyklistu? Darujte mu opravdovou výzvu: startovné na Krakonošův cyklomaraton ${race.year} jako dárkový voucher v elektronické podobě.`}
 >
-  <PageHead title="Dárek pro cyklistu" />
+  <PageHead image={headPhoto} imagePosition="56% 35%" title="Dárek pro cyklistu" />
 
   <section class="section" aria-labelledby="voucher-title">
     <div class="wrap gift">
