@@ -69,7 +69,7 @@ export const media: Partner[] = [
   { name: 'Česká televize', href: 'https://www.ceskatelevize.cz/', logo: logo('2023_10_logo-ceskatelevize-full.png') },
   { name: 'Trutnovinky', href: 'https://trutnovinky.cz/', logo: logo('2023_10_logo-5.png') },
   { name: 'RoadCycling.cz', href: 'https://www.roadcycling.cz/', logo: logo('2024_12_RC_logo_cmyk.png') },
-  { name: 'RoadCup 2025', href: 'https://www.roadcycling.cz/roadcup/rocnik-2025', logo: logo('2024_12_logo_roadcup25.png') },
+  { name: 'RoadCup 2027', href: 'https://www.roadcycling.cz/roadcup/rocnik-2027', logo: logo('2026_11_logo_roadcup27.svg') },
 ];
 
 export const union: Partner = {
